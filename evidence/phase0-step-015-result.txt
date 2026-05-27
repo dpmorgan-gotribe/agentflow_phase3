@@ -1,0 +1,18 @@
+phase0-step-015 — context + phase-gate + polish-pass skills
+Date: 2026-05-27
+
+Files written:
+- .claude/skills/phase-gate/SKILL.md (NEW — ported from agentmark scaffolding 15)
+- .claude/skills/polish-pass/SKILL.md (NEW — ported from agentmark scaffolding 16)
+- .claude/skills/save-context/SKILL.md (ported from Phase 2 — covered under row 013's port batch)
+- .claude/skills/load-context-chain/SKILL.md (ported from Phase 2 — covered under row 013's port batch)
+
+Skill summaries:
+- /phase-gate: invokes retro subagent, saves report to reports/phase-{N}-gate-{YYYY-MM-DD}.md, hard-pauses for human approval before phase transition
+- /polish-pass: verifies row's perf/cost budget from phase-plan.md, produces evidence/{row-id}-bench.json, flips polished:false→true
+- /save-context: writes contexts/<YYYY-MM-DD-HHMM>-<slug>.md (port preserved)
+- /load-context-chain: walks chain backward at session start (port preserved)
+
+Verdict: GO. All 11 harness skills + 2 subagents + 7 hooks + 6 root artifacts + settings.json in place. Harness baseline complete.
+
+Next: row 016 (HUMAN — harness baseline smoke test).

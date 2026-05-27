@@ -1,0 +1,17 @@
+phase0-step-007 — detect-loop.mjs
+Date: 2026-05-27
+
+File: .claude/hooks/detect-loop.mjs (ported verbatim from Phase 2).
+
+`node -c .claude/hooks/detect-loop.mjs` → OK (syntactically valid).
+
+Behavior coverage (from ported impl):
+- Hash signature: tool + file/command + first 200 chars of content + extra discriminators
+- MAX_PRIOR_IDENTICAL = 2 (3rd identical → deny)
+- Rolling state: .claude/state/recent-attempts.json, capped at 50 entries
+- CAPTURE_TOOLS carve-out: mcp__playwright__{browser_resize, browser_navigate, browser_wait_for, browser_take_screenshot, browser_close} bypass loop detection
+- Extra discriminators: offset, limit, old_string, pattern, subagent_type, description, taskId, status, subject, query, url, width, height, filename, time, text, textGone, skill, args
+- Fail-open on unparseable input
+- Atomic write via temp file + rename
+
+Verdict: GO. Verbatim port from Phase 2; multi-iteration discrimination behavior preserved.

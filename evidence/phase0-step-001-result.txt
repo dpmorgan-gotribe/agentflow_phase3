@@ -1,0 +1,15 @@
+phase0-step-001 — Prerequisites verification
+Date: 2026-05-27
+Operator: claude-opus-4-7[1m] (assisted)
+
+Tool versions:
+- node: v22.18.0 (>=22 required) PASS
+- pnpm: 10.27.0 PASS
+- git: 2.49.0.windows.1 PASS
+- just: 1.49.0 PASS
+- playwright: 1.59.1 PASS (binary installed; `--with-deps chromium` not re-run, version probe sufficient)
+
+Auth:
+- ANTHROPIC_API_KEY: not set in current shell. Claude Code session uses integrated auth for harness-build work. Orchestrator runs (Mode A/B + verifier) MUST set ANTHROPIC_API_KEY or use Claude Max / Bedrock / Vertex per auth-provider.ts (phase0-step-017).
+
+Verdict: GO. All 5 tools present at acceptable versions. Auth caveat noted for downstream rows.

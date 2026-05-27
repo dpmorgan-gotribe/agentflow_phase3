@@ -1,0 +1,15 @@
+phase0-step-005 — block-dangerous.sh
+Date: 2026-05-27
+
+File: .claude/hooks/block-dangerous.sh (ported verbatim from Phase 2).
+
+Self-test probes:
+1. `echo '{"tool_input":{"command":"rm -rf /"}}' | bash .claude/hooks/block-dangerous.sh`
+   → BLOCKED: command matches dangerous pattern: rm[[:space:]]+-[a-z]*r[a-z]*f?[[:space:]]+/($|[[:space:]])
+   → exit code 2 (correct)
+
+2. `echo '{"tool_input":{"command":"git push --force-with-lease origin feat/x"}}' | bash .claude/hooks/block-dangerous.sh`
+   → no output
+   → exit code 0 (correct — --force-with-lease exemption fired)
+
+Verdict: GO. Hook denies forbidden patterns, exempts documented carve-outs.

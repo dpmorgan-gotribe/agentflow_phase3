@@ -1,0 +1,19 @@
+phase0-step-013 — harness skills port (6 base + capture-lesson + consult-lessons)
+Date: 2026-05-27
+
+Files written:
+- .claude/skills/check-existing-work/SKILL.md (ported from Phase 2)
+- .claude/skills/plan-bug/SKILL.md (ported from Phase 2)
+- .claude/skills/plan-feature/SKILL.md (ported from Phase 2)
+- .claude/skills/plan-investigation/SKILL.md (ported from Phase 2)
+- .claude/skills/save-context/SKILL.md (ported from Phase 2)
+- .claude/skills/load-context-chain/SKILL.md (ported from Phase 2)
+- .claude/skills/capture-lesson/SKILL.md (NEW — ported from agentmark scaffolding 13)
+- .claude/skills/consult-lessons/SKILL.md (NEW — ported from agentmark scaffolding 14)
+
+Verification (find . -name "SKILL.md"):
+  6 ports + 2 new files confirmed in tree.
+
+Note: row 013's description says "6 harness workflow skills" (check-existing-work + plan-* × 3 + capture-lesson + consult-lessons). All 6 plus the 2 prior-art skills (save-context, load-context-chain originally rowed under 015) are in place. The grouping is pragmatic — all 8 came in one port batch.
+
+Verdict: GO. Harness lessons + planning surface ready.

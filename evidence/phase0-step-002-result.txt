@@ -1,0 +1,23 @@
+phase0-step-002 — Factory folder skeleton
+Date: 2026-05-27
+
+Created (with .gitkeep where empty):
+- .claude/{agents,skills,hooks,rules,templates,state}/
+- schemas/
+- scaffolding/
+- packages/
+- scripts/
+- orchestrator/{src,tests,scripts}/
+- evidence/
+- contracts/
+- contexts/
+- investigations/
+- reports/
+- projects/
+- docs/
+
+Verification (ls of factory root + .claude):
+  factory root: RESEARCH.md, agentflow_rebuild_prompt.md, contexts/, contracts/, docs/, evidence/, feature_list.json, inventory-scratch.md, investigations/, orchestrator/, packages/, projects/, reports/, scaffolding/, schemas/, scripts/, .claude/
+  .claude/: agents/, hooks/, rules/, skills/, state/, templates/
+
+Verdict: GO. Tree matches the canonical Phase 0 layout. .gitkeeps to be dropped into empty dirs on first commit.

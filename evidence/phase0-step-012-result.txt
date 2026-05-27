@@ -1,0 +1,18 @@
+phase0-step-012 — retro subagent
+Date: 2026-05-27
+
+File: .claude/agents/retro.md — ported from agentmark/scaffolding/phase-0-harness/08-subagent-retro.md with Phase 3 path updates.
+
+Frontmatter:
+- name: retro
+- model: sonnet
+- tools: Read, Glob, Grep, Bash
+
+Body covers:
+- Inputs (phase number, git range)
+- Reads: feature_list.json, LESSONS.md, DECISIONS.md, git log, phase-plan.md (current + frozen via `git show phase-N-start:phase-plan.md`), evidence/ sample
+- Plan ↔ code parity sampling: 5 random passes:true rows; drift >20% blocks phase close (hard gate)
+- Output format: 7-section Phase Gate Report with specific row IDs cited
+- Read-only, no Write/Edit, prints to stdout (phase-gate skill saves the file)
+
+Verdict: GO. Retro ready for /phase-gate invocation.

@@ -1,0 +1,23 @@
+phase0-step-008 — verify-gate.mjs
+Date: 2026-05-27
+
+File: .claude/hooks/verify-gate.mjs (net-new harness baseline; not in Phase 2).
+
+Self-test: `node .claude/hooks/verify-gate.mjs --selftest`
+  → verify-gate selftest PASS
+  → exit 0
+
+Self-test internal probes:
+  1. Detect flip phase0-step-001 false→true via detectFlips() → expected 1 flip, got 1 flip
+  2. No-change diff → expected 0 flips, got 0 flips
+
+Behavior contract:
+- PreToolUse on Write/Edit/MultiEdit targeting feature_list.json
+- Detects passes:false → passes:true transitions per-row
+- Reads .claude/state/evidence-reads.json (populated by track-read.mjs)
+- Denies if the flipping row's evidence path hasn't been Read this session
+- Deny payload via hookSpecificOutput JSON on stdout (exit 0)
+- Allow path is silent exit 0
+- Self-test mode via --selftest CLI flag
+
+Verdict: GO. Hook syntactically valid, selftest passes, integration with track-read.mjs verified.

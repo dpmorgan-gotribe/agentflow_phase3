@@ -1,0 +1,22 @@
+phase0-step-009 — track-read.mjs
+Date: 2026-05-27
+
+File: .claude/hooks/track-read.mjs (net-new harness baseline).
+
+`node -c .claude/hooks/track-read.mjs` → OK.
+
+Behavior contract:
+- PostToolUse on Read
+- Appends {tool:"Read", file_path, timestamp} to .claude/state/evidence-reads.json
+- Atomic write via temp file + rename
+- Capped at 500 entries (WINDOW_SIZE) to prevent unbounded growth
+- Skips non-Read tool calls and Read calls without a file_path
+- Fail-open on state-write failure (stderr log, exit 0)
+- Never blocks
+
+Integration with verify-gate.mjs (phase0-step-008):
+- verify-gate reads READS_FILE via readsList()
+- Normalizes paths (case-insensitive, Windows/mingw)
+- Compares Set of read paths to flipped rows' evidence paths
+
+Verdict: GO. Pair to verify-gate complete; together they enforce evidence-before-flip invariant.

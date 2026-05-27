@@ -1,0 +1,22 @@
+phase0-step-029 — validate-brief.mjs hook
+Date: 2026-05-27
+
+File: .claude/hooks/validate-brief.mjs (ported verbatim from Phase 2).
+
+`node -c .claude/hooks/validate-brief.mjs` → OK.
+
+Behavior contract:
+- PreToolUse on Write/Edit/MultiEdit
+- Filters: only acts when filePath normalizes to project's brief.md path
+- Cross-platform path normalization: Windows C:/, mingw /c/, lowercase
+- Operation simulation in-memory: Write replaces content; Edit splices old_string→new_string; MultiEdit iterates edits sequentially
+- Frontmatter validation: gray-matter parse + ajv against schemas/brief-frontmatter.schema.json
+- Code-block validation: §7 (Architecture) and §10 (Navigation) must contain ```fenced``` blocks
+- Date normalization: gray-matter Date objects → YYYY-MM-DD strings before ajv check
+- Fail-open if Ajv/gray-matter not installed (logs to stderr, allows)
+- Fail-open if schema file doesn't exist (project pre-task-026)
+- Deny via hookSpecificOutput JSON on stdout (exit 0)
+
+Note: full e2e validation deferred until schemas/ and orchestrator/node_modules ship (Phase 0 rows 030-031). In current state, hook fail-opens with stderr warning. This matches Phase 2's intentional behavior for pre-schema projects.
+
+Verdict: GO. Verbatim port; full activation gates on schema authoring in row 030.

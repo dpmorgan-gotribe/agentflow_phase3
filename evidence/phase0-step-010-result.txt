@@ -1,0 +1,23 @@
+phase0-step-010 — commit-on-stop.mjs
+Date: 2026-05-27
+
+File: .claude/hooks/commit-on-stop.mjs (net-new harness baseline).
+
+`node -c .claude/hooks/commit-on-stop.mjs` → OK.
+
+Behavior contract:
+- Stop-event hook
+- Runs `git status --porcelain` to detect dirty state
+- If clean tree → exit 0 (no commit)
+- If dirty → `git add -A` + `git commit -F -` with HEREDOC-style stdin message
+- Commit message format: `checkpoint: <session-id> <YYYY-MM-DD HH:MM>\n\nAuto-created by commit-on-stop hook on Stop event. Reversible via \`git reset HEAD~1\`. Intent: prevent partial work loss across session boundaries.`
+- Uses CLAUDE_SESSION_ID env var when available, else "unknown"
+- Never amends (creates new commits only)
+- Never --no-verify (respects pre-commit hooks)
+- Never blocks session termination (all errors → stderr log, exit 0)
+- Never force-pushes (read-only on remote)
+- HEREDOC equivalent via stdin to avoid Windows shell-escaping problems
+
+Smoke test deferred to phase0-step-016 HUMAN smoke (would need a real Stop event simulation).
+
+Verdict: GO. Backstop against session-end work loss in place.

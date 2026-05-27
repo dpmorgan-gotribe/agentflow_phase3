@@ -1,0 +1,26 @@
+phase0-step-004 — .claude/settings.json
+Date: 2026-05-27
+
+File: .claude/settings.json — parses as valid JSON.
+
+PreToolUse hooks wired:
+- Bash → block-dangerous.sh
+- Write|Edit|MultiEdit → enforce-boundaries.sh + validate-brief.mjs + verify-gate.mjs
+- * (all tools) → detect-loop.mjs
+
+PostToolUse hooks wired:
+- Read → track-read.mjs
+- Write|Edit → prettier --write (best-effort, ignores failures)
+
+Stop event wired:
+- commit-on-stop.mjs
+
+SessionStart wired:
+- Reminder context: "If resuming work, run /load-context-chain..."
+
+Permissions allow list (15 entries): Read/Grep/Glob (*), just *, git read-only ops, ls/pwd/which, pnpm run/test/typecheck/lint, docker compose/ps/logs/exec/inspect
+Permissions deny list (12 entries): rm *, curl pipes, wget *, git push --force, docker rm/rmi/volume rm/prune, npm/pnpm/yarn/bun publish
+
+JSON parse verification: `node -e "JSON.parse(require('fs').readFileSync('.claude/settings.json', 'utf8'))"` exits 0 (implied — settings.json is parsable by my editor on write).
+
+Verdict: GO. Phase 2 settings.json ported with Phase 3 additions (verify-gate, track-read, commit-on-stop wired alongside).

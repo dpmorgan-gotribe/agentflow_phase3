@@ -1,0 +1,19 @@
+phase0-step-014 — sync-phase-plan skill (rebuild guarantee)
+Date: 2026-05-27
+
+File: .claude/skills/sync-phase-plan/SKILL.md — ported from agentmark/scaffolding/phase-0-harness/20-skill-sync-phase-plan.md with Phase 3 references.
+
+Frontmatter:
+- name: sync-phase-plan
+- description: "After a row goes passes:true, a bug closes, or a polish-pass lands an architectural change, draft a surgical addition to phase-plan.md..."
+- when_to_use: end of every row before flipping passes:true; end of every bug close; end of every /polish-pass that lands architectural change
+- allowed-tools: Read, Write, Edit, Bash, Grep, Skill
+
+Body covers:
+- 9-step flow: gather → classify → find section → draft delta → human approval → apply → ADR → report → flip
+- Durable-vs-noise classifier (matches evaluator's cheat sheet)
+- SCAFFOLDING MISS counter when no section in phase-plan.md matches
+- Surgical-addition rules: provenance tag, one-sentence-per-item, no code blocks
+- Hard pause for human approval — no auto-apply
+
+Verdict: GO. Rebuild-guarantee skill ready. /sync-phase-plan invocation will be exercised at first row close that lands durable behavior.

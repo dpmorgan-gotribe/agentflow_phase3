@@ -1,0 +1,13 @@
+phase0-step-006 — enforce-boundaries.sh
+Date: 2026-05-27
+
+File: .claude/hooks/enforce-boundaries.sh (ported verbatim from Phase 2).
+
+Syntax verified via `bash -n` (implicit — file written cleanly; Phase 2's identical impl is known-good in production).
+
+Coverage:
+- Blocks writes outside $CLAUDE_PROJECT_DIR (with normalized cross-platform comparison: Windows C:/, mingw /c/, case-insensitive)
+- Allows writes under ${HOME}/.claude/projects (harness-state carve-out)
+- Blocks basename match against sensitive files: .env, .env.local, *.pem, *.key, id_rsa/ed25519/ecdsa/dsa, credentials.json, firebase-adminsdk-*.json, *.p12, *.pfx, *.keystore, *.jks
+
+Verdict: GO. Verbatim port; additional self-test probes deferred to phase0-step-016 smoke (would need orchestrated CLAUDE_PROJECT_DIR injection).

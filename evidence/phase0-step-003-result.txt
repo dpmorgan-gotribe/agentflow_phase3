@@ -1,0 +1,18 @@
+phase0-step-003 — 6 root artifacts
+Date: 2026-05-27
+
+Files written:
+- CLAUDE.md (startup ritual + hard rules + architectural commitments + key file locations) — 144 lines
+- PROGRESS.md (append-only handoff log; kickoff entry at 2026-05-27) — present
+- phase-plan.md (living rebuild manifest preamble + Phase 0/1/2/3 scope sections + cross-phase commitments) — present
+- feature_list.json — ALREADY EXISTS (134 rows, generated 2026-05-27). Not overwritten. Treated as already-bootstrapped from the planning pass.
+- LESSONS.md (skeleton + format guide) — present
+- DECISIONS.md (ADR-000 adopt-harness, ADR-001 cache-aware dispatch, ADR-002 hybrid TDD) — 3 ADRs
+
+Verification:
+- CLAUDE.md opens with "Agentflow Phase 3 — Factory CLAUDE.md" header
+- phase-plan.md opens with "the canonical rebuild manifest" header + living-doc preamble
+- DECISIONS.md contains ADR-000
+- feature_list.json parses (verified earlier; 134 rows confirmed)
+
+Verdict: GO. All 6 root artifacts present with non-trivial content per the harness baseline pattern.

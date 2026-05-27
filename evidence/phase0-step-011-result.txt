@@ -1,0 +1,19 @@
+phase0-step-011 — evaluator subagent
+Date: 2026-05-27
+
+File: .claude/agents/evaluator.md — ported from agentmark/scaffolding/phase-0-harness/07-subagent-evaluator.md with Phase 3 path updates (orchestrator/src refs instead of dailytrade refs; protected-files-policy reference instead of Risk Manager).
+
+Frontmatter parses:
+- name: evaluator
+- description: Skeptical second-opinion reviewer...
+- tools: Read, Glob, Grep, Bash
+- model: sonnet
+
+Body covers:
+- Inputs (row id, evidence paths, contract path)
+- 7 review steps including plan-parity check (rebuild guarantee)
+- Durable-behavior cheat sheet (validation, retry, rate-limit, cache, schema, control-flow inversion, new dependency)
+- Tool restrictions (no Write/Edit/MultiEdit, read-only Bash)
+- Output format: first line literal "PASS" or "NEEDS_WORK", then findings
+
+Verdict: GO. Evaluator ready for end-of-row gating.
