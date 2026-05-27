@@ -1,0 +1,22 @@
+[
+  {
+    "hash": "e669db2fb8f1",
+    "timestamp": 1779923269058,
+    "tool": "Bash"
+  },
+  {
+    "hash": "9034415029dc",
+    "timestamp": 1779923269666,
+    "tool": "Read"
+  },
+  {
+    "hash": "df1f288a1447",
+    "timestamp": 1779923270005,
+    "tool": "Read"
+  },
+  {
+    "hash": "cbca9b1fc22e",
+    "timestamp": 1779923285047,
+    "tool": "AskUserQuestion"
+  }
+]
