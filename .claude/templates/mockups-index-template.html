@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{PROJECT_NAME}} — Style selection</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #fafafa;
+        --bg-elevated: #ffffff;
+        --border: #e4e4e7;
+        --border-hover: #a1a1aa;
+        --text: #18181b;
+        --muted: #71717a;
+        --subtle: #f4f4f5;
+        --accent: #2563eb;
+        --focus: 0 0 0 3px rgb(37 99 235 / 0.3);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+      code {
+        font-family:
+          ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", Consolas,
+          monospace;
+        font-size: 0.92em;
+        background: var(--subtle);
+        padding: 1px 6px;
+        border-radius: 3px;
+      }
+
+      /* Page chrome */
+      header.page {
+        padding: 20px 32px;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        background: rgba(250, 250, 250, 0.88);
+        backdrop-filter: blur(10px);
+        z-index: 50;
+      }
+      header.page h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      header.page .sub {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      main {
+        padding: 28px 32px 96px;
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      /* Row card */
+      .row {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: border-color 150ms;
+      }
+      .row:hover {
+        border-color: var(--border-hover);
+      }
+      .row-head {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--subtle);
+        flex-wrap: wrap;
+      }
+      .idx {
+        width: 24px;
+        height: 24px;
+        display: grid;
+        place-items: center;
+        background: var(--subtle);
+        color: #52525b;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        font-variant-numeric: tabular-nums;
+      }
+      .title {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .palette {
+        display: flex;
+        gap: 3px;
+      }
+      .palette span {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        border: 1px solid rgb(0 0 0 / 0.08);
+      }
+      .refs {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .dials-badge {
+        color: var(--muted);
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        font-family:
+          ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", Consolas,
+          monospace;
+      }
+      .choose-row {
+        margin-left: auto;
+        padding: 6px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-elevated);
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 120ms;
+      }
+      .choose-row:hover {
+        background: var(--text);
+        color: var(--bg-elevated);
+        border-color: var(--text);
+      }
+      .choose-row:focus-visible {
+        outline: none;
+        box-shadow: var(--focus);
+      }
+
+      /* Cells */
+      .cells {
+        display: grid;
+        grid-template-columns: repeat(var(--cols, 3), 1fr);
+        gap: 1px;
+        background: var(--subtle);
+      }
+      .cell {
+        background: var(--bg-elevated);
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: 220px;
+      }
+      .cell-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .cell-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .archetype-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: var(--subtle);
+        border: 1px solid transparent;
+        border-radius: 6px;
+        font-size: 13px;
+        text-align: left;
+        transition: all 120ms;
+        color: var(--text);
+      }
+      .archetype-btn:hover {
+        background: var(--bg-elevated);
+        border-color: var(--border-hover);
+      }
+      .archetype-btn:focus-visible {
+        outline: none;
+        box-shadow: var(--focus);
+      }
+      .archetype-btn .open-icon {
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      /* Modal */
+      dialog#viewer {
+        border: none;
+        padding: 0;
+        background: transparent;
+        max-width: 100vw;
+        max-height: 100vh;
+        width: 100vw;
+        height: 100vh;
+      }
+      dialog#viewer::backdrop {
+        background: rgb(0 0 0 / 0.55);
+        backdrop-filter: blur(4px);
+      }
+      .modal-body {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+      .modal-chrome {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 10px 16px;
+        background: var(--bg-elevated);
+        border-bottom: 1px solid var(--border);
+        flex-wrap: wrap;
+      }
+      .modal-chrome .style-label {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .modal-chrome .viewport-switcher {
+        display: flex;
+        gap: 4px;
+        background: var(--subtle);
+        padding: 2px;
+        border-radius: 6px;
+      }
+      .modal-chrome .viewport-switcher button {
+        padding: 4px 10px;
+        background: transparent;
+        border: none;
+        border-radius: 4px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .modal-chrome .viewport-switcher button.active {
+        background: var(--bg-elevated);
+        color: var(--text);
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+      }
+      .modal-chrome .dials {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        font-size: 12px;
+      }
+      .modal-chrome .dials label {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        color: var(--muted);
+      }
+      .modal-chrome .dials label .dial-val {
+        color: var(--text);
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+      .modal-chrome .dials input[type="range"] {
+        width: 110px;
+      }
+      .modal-chrome .dial-save-status {
+        font-size: 11px;
+        color: var(--muted);
+        min-width: 60px;
+      }
+      .modal-chrome .dial-save-status.saving {
+        color: #a16207;
+      }
+      .modal-chrome .dial-save-status.saved {
+        color: #15803d;
+      }
+      .modal-chrome .dial-save-status.error {
+        color: #dc2626;
+      }
+      .modal-chrome .spacer {
+        flex: 1;
+      }
+      .modal-chrome .choose {
+        padding: 8px 16px;
+        background: var(--text);
+        color: var(--bg-elevated);
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .modal-chrome .choose:hover {
+        opacity: 0.9;
+      }
+      .modal-chrome .choose:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .modal-close-corner {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        z-index: 10;
+        width: 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        font-size: 20px;
+        line-height: 1;
+        color: var(--text);
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+        transition: all 120ms;
+      }
+      .modal-close-corner:hover {
+        background: var(--text);
+        color: var(--bg-elevated);
+        border-color: var(--text);
+      }
+      .modal-close-corner:focus-visible {
+        outline: none;
+        box-shadow: var(--focus);
+      }
+      .modal-chrome .esc-hint {
+        font-size: 11px;
+        color: var(--muted);
+        font-family:
+          ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", Consolas,
+          monospace;
+      }
+      .iframe-wrap {
+        background: #0a0a0a;
+        display: grid;
+        place-items: center;
+        overflow: auto;
+        padding: 16px;
+        cursor: zoom-out;
+      }
+      .iframe-wrap iframe {
+        cursor: auto;
+      }
+      .iframe-wrap iframe {
+        background: white;
+        border: 1px solid rgb(255 255 255 / 0.08);
+        box-shadow: 0 20px 60px rgb(0 0 0 / 0.4);
+        display: block;
+      }
+
+      /* Sticky footer */
+      footer.gate {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-elevated);
+        border-top: 1px solid var(--border);
+        padding: 10px 32px;
+        display: flex;
+        gap: 24px;
+        font-size: 12px;
+        color: var(--muted);
+        align-items: center;
+        z-index: 40;
+      }
+      footer.gate .status {
+        margin-left: auto;
+        color: var(--text);
+        font-weight: 500;
+      }
+      footer.gate .status.done {
+        color: #15803d;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page">
+      <h1>{{PROJECT_NAME}} — Style selection</h1>
+      <div class="sub">
+        Click any cell to preview. Pick one style with
+        <code>Choose this style</code>; losing styles archive to
+        <code>docs/mockups/archive/</code>.
+      </div>
+    </header>
+
+    <main id="grid"></main>
+
+    <dialog id="viewer" aria-label="Style preview">
+      <div class="modal-body">
+        <button
+          type="button"
+          class="modal-close-corner"
+          id="close-btn"
+          aria-label="Close preview"
+          title="Close (ESC)"
+        >
+          ×
+        </button>
+        <div class="modal-chrome">
+          <span class="style-label" id="modal-style-label">—</span>
+          <div class="viewport-switcher" id="vp-switcher">
+            <button data-w="390" data-h="844">Mobile · 390</button>
+            <button data-w="820" data-h="1180">Tablet · 820</button>
+            <button data-w="1400" data-h="900" class="active">
+              Desktop · 1400
+            </button>
+          </div>
+          <div class="dials" id="dials-edit">
+            <label>
+              Variance
+              <input
+                type="range"
+                min="1"
+                max="10"
+                data-dial="design_variance"
+              />
+              <span class="dial-val" data-dial-val="design_variance">—</span>
+            </label>
+            <label>
+              Motion
+              <input
+                type="range"
+                min="1"
+                max="10"
+                data-dial="motion_intensity"
+              />
+              <span class="dial-val" data-dial-val="motion_intensity">—</span>
+            </label>
+            <label>
+              Density
+              <input type="range" min="1" max="10" data-dial="visual_density" />
+              <span class="dial-val" data-dial-val="visual_density">—</span>
+            </label>
+          </div>
+          <span class="dial-save-status" id="dial-save-status"></span>
+          <span class="spacer"></span>
+          <span class="esc-hint">ESC to close</span>
+          <button class="choose" id="choose-btn">Choose this style →</button>
+        </div>
+        <div class="iframe-wrap" id="iframe-wrap">
+          <iframe
+            id="preview"
+            title="Mockup preview"
+            sandbox="allow-same-origin allow-scripts"
+          ></iframe>
+        </div>
+      </div>
+    </dialog>
+
+    <footer class="gate">
+      <span>Nanobanana: <code>{{NANOBANANA_STATE}}</code></span>
+      <span>{{IMAGE_BUDGET}}</span>
+      <span class="status" id="gate-status">Waiting for selection…</span>
+    </footer>
+
+    <script>
+      // Injected at render time by .claude/skills/mockups/SKILL.md step 9.
+      const MANIFEST = {{MANIFEST_JSON}};
+      const GATE = "{{GATE_API_BASE}}";
+
+      const $grid = document.getElementById("grid");
+      const $viewer = document.getElementById("viewer");
+      const $iframe = document.getElementById("preview");
+      const $iframeWrap = document.getElementById("iframe-wrap");
+      const $modalStyleLabel = document.getElementById("modal-style-label");
+      const $vpSwitcher = document.getElementById("vp-switcher");
+      const $dialsEdit = document.getElementById("dials-edit");
+      const $dialSaveStatus = document.getElementById("dial-save-status");
+      const $chooseBtn = document.getElementById("choose-btn");
+      const $closeBtn = document.getElementById("close-btn");
+      const $gateStatus = document.getElementById("gate-status");
+
+      let currentStyleId = null;
+      let currentDialValues = {};
+
+      function renderGrid() {
+        const styles = MANIFEST.styles || [];
+        const apps = MANIFEST.appsCovered || [];
+        const cols = apps.length || 1;
+
+        $grid.innerHTML = "";
+        styles.forEach((style, i) => {
+          const row = document.createElement("article");
+          row.className = "row";
+          row.setAttribute("aria-label", style.styleName);
+
+          const head = document.createElement("div");
+          head.className = "row-head";
+          head.innerHTML = `
+            <span class="idx">${String(i).padStart(2, "0")}</span>
+            <span class="title">${escapeHtml(style.styleName)}</span>
+            <span class="palette" aria-hidden="true">
+              ${(style.paletteSwatch || []).slice(0, 5).map(hex => `<span style="background:${hex}"></span>`).join("")}
+            </span>
+            <span class="refs">${escapeHtml((style.namedReferences || []).join(" · "))}</span>
+            <span class="dials-badge">V${style.dials?.design_variance ?? "?"}·M${style.dials?.motion_intensity ?? "?"}·D${style.dials?.visual_density ?? "?"}</span>
+            <button class="choose-row" data-style-id="${style.styleId}">Choose this style →</button>
+          `;
+          row.appendChild(head);
+
+          const cells = document.createElement("div");
+          cells.className = "cells";
+          cells.style.setProperty("--cols", cols);
+
+          apps.forEach((app) => {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            const archetypes = (style.archetypesByApp && style.archetypesByApp[app]) || [];
+            const fallbackPath = `${style.styleId}/${app}/home.html`;
+
+            cell.innerHTML = `
+              <div class="cell-head">
+                <span>${escapeHtml(app)}</span>
+                <span>${archetypes.length || 1} archetype${archetypes.length === 1 ? "" : "s"}</span>
+              </div>
+              <div class="cell-body" data-cell-body></div>
+            `;
+
+            const body = cell.querySelector("[data-cell-body]");
+            const list = archetypes.length > 0
+              ? archetypes
+              : [{ name: "home", path: fallbackPath }];
+
+            list.forEach((a) => {
+              const btn = document.createElement("button");
+              btn.className = "archetype-btn";
+              btn.dataset.styleId = style.styleId;
+              btn.dataset.styleName = style.styleName;
+              btn.dataset.app = app;
+              btn.dataset.archetype = a.name;
+              btn.dataset.path = a.path;
+              btn.innerHTML = `
+                <span>${escapeHtml(a.name)}</span>
+                <span class="open-icon">Open ↗</span>
+              `;
+              btn.addEventListener("click", () => openModal(style, app, a));
+              body.appendChild(btn);
+            });
+
+            cells.appendChild(cell);
+          });
+          row.appendChild(cells);
+          $grid.appendChild(row);
+        });
+
+        // Wire row-level "Choose this style" buttons.
+        $grid.querySelectorAll(".choose-row").forEach((b) => {
+          b.addEventListener("click", (e) => {
+            e.stopPropagation();
+            chooseStyle(b.dataset.styleId);
+          });
+        });
+      }
+
+      function openModal(style, app, archetype) {
+        currentStyleId = style.styleId;
+        currentDialValues = { ...(style.dials || { design_variance: 5, motion_intensity: 5, visual_density: 5 }) };
+        $modalStyleLabel.textContent = `${style.styleName} · ${app} · ${archetype.name}`;
+        $iframe.src = archetype.path;
+
+        // Default viewport: desktop
+        setViewport(1400, 900);
+        $vpSwitcher.querySelectorAll("button").forEach((b) => {
+          b.classList.toggle("active", b.dataset.w === "1400");
+        });
+
+        // Populate dial sliders
+        $dialsEdit.querySelectorAll("input[type='range']").forEach((input) => {
+          const dial = input.dataset.dial;
+          input.value = currentDialValues[dial] ?? 5;
+          const valEl = $dialsEdit.querySelector(`[data-dial-val="${dial}"]`);
+          if (valEl) valEl.textContent = input.value;
+        });
+        $dialSaveStatus.textContent = "";
+        $dialSaveStatus.className = "dial-save-status";
+
+        $chooseBtn.disabled = false;
+        $chooseBtn.textContent = "Choose this style →";
+        $viewer.showModal();
+      }
+
+      function closeModal() {
+        currentStyleId = null;
+        $iframe.src = "about:blank";
+        $viewer.close();
+      }
+
+      function setViewport(w, h) {
+        $iframe.width = w;
+        $iframe.height = h;
+      }
+
+      $vpSwitcher.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-w]");
+        if (!btn) return;
+        $vpSwitcher.querySelectorAll("button").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        setViewport(Number(btn.dataset.w), Number(btn.dataset.h));
+      });
+
+      $closeBtn.addEventListener("click", closeModal);
+      $viewer.addEventListener("click", (e) => {
+        if (e.target === $viewer) closeModal();
+      });
+      // Click on the dark backdrop area around the iframe to close.
+      // Clicks on the iframe itself or on the chrome row do not bubble here.
+      $iframeWrap.addEventListener("click", (e) => {
+        if (e.target === $iframeWrap) closeModal();
+      });
+      $viewer.addEventListener("close", () => {
+        currentStyleId = null;
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && $viewer.open) closeModal();
+      });
+
+      // Debounced dial POST (300ms) — per-dial latest-wins
+      const dialTimers = {};
+      $dialsEdit.addEventListener("input", (e) => {
+        const input = e.target.closest("input[type='range']");
+        if (!input || !currentStyleId) return;
+        const dial = input.dataset.dial;
+        const value = Number(input.value);
+        currentDialValues[dial] = value;
+        const valEl = $dialsEdit.querySelector(`[data-dial-val="${dial}"]`);
+        if (valEl) valEl.textContent = value;
+
+        $dialSaveStatus.textContent = "Editing…";
+        $dialSaveStatus.className = "dial-save-status";
+        clearTimeout(dialTimers[dial]);
+        dialTimers[dial] = setTimeout(() => persistDials(currentStyleId, currentDialValues), 300);
+      });
+
+      async function persistDials(styleId, dials) {
+        $dialSaveStatus.textContent = "Saving…";
+        $dialSaveStatus.className = "dial-save-status saving";
+        try {
+          const r = await fetch(`${GATE}/api/dials/${encodeURIComponent(styleId)}`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(dials),
+          });
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          $dialSaveStatus.textContent = "Saved";
+          $dialSaveStatus.className = "dial-save-status saved";
+        } catch (err) {
+          $dialSaveStatus.textContent = "Save failed";
+          $dialSaveStatus.className = "dial-save-status error";
+          console.error("dials save failed:", err);
+        }
+      }
+
+      $chooseBtn.addEventListener("click", () => {
+        if (!currentStyleId) return;
+        chooseStyle(currentStyleId);
+      });
+
+      async function chooseStyle(styleId) {
+        if (!styleId) return;
+        $chooseBtn.disabled = true;
+        $chooseBtn.textContent = "Submitting…";
+        try {
+          const r = await fetch(`${GATE}/api/select`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ styleId }),
+          });
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const payload = await r.json().catch(() => ({ styleId }));
+          $gateStatus.textContent = `Selected ${payload.styleId || styleId} — pipeline advancing…`;
+          $gateStatus.classList.add("done");
+          $chooseBtn.textContent = "Selected ✓";
+          // Lock further interaction; the server closes when selected-style.json is written.
+          $grid.querySelectorAll("button").forEach((b) => (b.disabled = true));
+          setTimeout(() => {
+            if ($viewer.open) $viewer.close();
+          }, 800);
+        } catch (err) {
+          $chooseBtn.disabled = false;
+          $chooseBtn.textContent = "Choose this style →";
+          $gateStatus.textContent = `Selection failed: ${err.message} — retry?`;
+          console.error("select failed:", err);
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[c]);
+      }
+
+      renderGrid();
+    </script>
+  </body>
+</html>

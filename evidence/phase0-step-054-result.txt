@@ -1,0 +1,27 @@
+phase0-step-054 — factory helper scripts
+Date: 2026-05-27
+
+Action: bulk-cp scripts/* (54 files total in this batch) from Phase 2. Includes the helpers listed in row 054:
+- build-screens-catalog.mjs
+- build-screens-manifest.mjs
+- build-user-flows.mjs
+- derive-fixture-from-mockup.mjs
+- retrofit-ui-kit-data-attrs.mjs
+- file-bug-plan.mjs
+- snapshot-project.mjs
+- sync-project-schemas.mjs
+- aggregate-components.mjs
+- ai-walkthrough.mjs
+- run-synthesized-flows.mjs
+- seed-app-state.mjs
+- archive-plans.mjs
+- detect-affects-files-overlaps.mjs
+- audit-tracked-pycache.mjs
+
+Plus throwaway _tmp-*.mjs and one-shot verify-*.mjs scripts ported alongside (low-risk preservation; can be cleaned later).
+
+Verification:
+- All 15 helpers present in scripts/
+- Test coverage in orchestrator/tests/ for: build-screens-catalog.test.ts, derive-fixture-from-mockup.test.ts, file-bug-plan-parity.test.ts, run-synthesized-flows.test.ts, seed-app-state.test.ts — all pass
+
+Verdict: GO.

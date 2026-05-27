@@ -1,0 +1,6 @@
+tooling:
+  stack:
+    web_framework: react-next
+    backend_framework: python-fastapi
+    database: null
+    persistence_layer: external-api-only

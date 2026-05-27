@@ -1,0 +1,19 @@
+phase0-step-018 — orchestrator/src/model-config.ts + .claude/models.yaml
+Date: 2026-05-27
+
+Action: bulk-cp model-config.ts (590 lines) + .claude/models.yaml from Phase 2.
+
+Verification:
+- model-config.ts present at orchestrator/src/
+- .claude/models.yaml present at factory root (extends ~/.claude/models.yaml per comment)
+- Tests: orchestrator/tests/model-config.test.ts passes
+
+Coverage:
+- readModelConfig() merges .claude/models.yaml + ~/.claude/models.yaml (project > user precedence)
+- Per-agent tier overrides: backend-builder, ui-designer, etc. resolvable by slug
+- Provider config under top-level `provider:` key
+- ANTHROPIC_MODEL env var has highest precedence per docs
+
+Note: ~/.claude/models.yaml is operator-managed (not in repo). Empty extends-only project file inherits all system defaults.
+
+Verdict: GO.

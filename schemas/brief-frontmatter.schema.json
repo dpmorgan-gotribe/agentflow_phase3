@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow/schemas/brief-frontmatter.schema.json",
+  "title": "brief.md frontmatter",
+  "description": "Validates the YAML frontmatter block of a project brief.md. See blueprint §3.",
+  "type": "object",
+  "required": [
+    "version",
+    "status",
+    "project-name",
+    "author",
+    "created",
+    "last-modified",
+    "brief-schema-version"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema, for editor tooling."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of this brief. Bump on every approved amendment.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "review", "approved", "locked"]
+    },
+    "project-name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "author": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created": {
+      "type": "string",
+      "format": "date"
+    },
+    "last-modified": {
+      "type": "string",
+      "format": "date"
+    },
+    "brief-schema-version": {
+      "type": "string",
+      "description": "Schema version this brief was authored against.",
+      "pattern": "^\\d+\\.\\d+$"
+    },
+    "companion-files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "type", "required"],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Path relative to project root.",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "navigation",
+              "schema",
+              "data-models",
+              "assets",
+              "wireframes",
+              "other"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "amendments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["sections-affected", "downstream-impact"],
+        "additionalProperties": true,
+        "properties": {
+          "sections-affected": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "downstream-impact": {
+            "type": "string",
+            "description": "What pipeline stages/artifacts need re-running because of this amendment.",
+            "minLength": 1
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

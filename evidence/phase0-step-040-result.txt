@@ -1,0 +1,16 @@
+phase0-step-040 — perceptual-reviewer + walkthrough-reviewer subagents
+Date: 2026-05-27
+
+Action: bulk-cp 2 .md files from Phase 2.
+
+Files:
+- .claude/agents/perceptual-reviewer.md (Tier 4 vision-LLM judge)
+- .claude/agents/walkthrough-reviewer.md (Tier 5 behavioral judge)
+
+Both files use model: sonnet (vision-capable). The Haiku 4.5 routing per phase3-step-023 (RESEARCH adopt) is layered via .claude/models.yaml override mechanism — agent file declares preferred model, model-config.ts override picks at dispatch time.
+
+Findings-only (not fixers); output schemas:
+- perceptual: docs/build-to-spec/perceptual/<screenId>.json
+- walkthrough: docs/build-to-spec/walkthrough/review.json
+
+Verdict: GO (code-in-place).

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ScreenFixture",
+  "description": "Screen-state seed payload consumed by the dev-only __seedFromUrl helper. Authored per project at docs/screens/webapp/fixtures/<screenId>.fixture.json — gitignored, regenerated each /build-to-spec-verify run. Source: feat-029.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "const": "1.0",
+      "description": "Schema version. v1 only; future bumps go through screen-fixtures.ts migration."
+    },
+    "screenId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Kebab-case mockup screen id (matches docs/screens/webapp/<id>.html + the [data-screen-id] attribute the page-root renders)."
+    },
+    "derivedFrom": {
+      "type": "string",
+      "enum": ["mockup-auto", "flow-context", "hand-authored"],
+      "description": "Where storeState came from. mockup-auto is regenerable; flow-context + hand-authored must NOT be overwritten by the auto-derive script."
+    },
+    "derivedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when the fixture was derived. Used by the seeder to flag stale fixtures (>30d old + mockup-auto = regenerate)."
+    },
+    "storeState": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Opaque to the schema — the app's own store-slice contract (Zustand / Jotai / Svelte rune state). Validated against @repo/types at the auto-derive script's level."
+    },
+    "routePath": {
+      "type": "string",
+      "default": "/",
+      "description": "Route the differ navigates to AFTER applying ?_seed=<screenId>. Most fixtures target home; sub-route screens override."
+    },
+    "preActions": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["click", "type", "press", "wait"]
+          },
+          "selector": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "timeoutMs": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": ["kind"]
+      },
+      "description": "Ordered click/type/press/wait list scripts/seed-app-state.mjs plays before the snapshot fires. Used by flow-context fixtures to drive transient state (modal-open, search-empty, settings-tab-selected)."
+    }
+  },
+  "required": [
+    "version",
+    "screenId",
+    "derivedFrom",
+    "derivedAt",
+    "storeState"
+  ]
+}

@@ -1,0 +1,49 @@
+// .markdownlint.jsonc — structural enforcement for brief.md and brief-template.md
+//
+// MD043 fixes the H2 heading list. Each brief must have exactly 20 numbered
+// sections in the exact order specified in blueprint §3. §7 Architecture
+// Overview and §10 Navigation Schema MUST contain a fenced code block
+// (enforced separately by scripts/validate-brief.mjs --codeblocks).
+//
+// Scoping: this config applies to ALL *.md files in the repo by default.
+// Because most docs (plans, contexts, scaffolding) do NOT follow the
+// 20-section structure, we constrain where MD043 runs. See the matching
+// .markdownlint-cli2.jsonc for the `globs` that restrict cli2 to brief files.
+//
+// To lint: `npx markdownlint-cli2 brief.md brief-template.md`
+{
+  "default": true,
+
+  // Disable rules that fight legitimate markdown in briefs.
+  "MD013": false, // line length — briefs have long sentences
+  "MD033": false, // inline HTML — we use <!-- guidance --> comments
+  "MD041": false, // first line must be H1 — our files start with frontmatter or comments
+
+  // The structural enforcement.
+  "MD043": {
+    "headings": [
+      "# Project Brief",
+      "## 1. Vision & Principles",
+      "## 2. Visual Design Requirements",
+      "## 3. Problem Statement",
+      "## 4. Core Entities",
+      "## 5. Key Distinctions",
+      "## 6. User Personas",
+      "## 7. Architecture Overview",
+      "## 8. Infrastructure Architecture",
+      "## 9. Backend Module Architecture",
+      "## 10. Navigation Schema",
+      "## 11. Screen Catalog",
+      "## 12. Key Features Summary",
+      "## 13. Security",
+      "## 14. Regulatory Notes",
+      "## 15. Success Metrics",
+      "## 16. Development Workflow",
+      "## 17. Testing Strategy",
+      "## 18. Deployment Pipeline",
+      "## 19. Milestones & Timeline",
+      "## 20. Appendix",
+    ],
+    "match_case": true,
+  },
+}

@@ -1,0 +1,209 @@
+# =============================================================================
+# architecture.yaml.template — reference for /architect output
+#
+# This template is copied + filled by the architect agent. Every field below
+# shows the shape; architect replaces placeholder values with decisions
+# rooted in the analyst's integrations-options.md menu + brief signals +
+# competitor stacks.
+#
+# Validation: schemas/architecture.schema.json (strict on tooling.stack,
+# loose elsewhere so consumer-specific fields can extend safely).
+#
+# This file is NEVER edited by hand. On re-runs, architect overwrites
+# .claude/architecture.yaml and emits docs/credentials-diff.md from the
+# delta.
+# =============================================================================
+
+meta:
+  projectName: "{PROJECT_NAME}"
+  generatedAt: "2026-04-22T00:00:00Z" # ISO-8601 — architect replaces with actual run timestamp
+  generatedBy: "/architect (refactor-003)"
+  priorArchitectureSha: null # filled on re-runs: sha256 of the just-superseded file
+  ciProvider: "github-actions" # github-actions | gitlab-ci | circleci — drives .github/workflows/ci.yml emission
+  signoff:
+    file: "docs/signoff-{TIMESTAMP}.json"
+    uiKitVersion: "1.0.0" # mirrored from signoff
+    screensManifestHash: "{sha256 hex}"
+    visualReviewReportHash: "{sha256 hex}"
+
+apps:
+  # Each key is an app directory under apps/*. Not every project has all
+  # four — architect only emits apps the project actually needs per
+  # docs/brief-summary.json.detectedPlatforms + api inference.
+  web:
+    platformId: webapp
+    framework: next # FREE-TEXT mirror of tooling.stack.web_framework for human readability
+    frameworkVersion: "15.x"
+    routing: app-router
+    state: zustand
+    auth: thirdweb-embedded-wallets # mirrored from integrations.auth vendor pick
+    integrations:
+      auth:
+        deployment: vendor # vendor | self-hosted | declined
+        vendor: thirdweb
+        signupUrl: https://thirdweb.com
+        pricingTier: "Free up to 10k MAU; Growth $99/mo"
+        credentialsRequired:
+          - name: THIRDWEB_CLIENT_ID
+            format: "UUID"
+          - name: THIRDWEB_SECRET_KEY
+            format: "opaque"
+        requiredBy: ["build-backend", "build-web"]
+        requiredNow: true
+        freeTierNotes: "Forever-free up to 10k MAU"
+        lockInRisk: medium
+        decisionRationale: "Brief §7.3 explicitly names ThirdWeb embedded wallets"
+
+      payments:
+        deployment: vendor
+        vendor: stripe
+        signupUrl: https://dashboard.stripe.com/register
+        pricingTier: "2.9% + .29/txn; Connect adds 0.25%/txn"
+        credentialsRequired:
+          - name: STRIPE_PUBLISHABLE_KEY
+          - name: STRIPE_SECRET_KEY
+          - name: STRIPE_WEBHOOK_SECRET
+        requiredBy: ["build-backend"]
+        requiredNow: true
+        decisionRationale: "Analyst integrations-options.md flagged Stripe as market standard for §12 payment flows"
+
+      analytics:
+        deployment: declined
+        declinedRationale: "Brief §12 mentions ML rec/fraud/churn but v1 ships without product analytics; reconsider Release 3. No .env row, no checklist entry."
+
+  mobile:
+    platformId: mobile
+    framework: expo
+    frameworkVersion: "53.x"
+    # (same integrations shape as web)
+
+  api:
+    # api is a build target, not a design platform — no platformId
+    framework: nestjs
+    frameworkVersion: "11.x"
+    orm: drizzle
+    database: postgres-16
+    integrations:
+      database:
+        deployment: self-hosted
+        configTemplate: docs/config/postgres.toml.template
+        deploymentChecklist: docs/deployment-checklist.md#postgres
+        credentialsRequired: []
+        requiredBy: ["build-backend", "deploy"]
+        operationalNotes: "16.4; one primary + one replica per brief §7.3"
+
+      email-transactional:
+        deployment: vendor
+        vendor: resend
+        signupUrl: https://resend.com
+        credentialsRequired:
+          - name: RESEND_API_KEY
+        requiredBy: ["build-backend"]
+        requiredNow: true
+        decisionRationale: "Simplest API for §12 transactional flows; lowest lock-in vs SendGrid"
+
+  admin:
+    platformId: admin
+    framework: next
+    # (same integrations shape)
+
+packages:
+  ui-kit:
+    version: "1.0.0" # mirrored from signoff.uiKitVersion
+    source: packages/ui-kit/
+  types: { source: packages/types/ }
+  utils: { source: packages/utils/ }
+  api-client: { source: packages/api-client/ }
+  orchestrator-contracts: { source: packages/orchestrator-contracts/ }
+
+tooling:
+  # Authoritative stack choice — lives in this subtree. Each non-null slot
+  # resolves to .claude/skills/agents/{tier}/{stack-slug}/SKILL.md.
+  # Schema: architecture.schema.json#/definitions/stack (additionalProperties: false).
+  stack:
+    web_framework: react-next
+    web_styling: tailwind
+    mobile_framework: expo-rn
+    backend_language: node
+    backend_framework: node-trpc-nest
+    orm: prisma
+    database: postgres
+
+  # Mirrored from docs/selected-style.json — NOT decided here.
+  icon_library: lucide
+  design_dials:
+    design_variance: 4
+    motion_intensity: 3
+    visual_density: 5
+
+  mcp_servers:
+    # Design-stage servers pre-registered by /new-project (playwright,
+    # icons8, unsplash, chrome-devtools, optionally image-generator).
+    # Architect appends build-stage entries here if the picked vendors
+    # require them — usually zero, since most vendor SDKs are NPM
+    # packages, not MCP servers.
+    - name: playwright
+      scoped_to: [ui-designer, html-verifier]
+
+  skills:
+    design:
+      - nativewind-expo # derived from stack.mobile_framework=expo-rn + stack.web_styling=tailwind
+      - storybook-tailwind
+      - cva
+    build:
+      # Derived from apps.*.integrations vendor picks — each vendor gets
+      # one skill entry so /skills-audit --scope=build can source the
+      # right prompt pack
+      - stripe-connect
+      - thirdweb-embedded-wallets
+      - resend-transactional
+
+  budget:
+    total_mcp_cost_usd: 25
+    total_image_gen_calls: 100 # enforced only when --flags=nanobanana
+
+assets:
+  provenance:
+    logos: user # user | hybrid | researched | generated
+    icons: hybrid # user + lucide gap-fill
+    fonts: research
+    images: stock # Unsplash by default; "generated" when --flags=nanobanana
+
+compliance:
+  gdpr: true # mirrored from brief.md §14 / analyst compliance flags
+  coppa_under_13: excluded
+  kyc_aml: stripe-identity # if brief §14 flagged
+  privacy_manifest:
+    data_collected: ["email", "name", "payment_token"]
+    third_party_ai: [] # Apple 5.1.2(i) — list AI providers the app calls
+    age_rating: "17+"
+  required_assets:
+    - privacy_policy_url
+    - terms_url
+    - support_url
+
+# Architect's justification for each tooling.stack slot. One entry per
+# non-null slot. Downstream agents (PM, builders, tester) read this to
+# understand WHY a stack was chosen. Brief-hinted picks record the
+# quote; factory-default picks record "no signal".
+stackRationale:
+  - slot: web_framework
+    pick: react-next
+    reason: "Factory default; brief §7 did not name a web framework and competitor stacks are split roughly evenly between Next.js and Remix"
+    briefSignal: null
+    rejected: [svelte-kit, remix]
+  - slot: mobile_framework
+    pick: expo-rn
+    reason: "Brief §7.3 explicitly names Expo for mobile tier"
+    briefSignal: "brief.md §7.3: '...built with Expo managed workflow for faster iteration'"
+    rejected: [flutter, bare-rn]
+  - slot: backend_framework
+    pick: node-trpc-nest
+    reason: "Factory default; typed tRPC contract matches the web + mobile clients already on TS"
+    briefSignal: null
+    rejected: [python-fastapi, node-fastify]
+  - slot: orm
+    pick: prisma
+    reason: "Factory default; integrates with postgres-16 and the NestJS + tRPC stack cleanly"
+    briefSignal: null
+    rejected: [drizzle, sqlalchemy]

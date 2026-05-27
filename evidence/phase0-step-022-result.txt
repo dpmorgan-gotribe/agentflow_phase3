@@ -1,0 +1,21 @@
+phase0-step-022 — orchestrator/src/invoke-agent.ts (bug-134 RESOLVED)
+Date: 2026-05-27
+
+Action:
+- Cp invoke-agent.ts (3534 lines) from Phase 2
+- EXCLUDED invoke-agent.ts.bug-134-final companion file (in-flight backup)
+- Diff probe (head -50): canonical version has resolveAuditBaseRef import; .bug-134-final has readModelConfig import — picked canonical (more complete) per row description
+
+Verification:
+- File present at orchestrator/src/invoke-agent.ts
+- .bug-134-final NOT present in Phase 3 tree
+- Tests: invoke-agent.test.ts + invoke-agent-liveness.test.ts pass in suite
+
+Coverage:
+- SDK dispatch wrapper
+- Bug-fix context injection (via bug-fix-context.ts — Phase 3 row 008 stubs interface)
+- Output validation against schemas (via @repo/orchestrator-contracts)
+- Tester-diff audit guard (via tester-diff-audit.ts — Phase 3 row 009)
+- Worktree seed/commit/install orchestration
+
+Verdict: GO. bug-134 ambiguity resolved by canonical-version selection.

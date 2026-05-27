@@ -1,0 +1,7 @@
+# feat-038 Phase 5 — fixtures are read-only inputs. The synthesizer's
+# emitted output lands at <fixture>/apps/web/e2e/synthesized/ when the
+# script is invoked directly against the fixture (e.g. operator
+# inspecting the raw output for debugging). Tests run the synthesizer
+# in a temp copy so this dir doesn't grow during CI; this gitignore
+# keeps any local-only operator runs out of commits.
+**/apps/

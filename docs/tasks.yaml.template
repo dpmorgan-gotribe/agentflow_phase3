@@ -1,0 +1,125 @@
+# =============================================================================
+# tasks.yaml.template — reference for /pm --mode=tasks output
+#
+# The PM skill copies this shape + fills in real content. Schema:
+# schemas/tasks.schema.json + schemas/feature.schema.json. Validated via
+# scripts/validate-tasks-yaml.mjs at write time and by the orchestrator
+# via TasksV2Schema (@repo/orchestrator-contracts) at Mode B load time.
+#
+# This file is NEVER edited by hand. On re-runs, PM regenerates it; tasks.yaml
+# is an output, not a human-authored doc.
+# =============================================================================
+
+version: "2.0"
+generated_at: "2026-04-23T00:00:00Z" # ISO-8601 — PM replaces with actual run timestamp
+project_name: "{project-name}"
+architecture_ref: .claude/architecture.yaml
+ui_kit_version: "1.0.0" # mirrored from packages/ui-kit/package.json at PM run time
+
+features:
+  # Example 1: multi-surface feature (backend + web + mobile + test + review)
+  - id: feat-password-reset
+    worktree: feat-password-reset
+    branch: feat/password-reset
+    priority: P1
+    depends_on: []
+    skip: [] # [] = touches all surfaces; [mobile] would skip mobile-frontend-builder
+    agent_sequence:
+      - backend-builder
+      - web-frontend-builder
+      - mobile-frontend-builder
+      - tester
+      - reviewer
+    summary: "Email-based password reset with magic-link verification"
+    brief_reference: "brief.md §12 auth + docs/analysis/webapp/flows.md#flow-4"
+    tasks:
+      - id: api-password-reset-endpoint
+        agent: backend-builder
+        depends_on: []
+        skills: [stack-backend-default, bcrypt, nodemailer]
+        priority: P1
+        integration_ref: architecture.yaml#apps.api.integrations.email-transactional
+        status: pending
+        summary: "POST /auth/reset — email magic-link"
+
+      - id: web-password-reset-form
+        agent: web-frontend-builder
+        depends_on: [api-password-reset-endpoint]
+        skills: [stack-web-default, react-hook-form]
+        priority: P1
+        estimated_screens: 2
+        status: pending
+
+      - id: mobile-password-reset-screen
+        agent: mobile-frontend-builder
+        depends_on: [api-password-reset-endpoint]
+        skills: [stack-mobile-default]
+        priority: P1
+        estimated_screens: 2
+        status: pending
+
+      - id: test-password-reset
+        agent: tester
+        depends_on: [web-password-reset-form, mobile-password-reset-screen]
+        priority: P1
+        status: pending
+        summary: "Unit + integration + E2E coverage for reset flow"
+
+      - id: review-password-reset
+        agent: reviewer
+        depends_on: [test-password-reset]
+        priority: P1
+        status: pending
+
+  # Example 2: backend-only feature (skips web + mobile)
+  - id: feat-stripe-checkout
+    worktree: feat-stripe-checkout
+    branch: feat/stripe-checkout
+    priority: P0
+    depends_on: [feat-password-reset]
+    skip: [mobile] # web + backend only; IAP on mobile is a separate feature
+    agent_sequence:
+      - backend-builder
+      - web-frontend-builder
+      - tester
+      - reviewer
+    summary: "Stripe checkout + webhook handling for paid tier"
+    brief_reference: "brief.md §11 billing + architecture.yaml#apps.api.integrations.payments"
+    tasks:
+      - id: backend-stripe-checkout
+        agent: backend-builder
+        skills: [stripe-connect]
+        priority: P0
+        integration_ref: architecture.yaml#apps.api.integrations.payments
+        status: pending
+
+      - id: web-stripe-checkout-form
+        agent: web-frontend-builder
+        depends_on: [backend-stripe-checkout]
+        skills: [stripe-elements-react]
+        priority: P0
+        estimated_screens: 3
+        status: pending
+
+      - id: test-stripe-flow
+        agent: tester
+        depends_on: [web-stripe-checkout-form]
+        priority: P0
+        status: pending
+
+summary_counts:
+  total_features: 2
+  total_tasks: 8
+  by_agent:
+    backend-builder: 2
+    web-frontend-builder: 2
+    mobile-frontend-builder: 1
+    tester: 2
+    reviewer: 1
+  by_priority:
+    P0: 3
+    P1: 5
+    P2: 0
+    P3: 0
+
+warnings: []

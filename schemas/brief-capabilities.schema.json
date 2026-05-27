@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow/schemas/brief-capabilities.schema.json",
+  "title": "brief-capabilities.json — authoritative catalog of brief §11/§12 capabilities",
+  "description": "Emitted by /analyze alongside requirements.md. Every capability the brief promises has an entry here; PM consumes this list to produce tasks-coverage.json. Authoritative spec: plans/active/feat-023-pm-stage-brief-coverage-assertion.md. Zod mirror: packages/orchestrator-contracts/src/brief-coverage.ts.",
+  "type": "object",
+  "required": ["version", "capabilities"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "source", "summary", "category"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^cap-[0-9]+(\\.[0-9]+)?-[a-z][a-z0-9-]*$",
+            "description": "cap-{section}-{kebab-slug}; section may be a decimal like 11.4."
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Citation back to brief.md, e.g. 'brief.md#12' or 'brief.md#11.4'."
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": ["core", "optional", "stretch"]
+          }
+        }
+      }
+    }
+  }
+}

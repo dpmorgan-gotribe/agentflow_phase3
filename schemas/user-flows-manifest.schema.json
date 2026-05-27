@@ -1,0 +1,522 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schemaVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+    },
+    "projectName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "platforms": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "uiKitVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "screensManifestHash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visualReviewReportHash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "flows": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "platform": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string"
+          },
+          "primaryPersona": {
+            "type": "string"
+          },
+          "steps": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "screenId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "platform": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "file": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "needs-human-review",
+                    "not-reviewed"
+                  ]
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "screenId",
+                "platform",
+                "file",
+                "status",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "screenIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "interactions": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "navigate"
+                    },
+                    "to": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "to"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "fill"
+                    },
+                    "selector": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "selector",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "click"
+                    },
+                    "selector": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "selector"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "select"
+                    },
+                    "selector": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "option": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "selector",
+                    "option"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "waitForResponse"
+                    },
+                    "urlPattern": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "status": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "urlPattern"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "waitForSelector"
+                    },
+                    "selector": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "timeout": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "selector"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "assertVisible"
+                    },
+                    "selector": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "selector"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "assertText"
+                    },
+                    "selector": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "selector",
+                    "text"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "assertUrlMatches"
+                    },
+                    "pattern": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "pattern"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "screenshot"
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "mock"
+                    },
+                    "urlPattern": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "status": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 599
+                    },
+                    "body": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        }
+                      ]
+                    },
+                    "contentType": {
+                      "type": "string"
+                    },
+                    "method": {
+                      "type": "string",
+                      "enum": [
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "PATCH",
+                        "DELETE"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "urlPattern",
+                    "status",
+                    "body"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "seedingTier": {
+            "type": "string",
+            "enum": [
+              "read-only",
+              "mutation"
+            ]
+          },
+          "requiredState": {
+            "description": "feat-050 — per-flow required DB state. Closes the seed-mismatch class where a flow expects state contradicting the project baseline. Strategy C (real-db) only.",
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": { "type": "string", "const": "baseline" }
+                },
+                "required": ["kind"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": { "type": "string", "const": "empty" },
+                  "tablesToCleanup": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 },
+                    "minItems": 1
+                  }
+                },
+                "required": ["kind", "tablesToCleanup"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": { "type": "string", "const": "custom" },
+                  "tablesToCleanup": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 },
+                    "minItems": 1
+                  },
+                  "fixtures": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  }
+                },
+                "required": ["kind", "tablesToCleanup", "fixtures"],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "steps"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "personas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "primaryGoal": {
+            "type": "string",
+            "minLength": 1
+          },
+          "flowIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "primaryGoal",
+          "flowIds"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "screensCounts": {
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "pass": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "fail": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "needs-human-review": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "needsHumanReview": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "generatedAt",
+    "projectName",
+    "platforms",
+    "uiKitVersion",
+    "screensManifestHash",
+    "visualReviewReportHash",
+    "flows"
+  ],
+  "additionalProperties": false
+}

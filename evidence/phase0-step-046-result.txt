@@ -1,0 +1,17 @@
+phase0-step-046 — 7 analyzer subscope skills
+Date: 2026-05-27
+
+Action: bulk-cp .claude/skills/analyze/*.md from Phase 2.
+
+Files present:
+- research.md (competitive research subscope)
+- styles.md (N design options per dials)
+- assets.md (fonts/icons/colors recommendation)
+- inspirations.md (mood board + reference designs)
+- flows.md (per-platform user-flow extraction)
+- screens.md (per-platform screen inventory)
+- integrations.md (vendor integration research)
+
+Each subscope is callable by analyst agent during /analyze fan-out (Phase 1 stage).
+
+Verdict: GO.

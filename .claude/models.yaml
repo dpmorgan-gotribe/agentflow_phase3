@@ -1,0 +1,86 @@
+# .claude/models.yaml — Project-level override.
+#
+# This file extends ~/.claude/models.yaml. Keys set here win; keys omitted
+# fall through to the system config. The orchestrator merges both at the
+# start of every pipeline run (see task 035).
+#
+# Typical uses:
+#   - Pin an agent to a higher tier when the project is unusually complex
+#     (e.g., bump backend-builder to planning for a heavy-auth project)
+#   - Downgrade an agent to mechanical when the work is repetitive
+#     (e.g., ui-designer for a CRUD-only app)
+#   - Raise the per-pipeline budget for a large project
+#
+# Leave sections empty to inherit system defaults verbatim.
+
+extends: ~/.claude/models.yaml
+
+# Per-agent overrides go here. Example:
+#   agents:
+#     backend-builder: { tier: planning, effort: max }
+#     ui-designer:     { tier: mechanical, effort: medium }
+agents:
+  # feat-065 (2026-05-08) — bug-fixer is a NEW factory agent (feat-064)
+  # that doesn't exist in `~/.claude/models.yaml` system defaults yet.
+  # Pin it here so factory dispatches resolve a model. tier:building +
+  # effort:medium reflects "narrow-scope patch with pre-loaded context"
+  # — bug-fixer doesn't need exploration depth (the orchestrator's
+  # buildBugContextEnvelope already supplied it). See investigate-024 §F8.
+  # NOTE: when ~/.claude/models.yaml gains bug-fixer system-wide, this
+  # entry can be removed (factory will inherit).
+  bug-fixer: { tier: building, effort: medium }
+  # feat-070 (2026-05-11) — systemic-fixer is the cross-file variant of
+  # bug-fixer for SYSTEMIC bug classes (tooling-css-pipeline-broken,
+  # tooling-config-mismatch, tooling-test-seed-contract-broken,
+  # systemic-divergence, pixel-systemic-divergence, clustered-systemic-
+  # divergence). Same tier/effort as bug-fixer per investigate-024
+  # evidence that Sonnet handles these tasks without Opus's 5× premium;
+  # exploration budget comes from agent frontmatter (maxTurns: 12) and
+  # the 18-min stall cap in model-config.ts:DEFAULT_STALL_TIMEOUT_BY_AGENT.
+  systemic-fixer: { tier: building, effort: medium }
+  # feat-068 (2026-05-12) — perceptual-reviewer is the Tier 4 vision-LLM
+  # agent. Per-screen mockup-vs-live comparison, structured-output JSON.
+  # tier:building resolves to Sonnet (vision-capable, ~5× cheaper than
+  # Opus on tier:planning); the task is pattern-recognition over images,
+  # not deep reasoning. effort:medium gives enough budget for image
+  # inputs + parity-context preload. ~$0.005-0.01 per screen.
+  # Also pinned in FACTORY_DEFAULT_AGENT_TIERS so project-level YAMLs
+  # don't need to repeat this (matches bug-fixer / systemic-fixer pattern).
+  perceptual-reviewer: { tier: building, effort: medium }
+  # feat-069 (2026-05-13) — walkthrough-reviewer is the Tier 5 AI walkthrough
+  # behavioral agent. ONE invocation per fix-loop iteration; reads the
+  # Playwright walkthrough's evidence bundle (screenshots + network log +
+  # console log) and emits behavioral findings. tier:building (Sonnet)
+  # for same vision + cross-step reasoning reasons as perceptual.
+  # effort:medium with maxTurns:4 frontmatter gives the agent room for
+  # the larger evidence bundle (~24 screenshots vs perceptual's 2) without
+  # wandering. Projected ~$0.05-0.10 per walkthrough.
+  walkthrough-reviewer: { tier: building, effort: medium }
+
+# Budget overrides. Leave empty to inherit.
+# budget:
+#   perPipelineMaxUsd: 250.00
+budget: {}
+
+# feat-024 Phase B — per-agent stall-timeout (ms). The orchestrator wraps
+# every runLlmAgent call with an AbortController + a SDKKeepAliveMessage
+# gap watcher. When a stall fires, the abort surfaces as
+# `error_stall_timeout` and the feature is failed (lenient mode) or the
+# run is paused (strict mode — see stallTimeoutMode below).
+#
+# Built-in defaults (edit per project to override):
+#   backend-builder, web-frontend-builder, mobile-frontend-builder: 25 * 60 * 1000 (25 min)
+#   tester:                                                          20 * 60 * 1000 (20 min)
+#   reviewer, security:                                              10 * 60 * 1000 (10 min)
+#   git-agent:                                                        null (never abort)
+#
+# Set explicit `null` to disable the timer entirely; an integer (ms) wins.
+# Per-agent map overrides built-ins; per-agent `agents.<name>.stallTimeoutMs`
+# overrides the map.
+# stallTimeoutMs:
+#   tester: 1800000           # 30 min override for slow test suites
+
+# feat-024 Phase C — what to do when stallTimeoutMs fires:
+#   "lenient" (default) — mark the feature as failed, continue the run
+#   "strict"            — pause the entire orchestrator (writes paused.json)
+# stallTimeoutMode: lenient

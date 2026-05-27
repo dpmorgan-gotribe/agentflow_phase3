@@ -1,0 +1,13 @@
+phase0-step-045 — 8 vendor stack-skill stubs + 1 _template
+Date: 2026-05-27
+
+Action: bulk-cp .claude/skills/agents/vendor/* from Phase 2.
+
+Files present (8 vendor stubs):
+- calcom-embed, mux-player-react, next-sanity, plausible-analytics, react-email, resend-transactional, sanity-studio, turnstile-widget
+
+Plus _template/ pack for cloning when adding a new vendor.
+
+All vendor packs are intentionally minimal stubs (Phase 2 + Phase 3 scope choice; vendor APIs evolve and are best implemented per-need with current docs).
+
+Verdict: GO. Stub scope preserved verbatim.

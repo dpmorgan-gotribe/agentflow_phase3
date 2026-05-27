@@ -1,0 +1,54 @@
+{
+  "_comment": "Factory-level design-stage MCP default server list. Copied into new projects by /new-project step 5b (refactor-003). Registered via /register-mcp-servers --scope=design. Fixed list — not an architect decision. Servers with feature_flag are gated by the pipeline flag set (--flags=nanobanana).",
+  "mcp_servers": [
+    {
+      "name": "playwright",
+      "purpose": "Multi-viewport screenshots for /visual-review",
+      "scoped_to": ["ui-designer", "html-verifier"],
+      "config": {
+        "command": "npx",
+        "args": ["@playwright/mcp@0.0.74"]
+      }
+    },
+    {
+      "name": "icons8",
+      "purpose": "Icon search and download for UI Kit gap-fill",
+      "scoped_to": ["ui-designer"],
+      "config": {
+        "url": "https://mcp.icons8.com/mcp/",
+        "transport": "sse"
+      }
+    },
+    {
+      "name": "unsplash",
+      "purpose": "Stock photos for UI screens (hero, placeholders)",
+      "scoped_to": ["ui-designer", "web-frontend-builder"],
+      "config": {
+        "command": "npx",
+        "args": ["@drumnation/unsplash-smart-mcp-server"],
+        "env_refs": ["UNSPLASH_ACCESS_KEY"]
+      }
+    },
+    {
+      "name": "chrome-devtools",
+      "purpose": "Lighthouse / a11y / CSS inspection during /visual-review",
+      "scoped_to": ["ui-designer"],
+      "config": {
+        "command": "npx",
+        "args": ["chrome-devtools-mcp@latest"]
+      }
+    },
+    {
+      "name": "image-generator",
+      "purpose": "Hero images, onboarding/empty-state illustrations, logos (Gemini 2.5/3.x Flash Image)",
+      "scoped_to": ["ui-designer"],
+      "feature_flag": "nanobanana",
+      "budget": { "max_calls": 50, "max_cost_usd": 10 },
+      "config": {
+        "command": "npx",
+        "args": ["@google/generative-ai-mcp"],
+        "env_refs": ["GOOGLE_API_KEY"]
+      }
+    }
+  ]
+}

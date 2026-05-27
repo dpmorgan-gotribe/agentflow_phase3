@@ -1,0 +1,16 @@
+phase0-step-051 — factory-root scaffolds
+Date: 2026-05-27
+
+Action: bulk-cp from Phase 2:
+- brief-template.md (20-section canonical template with frontmatter)
+- mcp-defaults-design.json (design-scope MCP list: playwright, icons8, unsplash, chrome-devtools, image-generator + scoped_to per agent)
+- tsconfig.base.json (factory root TS config)
+- pnpm-workspace.yaml (factory monorepo workspace config)
+- package.json (factory root package.json — name updated to "agentflow-phase3", description updated)
+
+Verification:
+- pnpm install succeeded against this workspace (312 packages resolved)
+- /new-project (phase0-step-026) clone target brief.md template is ready
+- /register-mcp-servers (phase1-step-022) source MCP list ready
+
+Verdict: GO.

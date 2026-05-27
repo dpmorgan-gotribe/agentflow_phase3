@@ -1,0 +1,25 @@
+phase0-step-026 — .claude/skills/new-project/SKILL.md
+Date: 2026-05-27
+
+Action: bulk-cp .claude/skills/new-project/SKILL.md (550 lines) from Phase 2.
+
+Verification:
+- Skill file present at .claude/skills/new-project/SKILL.md
+- Frontmatter parses (name, description, when_to_use, argument-hint, allowed-tools)
+- All factory resources skill depends on are present:
+  - .claude/{agents,skills,hooks,rules,templates}/ ✅
+  - brief-template.md ✅
+  - schemas/ ✅
+  - docs/agentic-visibility.md (referenced by --agentic-visibility flag) ✅
+  - mcp-defaults-design.json (consumed by clone helper) ✅
+
+Coverage (from ported skill body):
+- Args: <name> [--force] [--reset-brief] [--agentic-visibility=public|private|split] [--proposal "<text>" | --proposal-file <path> | --proposal-url <url>]
+- 3 visibility modes (public, private, split) with gitignore behavior matrix
+- --proposal* mutual exclusion; auto-invokes /draft-brief after scaffold
+- Reserved-name list, regex validation, pre-flight checks
+- --force preserves user content; --reset-brief required to overwrite brief.md
+
+Smoke-test deferred to phase0-step-027 (HUMAN gate).
+
+Verdict: GO (code-in-place). Functional verification at HUMAN gate.

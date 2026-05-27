@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow/schemas/architecture.schema.json",
+  "title": "architecture.yaml — architecture-as-code produced by /architect (refactor-003 + feat-002)",
+  "description": "Written by the architect agent (task 020) post-design-signoff, consumed by PM (task 021), skills-audit --scope=build (task 038), and all builders (028/029/030). Refactor-002/003 fixed the ordering; feat-002 (stack-skill-shelf) introduced `tooling.stack` as the stack-dispatch slot: per-tier stack-slug values that resolve to .claude/skills/agents/{tier}/{stack-slug}/SKILL.md. Builders use tooling.stack to load the right per-stack prompt pack at run time. `additionalProperties: false` only on the stack block (architecture.yaml itself allows consumer-specific fields; stack is locked).",
+  "type": "object",
+  "required": ["meta", "apps", "packages", "tooling"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["projectName", "generatedAt", "generatedBy"],
+      "properties": {
+        "projectName": { "type": "string" },
+        "generatedAt": { "type": "string", "format": "date-time" },
+        "generatedBy": { "type": "string" },
+        "priorArchitectureSha": { "type": ["string", "null"] },
+        "signoff": {
+          "type": "object",
+          "properties": {
+            "file": { "type": "string" },
+            "uiKitVersion": { "type": "string" },
+            "screensManifestHash": { "type": "string" },
+            "visualReviewReportHash": { "type": "string" }
+          }
+        }
+      }
+    },
+    "apps": {
+      "type": "object",
+      "description": "Per-app configuration. Keys are app names (web, mobile, api, admin, etc.). Each entry's `framework` field is a FREE-TEXT mirror of the corresponding tooling.stack slot (for human readability) — the authoritative stack choice lives in tooling.stack."
+    },
+    "packages": {
+      "type": "object",
+      "description": "Shared packages (ui-kit, types, utils, api-client, orchestrator-contracts)."
+    },
+    "tooling": {
+      "type": "object",
+      "required": ["stack"],
+      "properties": {
+        "stack": { "$ref": "#/definitions/stack" },
+        "icon_library": {
+          "type": "string",
+          "description": "Mirrored from docs/selected-style.json.iconLibrary — NOT decided here (refactor-003)."
+        },
+        "design_dials": {
+          "type": "object",
+          "description": "Mirrored from docs/selected-style.json.dials — NOT decided here."
+        },
+        "mcp_servers": {
+          "type": "array",
+          "description": "Design-stage servers pre-registered at /new-project time. Architect appends build-stage additions (usually zero — vendor SDKs are NPM, not MCP)."
+        },
+        "skills": {
+          "type": "object",
+          "properties": {
+            "design": { "type": "array", "items": { "type": "string" } },
+            "build": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "budget": {
+          "type": "object"
+        }
+      }
+    },
+    "assets": { "type": "object" },
+    "compliance": { "type": "object" },
+    "stackRationale": {
+      "type": "array",
+      "description": "Architect's justification for each stack pick (one entry per tooling.stack slot). Refactor-002/feat-002: surfaces the reasoning to the PM + builders so downstream agents understand WHY a stack was chosen. Human readable + audit trail.",
+      "items": {
+        "type": "object",
+        "required": ["slot", "pick", "reason"],
+        "properties": {
+          "slot": {
+            "type": "string",
+            "description": "Which tooling.stack field this rationale explains. Example: 'web_framework', 'backend_framework'."
+          },
+          "pick": {
+            "type": "string",
+            "description": "The stack-slug chosen for this slot (e.g. 'react-next', 'python-fastapi')."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Short prose justification. Should reference brief §7/§8 signals, competitor stacks from docs/analysis/shared/competitors.md, or integrations-options.md signals."
+          },
+          "briefSignal": {
+            "type": ["string", "null"],
+            "description": "Quote or reference into brief.md that influenced this pick, or null if architect-inferred."
+          },
+          "rejected": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Other stack-slugs the architect considered and rejected for this slot."
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "stack": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Stack slots. Each value is a stack-slug that matches a directory under .claude/skills/agents/{tier}/. null means 'no app of that tier' (e.g., mobile-less projects set mobile_framework: null).",
+      "properties": {
+        "web_framework": {
+          "type": ["string", "null"],
+          "enum": [
+            "react-next",
+            "svelte-kit",
+            "remix",
+            "astro",
+            "qwik",
+            "vue-nuxt",
+            "solid-start",
+            null
+          ],
+          "description": "Web app framework. null if the project has no web tier. Value resolves to .claude/skills/agents/front-end/{value}/SKILL.md. Initial shipped stacks: react-next, svelte-kit. Others are reserved for future stack-skill authoring via /skills-audit --scope=build."
+        },
+        "web_styling": {
+          "type": ["string", "null"],
+          "enum": [
+            "tailwind",
+            "vanilla-extract",
+            "css-modules",
+            "styled-components",
+            null
+          ],
+          "default": "tailwind",
+          "description": "Web styling approach. Tailwind is the factory default; other values trigger stack-skill alternate patterns."
+        },
+        "mobile_framework": {
+          "type": ["string", "null"],
+          "enum": [
+            "expo-rn",
+            "bare-rn",
+            "flutter",
+            "tauri-mobile",
+            "native-kotlin",
+            "native-swift",
+            null
+          ],
+          "description": "Mobile framework. null if no mobile tier. Initial shipped: expo-rn."
+        },
+        "backend_language": {
+          "type": ["string", "null"],
+          "enum": ["node", "python", "go", "rust", "ruby", "java", null],
+          "description": "Backend runtime language. Paired with backend_framework."
+        },
+        "backend_framework": {
+          "type": ["string", "null"],
+          "enum": [
+            "node-trpc-nest",
+            "node-trpc-only",
+            "node-express",
+            "node-fastify",
+            "python-fastapi",
+            "python-django",
+            "go-chi",
+            "go-echo",
+            "rust-axum",
+            "ruby-rails",
+            null
+          ],
+          "description": "Backend framework. null if no backend tier. Initial shipped: node-trpc-nest, python-fastapi."
+        },
+        "orm": {
+          "type": ["string", "null"],
+          "enum": [
+            "prisma",
+            "drizzle",
+            "sqlalchemy",
+            "sqlmodel",
+            "diesel",
+            "gorm",
+            "ent",
+            "activerecord",
+            null
+          ],
+          "description": "ORM / query builder. null if backend uses no ORM (raw SQL / NoSQL-only)."
+        },
+        "database": {
+          "type": ["string", "null"],
+          "enum": [
+            "postgres",
+            "mysql",
+            "sqlite",
+            "mongodb",
+            "dynamodb",
+            "cockroachdb",
+            "planetscale",
+            null
+          ],
+          "description": "Primary data store. Informational — drives Docker Compose + dev-setup generation more than builder prompt composition."
+        },
+        "persistence_layer": {
+          "type": ["string", "null"],
+          "enum": ["localStorage", "external-api-only", "real-db", null],
+          "description": "feat-038 Phase 2B — drives the E2E data-seeding strategy per `.claude/rules/testing-policy.md §E2E data-seeding strategy`. localStorage → Strategy A (per-test reseed via localStorage.clear). external-api-only → Strategy D (page.route() interception of upstream API). real-db → Strategy C (hybrid: globalSetup baseline + describe-block scoped /test/seed). null/absent: synthesizer infers from web_framework/backend_framework/database fields (database != null → real-db; database null + backend_framework non-null → external-api-only; both null → localStorage). Architects MUST set this explicitly when the project has a non-trivial persistence layer; the inference is a backstop for legacy manifests."
+        }
+      }
+    }
+  }
+}

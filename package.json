@@ -1,0 +1,26 @@
+{
+  "name": "agentflow-phase3",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agentflow Phase 3 factory rebuild on agentmark harness baseline. orchestrator/ runtime + packages/orchestrator-contracts/ shared types.",
+  "type": "module",
+  "scripts": {
+    "validate-brief": "node scripts/validate-brief.mjs --all",
+    "generate": "pnpm --filter orchestrator start generate",
+    "typecheck:all": "pnpm -r typecheck",
+    "test:all": "pnpm -r test"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "gray-matter": "^4.0.3",
+    "js-yaml": "^4.1.0",
+    "markdownlint-cli2": "^0.14.0",
+    "playwright": "^1.59.1",
+    "sharp": "^0.34.5",
+    "tsx": "^4.21.0",
+    "zod": "^4.3.6"
+  },
+  "packageManager": "pnpm@9.12.0"
+}

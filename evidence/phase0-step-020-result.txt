@@ -1,0 +1,15 @@
+phase0-step-020 — orchestrator/src/retry-counters.ts + state-persistence.ts
+Date: 2026-05-27
+
+Action: bulk-cp both modules (142 + 184 lines) from Phase 2.
+
+Verification:
+- Both files present at orchestrator/src/
+- Tests pass (retry-counters.test.ts + state-persistence.test.ts in suite)
+
+Coverage:
+- retry-counters: 5-tier budget table (layer5=3, visual-review=3, task-retry=2, merge-conflict=3, kit-change-request=2)
+- state-persistence: atomic write to .claude/state/{pipelineRunId}/counters.json
+- Snapshot/restore round-trip for crash recovery
+
+Verdict: GO.

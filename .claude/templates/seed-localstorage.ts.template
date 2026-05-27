@@ -1,0 +1,78 @@
+import type { Page } from "@playwright/test";
+
+/**
+ * Strategy A — per-test localStorage seeding.
+ *
+ * Source: `.claude/rules/testing-policy.md §E2E data-seeding strategy`.
+ *
+ * Use in `test.beforeEach` to start each test from a known state. The
+ * baseline pattern is `clearAndReload(page)` which wipes localStorage and
+ * reloads so Zustand-persist (or whichever store hydration runs at boot)
+ * starts fresh. Per-test cost ≈ 10ms (localStorage ops + page reload),
+ * which is why this strategy is the right answer for projects whose
+ * persistence layer is localStorage-only — paying the global-setup
+ * machinery cost would buy nothing.
+ *
+ * Empirical reference: `projects/kanban-webapp-09/apps/web/e2e/board.spec.ts`
+ * uses this exact pattern; the synthesizer's v2.0 path imports from this
+ * helper when the project's `architecture.yaml.tooling.stack.persistence_layer`
+ * is `"localStorage"` (or absent + database/backend null = inferred A).
+ */
+
+/**
+ * Clear all localStorage keys for the active origin and reload the page.
+ * Subsequent app boot starts from empty state — equivalent to a brand-new
+ * user opening the app for the first time.
+ */
+export async function clearAndReload(page: Page): Promise<void> {
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+}
+
+/**
+ * Seed one or more localStorage keys, then reload so the store hydration
+ * picks them up. Values are JSON-stringified before write — pass the
+ * canonical store-slice shape your app expects (Zustand persist envelope:
+ * `{ state: ..., version: 0 }`; raw object for ad-hoc keys).
+ *
+ * Example:
+ *
+ *   await seedLocalStorage(page, {
+ *     "kanban-store": {
+ *       state: { boards: [{ id: "b1", title: "Inbox" }] },
+ *       version: 0,
+ *     },
+ *   });
+ */
+export async function seedLocalStorage(
+  page: Page,
+  entries: Record<string, unknown>,
+): Promise<void> {
+  await page.evaluate((kv) => {
+    for (const [key, value] of Object.entries(kv)) {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    }
+  }, entries);
+  await page.reload();
+}
+
+/**
+ * Snapshot a single localStorage key for assertion purposes. Returns the
+ * parsed JSON value or `null` when the key is absent. Useful when a flow
+ * mutates store state and the test wants to assert on the persisted side
+ * effect (rather than the rendered UI).
+ */
+export async function readLocalStorage<T = unknown>(
+  page: Page,
+  key: string,
+): Promise<T | null> {
+  return page.evaluate((k) => {
+    const raw = window.localStorage.getItem(k);
+    if (raw === null) return null;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return raw as unknown as T;
+    }
+  }, key);
+}

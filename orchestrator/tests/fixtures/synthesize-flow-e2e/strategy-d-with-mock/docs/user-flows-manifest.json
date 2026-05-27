@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "schemaVersion": "2.0",
+  "generatedAt": "2026-04-30T00:00:00.000Z",
+  "projectName": "fixture-strategy-d-with-mock",
+  "platforms": ["webapp"],
+  "uiKitVersion": "1.0.0",
+  "screensManifestHash": "sha256:fixture-d-mock-screens",
+  "visualReviewReportHash": "sha256:fixture-d-mock-vr",
+  "flows": [
+    {
+      "id": "flow-1",
+      "platform": "webapp",
+      "name": "Hit a rate limit and recover",
+      "description": "Flow exercises a synthetic 429 state via page.route() interception. Verifies feat-039 mock-kind translation.",
+      "primaryPersona": "sam-curious",
+      "steps": [
+        {
+          "screenId": "report-rate-limited",
+          "platform": "webapp",
+          "file": "docs/screens/webapp/report-rate-limited.html",
+          "status": "pass",
+          "title": "Report Rate Limited"
+        }
+      ],
+      "interactions": [
+        {
+          "kind": "mock",
+          "urlPattern": "/api/report/",
+          "method": "GET",
+          "status": 429,
+          "contentType": "application/json",
+          "body": { "error": "rate_limited", "retryAfter": 60 }
+        },
+        { "kind": "navigate", "to": "/" },
+        {
+          "kind": "fill",
+          "selector": "input[name=\"url\"]",
+          "value": "facebook/react"
+        },
+        {
+          "kind": "click",
+          "selector": "button[type=\"submit\"]"
+        },
+        {
+          "kind": "assertVisible",
+          "selector": "[data-screen-id=\"report-rate-limited\"]"
+        }
+      ],
+      "seedingTier": "read-only"
+    }
+  ]
+}

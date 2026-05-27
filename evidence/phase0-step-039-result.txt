@@ -1,0 +1,14 @@
+phase0-step-039 — bug-fixer + systemic-fixer subagents
+Date: 2026-05-27
+
+Action: bulk-cp 2 .md files from Phase 2.
+
+Files:
+- .claude/agents/bug-fixer.md (narrow-diff)
+- .claude/agents/systemic-fixer.md (cross-file root-cause)
+
+Per-agent tool-surface asymmetry preserved from Phase 2 frontmatter declarations.
+
+Both reference protected-files-policy.md (phase0-step-025 ✅) in body prompts.
+
+Verdict: GO (code-in-place).

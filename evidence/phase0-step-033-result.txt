@@ -1,0 +1,13 @@
+phase0-step-033 — HTML/Docker/dev-server/E2E templates batch
+Date: 2026-05-27
+
+Action: bulk-cp .claude/templates/* from Phase 2.
+
+Files present (19 entries total in .claude/templates/):
+- mockups-index-template.html, user-flows-template.html, worktrees-README.md
+- 4 Dockerfile templates: node-express, node-fastify, node-trpc-nest, python-fastapi (node-express has template-only support; no corresponding stack skill — operator customization path)
+- 4 dev-multi-tier templates: same 4 stacks
+- 4 E2E seed templates: playwright-global-setup, seed-intercept (page.route), seed-localstorage, seed-db (/test/seed contract)
+- ui-kit-* (covered separately by phase0-step-032)
+
+Verdict: GO. Smoke-tests deferred (Dockerfile build / dev-server boot would require sample-project context).

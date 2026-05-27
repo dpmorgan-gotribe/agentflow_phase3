@@ -1,0 +1,15 @@
+phase0-step-017 — orchestrator/src/auth-provider.ts
+Date: 2026-05-27
+
+Action: bulk-cp from agentflow_phase2/orchestrator/src/auth-provider.ts (102 lines).
+
+Verification:
+- File present at orchestrator/src/auth-provider.ts
+- Tests: orchestrator/tests/auth-provider.test.ts passes (part of full 1182/1182 test suite)
+- `pnpm install` resolves @anthropic-ai/claude-agent-sdk types correctly
+
+Coverage:
+- resolveAuthOptions() resolves 4 providers (anthropic-api-key, claude-max-subscription, bedrock, vertex) into SDK options
+- Pure resolver — mutates env COPY, never process.env
+
+Verdict: GO. Verbatim port; downstream invoke-agent + cli-runner consume cleanly.

@@ -1,0 +1,12 @@
+phase0-step-032 — ui-kit templates
+Date: 2026-05-27
+
+Action: bulk-cp .claude/templates/ui-kit-* from Phase 2.
+
+Files present:
+- ui-kit-contract.md (6 consumption rules + escapes + enforcement)
+- ui-kit-eslint-plugin/ (4 rule files: no-arbitrary-tailwind, no-deep-imports, no-hex-in-className, no-inline-style-tokens)
+- ui-kit-tsconfig-consumer.json (barrel-only path alias)
+- ui-kit-validate-consumer.ts (consumer validator)
+
+Verdict: GO. Templates ready for /stylesheet (Phase 1) to scaffold packages/ui-kit/.

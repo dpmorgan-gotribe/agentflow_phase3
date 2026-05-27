@@ -1,0 +1,22 @@
+phase0-step-060 — orchestrator workspace + 46-file test suite
+Date: 2026-05-27
+
+Action: bulk-cp from Phase 2:
+- orchestrator/package.json (deps + scripts)
+- orchestrator/tsconfig.json
+- orchestrator/vitest.config.ts
+- orchestrator/tests/ (46 .test.ts files + fixtures/ dir)
+
+Verification:
+- `pnpm install` → 312 packages resolved, sharp built, all deps OK (~55s)
+- `pnpm --filter orchestrator test` → 46 test files pass, 1182 individual tests pass (~56s)
+- `pnpm --filter orchestrator typecheck` → 144 errors (IDENTICAL to Phase 2; pre-existing debt in perceptual-review/walkthrough-review tests — to be fixed in later Phase 3 rows that touch those modules)
+
+Coverage:
+- All 28 orchestrator modules + 6 scripts + 4 cross-cutting tests = 38 module-level test files + fixtures
+- Test framework: vitest with parallel execution
+- 1182 individual tests covers: budget-tracker, cluster-bugs, dev-server, feature-graph, fix-bugs-loop, parity-verify, perceptual-review, walkthrough-review, protected-files, tester-diff-audit, verify-worktree, etc.
+
+Verdict: GO. Test surface fully ported; identical pass count to Phase 2 confirms faithful port.
+
+Note: The 144 typecheck errors are Phase 2 inherited debt (test fixture type mismatches in vision-LLM tests). They do NOT block test execution (vitest uses tsx which is type-erasing). Future Phase 3 rows that touch perceptual-review/walkthrough-review may fix them as part of those rows' work.

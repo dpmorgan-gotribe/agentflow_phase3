@@ -1,0 +1,17 @@
+phase0-step-023 — orchestrator/src/cli.ts + cli-runner.ts
+Date: 2026-05-27
+
+Action: bulk-cp cli.ts (176) + cli-runner.ts (750 lines) from Phase 2.
+
+Verification:
+- Both files present at orchestrator/src/
+- cli-runner.test.ts passes in suite
+
+Coverage:
+- cli.ts: Commander entry with flags (--resume-from-stage, --dry-run, --require-pr-review, --max-concurrent, --pipeline-run-id, --bugs-yaml-mode)
+- cli-runner.ts: Mode A → Mode B → rounds-orchestrator dispatch
+- Orchestration seams between modes inherited from Phase 2 (unfinished items per phase-plan §0b)
+
+Note: phase-plan §0b notes Phase 2 cli-runner had "orchestration seams between modes" as unfinished. Port preserves Phase 2's current behavior — the seams are present but not all finished. Future Phase 1/2/3 rows wire the missing seams.
+
+Verdict: GO with caveat. CLI parses flags correctly; full mode orchestration depends on later rows.

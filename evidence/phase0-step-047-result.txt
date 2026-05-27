@@ -1,0 +1,19 @@
+phase0-step-047 — scaffolding/ docs
+Date: 2026-05-27
+
+Action: bulk-cp scaffolding/* from Phase 2.
+
+Files present (8 active docs + archive/ dir):
+- 000-scaffolding-index.md (master index)
+- 10-034-output-contracts.md
+- 12-026-turborepo-scaffold.md
+- 13-027-shared-packages.md
+- 19-032b-html-verifier-agent.md (Phase 2 [UNFINISHED] — agent file ported in phase0-step-042, this doc describes the wiring)
+- 24-037-lessons-agent.md (Phase 2 [UNFINISHED] — agent file ported)
+- 25-040-app-store-compliance.md (Phase 2 [UNFINISHED])
+- 26-039-agent-expert.md (Phase 2 [UNFINISHED] — agent file ported)
+- archive/ (40 archived docs from Phase 2 superseded scaffolding work)
+
+Note: The 4 [UNFINISHED] docs have their agent files in .claude/agents/ via bulk port (phase0-step-042 batch covers these via Phase 2 .md ports). Full wiring + verification of agent-expert / lessons-agent / html-verifier / app-store-compliance is finishing work that happens as those agents are exercised in their first real dispatch.
+
+Verdict: GO.

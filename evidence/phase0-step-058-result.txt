@@ -1,0 +1,21 @@
+phase0-step-058 — factory decision/reference docs
+Date: 2026-05-27
+
+Action: bulk-cp from Phase 2 docs/:
+- reviewer-playbook.md (8-dimension review criteria binding for reviewer agent)
+- security-checklist.md (OWASP/CWE/ASVS grounding for security agent)
+- agent-sdk-auth-providers.md (auth-provider.ts spec)
+- agentic-visibility.md (--agentic-visibility flag spec for /new-project)
+- build-tier-roadmap.md (5-tier verifier roadmap for Phase 3)
+- fix-bugs-cost-and-speed-priority-plan.md (fix-bugs-loop strategy)
+- tasks.yaml.template (PM output template, paired with architecture.yaml.template)
+
+Cross-references (agent body prompts cite these at execution time):
+- reviewer-playbook.md ← reviewer agent (phase0-step-038)
+- security-checklist.md ← security agent (phase0-step-038)
+- agent-sdk-auth-providers.md ← auth-provider.ts (phase0-step-017)
+- agentic-visibility.md ← new-project skill (phase0-step-026)
+- build-tier-roadmap.md ← build-to-spec-verify (phase3-step-001)
+- tasks.yaml.template ← pm skill (phase1-step-021)
+
+Verdict: GO.

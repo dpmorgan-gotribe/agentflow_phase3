@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "schemaVersion": "2.0",
+  "generatedAt": "2026-04-30T00:00:00.000Z",
+  "projectName": "fixture-strategy-c",
+  "platforms": ["webapp"],
+  "uiKitVersion": "1.0.0",
+  "screensManifestHash": "sha256:fixture-c-screens",
+  "visualReviewReportHash": "sha256:fixture-c-vr",
+  "flows": [
+    {
+      "id": "flow-1",
+      "platform": "webapp",
+      "name": "Create a book listing",
+      "description": "Mutation flow — book-swap-class. Submit a new listing and confirm it appears.",
+      "primaryPersona": "alex-the-lister",
+      "steps": [
+        {
+          "screenId": "new-listing",
+          "platform": "webapp",
+          "file": "docs/screens/webapp/new-listing.html",
+          "status": "pass",
+          "title": "New Listing"
+        }
+      ],
+      "interactions": [
+        { "kind": "navigate", "to": "/listings/new" },
+        {
+          "kind": "fill",
+          "selector": "input[name=\"title\"]",
+          "value": "The Pragmatic Programmer"
+        },
+        {
+          "kind": "fill",
+          "selector": "input[name=\"author\"]",
+          "value": "Andrew Hunt"
+        },
+        {
+          "kind": "click",
+          "selector": "role=button[name=\"Publish listing\"]"
+        },
+        {
+          "kind": "waitForResponse",
+          "urlPattern": "/api/listings",
+          "status": 201
+        },
+        {
+          "kind": "assertVisible",
+          "selector": "[data-kit-component=\"ListingCard\"]:has-text(\"The Pragmatic Programmer\")"
+        }
+      ],
+      "seedingTier": "mutation"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow/schemas/feature-context.schema.json",
+  "title": "feature-context — lockfile for one open feature worktree (feat-003 git-agent)",
+  "description": "Written by git-agent `checkout-feature`, updated by git-agent + every agent in the feature.agent_sequence. Lives at .claude/worktrees/{worktree}/.feature-context.json. Source of truth for worktree state — orchestrator reads it to route conflicts to the last writing agent, to detect stale worktrees on resume, and to decide when emergency-abort is safe. Never delete manually except as part of `just git-cleanup` housekeeping.",
+  "type": "object",
+  "required": [
+    "version",
+    "feature_id",
+    "worktree",
+    "branch",
+    "opened_at",
+    "opened_from",
+    "agent_sequence",
+    "agent_history",
+    "status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "enum": ["1.0"]
+    },
+    "feature_id": {
+      "type": "string",
+      "pattern": "^feat-[a-z][a-z0-9-]{1,48}$",
+      "description": "Matches tasks.yaml features[].id exactly. Immutable after checkout-feature writes it."
+    },
+    "worktree": {
+      "type": "string",
+      "pattern": "^feat-[a-z][a-z0-9-]{1,48}$",
+      "description": "Matches tasks.yaml features[].worktree; also the directory name under .claude/worktrees/."
+    },
+    "branch": {
+      "type": "string",
+      "pattern": "^(feat|fix|refactor|chore)/[a-z][a-z0-9-]+$",
+      "description": "Matches tasks.yaml features[].branch. Created fresh from origin/main at checkout-feature time."
+    },
+    "opened_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp (Zulu) when git-agent checkout-feature wrote this lockfile."
+    },
+    "opened_from": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_/-]+@[0-9a-f]{7,40}$",
+      "description": "`<ref>@<sha>` string, e.g. `main@a1b2c3d4`. Records the commit the feature branch forked from."
+    },
+    "agent_sequence": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "backend-builder",
+          "web-frontend-builder",
+          "mobile-frontend-builder",
+          "tester",
+          "reviewer",
+          "security",
+          "devops"
+        ]
+      },
+      "minItems": 1,
+      "description": "Verbatim copy of features[i].agent_sequence from tasks.yaml at checkout time. Mirrored here so git-agent operations don't require re-parsing tasks.yaml."
+    },
+    "agent_history": {
+      "type": "array",
+      "description": "Append-only log of agent invocations against this worktree. Each agent in agent_sequence writes one entry when it completes; git-agent adds resolve-conflict entries as they fire.",
+      "items": {
+        "type": "object",
+        "required": ["agent", "op", "started_at"],
+        "additionalProperties": false,
+        "properties": {
+          "agent": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string",
+            "enum": [
+              "execute-tasks",
+              "resolve-conflict",
+              "checkout-feature",
+              "close-feature",
+              "emergency-abort"
+            ]
+          },
+          "attempt": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Retry attempt counter within this op. execute-tasks typically attempt=1 (unless task retries fire); resolve-conflict goes 1..3."
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finished_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "null while the op is in progress; filled when the agent signals completion."
+          },
+          "outcome": {
+            "type": "string",
+            "enum": ["success", "failure", "in-progress"],
+            "description": "success → advance to next agent in sequence; failure → trigger per-task retry or emergency-abort per orchestrator policy; in-progress → transient state while the op runs."
+          },
+          "commit_sha": {
+            "type": ["string", "null"],
+            "pattern": "^[0-9a-f]{7,40}$",
+            "description": "If the agent committed work inside the worktree, the sha of that commit (or the HEAD sha after multiple commits). null if no commit."
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 400,
+            "description": "Free-form note (e.g. failure reason, retry context). Kept short — detailed logs go to orchestrator stdout."
+          }
+        }
+      }
+    },
+    "last_writing_agent": {
+      "type": ["string", "null"],
+      "description": "The agent whose most-recent agent_history entry has outcome: success + non-null commit_sha. Used by close-feature to route merge conflicts back to the last editor. Derived from agent_history but cached here for O(1) lookup. null until the first agent completes successfully."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["open", "merge-conflict", "closed", "aborted"],
+      "description": "Worktree lifecycle state: open = actively being worked; merge-conflict = close-feature hit a conflict + awaiting resolve-conflict-handoff; closed = successfully merged, worktree dir removed (lockfile retained briefly for audit); aborted = emergency-abort fired, worktree forcibly removed."
+    },
+    "conflict_files": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "When status: merge-conflict, list of conflicting file paths (relative to repo root). Populated by close-feature; consumed by resolve-conflict-handoff's return payload."
+    },
+    "conflict_detected_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO-8601 timestamp when close-feature first detected the conflict. Persists across resolve-conflict attempts until either close-feature succeeds (status → closed) or emergency-abort fires (status → aborted)."
+    },
+    "merge_sha": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{7,40}$",
+      "description": "The sha of the `git merge --no-ff` commit on main. Populated when status transitions to closed. null otherwise."
+    },
+    "failure_reason": {
+      "type": ["string", "null"],
+      "maxLength": 400,
+      "description": "When status: aborted, the orchestrator-supplied reason passed to emergency-abort. Mirrored into tasks.yaml features[i].failure_reason for human review."
+    }
+  }
+}

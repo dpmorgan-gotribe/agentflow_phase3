@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow-phase2/schemas/visual-review-report.schema.json",
+  "title": "Visual Review Report",
+  "description": "Aggregate output of /visual-review — one per pipeline run. Matches VisualReviewOutput in task 034b.",
+  "type": "object",
+  "required": [
+    "version",
+    "runAt",
+    "generatedAt",
+    "styleId",
+    "screensReviewed",
+    "passed",
+    "failed",
+    "retriesTriggered",
+    "needsHumanReview",
+    "screens",
+    "violations",
+    "chromeDevToolsAvailable"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "runAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Alias of runAt kept for /user-flows-generator compatibility. Emitter MUST set to the same value as runAt."
+    },
+    "styleId": {
+      "type": "string",
+      "pattern": "^style-[0-9]+$"
+    },
+    "screensReviewed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "passed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "failed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "retriesTriggered": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Incremented by the orchestrator (035), never by the skill. Always 0 on fresh skill emit."
+    },
+    "needsHumanReview": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(webapp|mobile|admin|desktop)/[a-z0-9][a-z0-9-]*$"
+      },
+      "description": "Screen IDs the orchestrator could not resolve after max retries, OR that the skill marked review-timeout / rubric-agent-invalid-response."
+    },
+    "screens": {
+      "type": "array",
+      "description": "Per-screen status block consumed by /user-flows-generator. Must contain one entry per screen in docs/screens-manifest.json.",
+      "items": {
+        "type": "object",
+        "required": ["platform", "screenId", "status", "issues"],
+        "additionalProperties": false,
+        "properties": {
+          "platform": {
+            "enum": ["webapp", "mobile", "admin", "desktop"]
+          },
+          "screenId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "status": {
+            "enum": ["pass", "fail", "needs-human-review"]
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rule": { "type": "string" },
+                "severity": { "enum": ["error", "warning", "info"] },
+                "detail": { "type": "string" },
+                "reason": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      }
+    },
+    "violations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["screen", "viewport", "rule", "severity", "detail"],
+        "additionalProperties": false,
+        "properties": {
+          "screen": {
+            "type": "string",
+            "pattern": "^(webapp|mobile|admin|desktop)/[a-z0-9][a-z0-9-]*$"
+          },
+          "viewport": {
+            "enum": ["mobile", "tablet", "desktop", "all", "static"]
+          },
+          "rule": {
+            "type": "string",
+            "pattern": "^(composition|type|color|states|motion|mobile|slop)\\.[a-zA-Z][a-zA-Z0-9-]*$"
+          },
+          "severity": {
+            "enum": ["error", "warning", "info"]
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 280
+          }
+        }
+      }
+    },
+    "lighthouse": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "performance": { "type": "number", "minimum": 0, "maximum": 100 },
+          "accessibility": { "type": "number", "minimum": 0, "maximum": 100 },
+          "bestPractices": { "type": "number", "minimum": 0, "maximum": 100 },
+          "seo": { "type": "number", "minimum": 0, "maximum": 100 }
+        }
+      }
+    },
+    "chromeDevToolsAvailable": {
+      "type": "boolean"
+    },
+    "perScreenDurationMs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    }
+  },
+  "allOf": [
+    {
+      "description": "passed + failed + needsHumanReview.length must equal screensReviewed",
+      "x-invariant": "screensReviewed === passed + failed + needsHumanReview.length"
+    },
+    {
+      "description": "screens[] must have one entry per reviewed screen",
+      "x-invariant": "screens.length === screensReviewed"
+    },
+    {
+      "description": "cross-check: error-severity count in violations[] equals error-severity count flattened across screens[].issues[]",
+      "x-invariant": "violations.filter(v => v.severity === 'error').length === screens.flatMap(s => s.issues).filter(i => i.severity === 'error').length"
+    }
+  ]
+}

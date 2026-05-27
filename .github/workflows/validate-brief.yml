@@ -1,0 +1,48 @@
+name: validate-brief
+
+on:
+  pull_request:
+    paths:
+      - "brief.md"
+      - "companion/**"
+      - "schemas/**"
+      - "scripts/validate-brief.mjs"
+      - ".github/workflows/validate-brief.yml"
+  push:
+    branches: [main]
+    paths:
+      - "brief.md"
+      - "companion/**"
+      - "schemas/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate frontmatter against JSON Schema
+        uses: mheap/frontmatter-json-schema-action@v1
+        with:
+          path: brief.md
+          schema: schemas/brief-frontmatter.schema.json
+
+      - name: Lint brief structure (markdownlint)
+        run: npx markdownlint-cli2 brief.md
+        continue-on-error: true
+
+      - name: Run validate-brief --all
+        run: node scripts/validate-brief.mjs --all

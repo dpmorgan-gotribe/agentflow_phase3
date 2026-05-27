@@ -1,0 +1,10 @@
+phase0-step-041 — git-agent subagent
+Date: 2026-05-27
+
+Action: bulk-cp .claude/agents/git-agent.md from Phase 2.
+
+File present; frontmatter parses.
+
+Op contracts inherited from Phase 2: bootstrap, checkout-feature, close-feature, resolve-conflict-handoff, emergency-abort. Schema cross-ref to packages/orchestrator-contracts/src/git-agent.ts (covered in phase0-step-031).
+
+Verdict: GO.

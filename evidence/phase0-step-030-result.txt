@@ -1,0 +1,14 @@
+phase0-step-030 — 16 JSON schemas at schemas/
+Date: 2026-05-27
+
+Action: bulk-cp schemas/*.json from Phase 2 (16 files).
+
+Verification:
+- ls schemas/ → 16 files present
+- @repo/orchestrator-contracts (phase0-step-031) test suite validates fixtures against several schemas
+- factory-schemas-meta-uniformity.test.ts and brief-capabilities-schema-ajv2020.test.ts pass
+
+Schema inventory:
+- brief-frontmatter, brief-capabilities, navigation, architecture, tasks, tasks-coverage, feature, feature-context, screens (discriminated union), screen-fixture, user-flows-manifest, bugs-yaml, build-to-spec-verify-output, parity-verify-output, visual-review-report, signoff
+
+Verdict: GO.

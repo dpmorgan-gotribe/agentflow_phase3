@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{PROJECT_NAME}} — User flows · final sign-off</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #fafafa;
+        --bg-elevated: #ffffff;
+        --border: #e4e4e7;
+        --border-hover: #a1a1aa;
+        --text: #18181b;
+        --muted: #71717a;
+        --subtle: #f4f4f5;
+        --accent: #2563eb;
+        --olive: #3f6212;
+        --olive-bg: #ecfccb;
+        --red: #b91c1c;
+        --red-bg: #fee2e2;
+        --amber: #b45309;
+        --amber-bg: #fef3c7;
+        --focus: 0 0 0 3px rgb(37 99 235 / 0.3);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        grid-template-rows: 56px 1fr;
+        grid-template-areas: "header header" "sidebar main";
+        height: 100vh;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+      code {
+        font:
+          0.92em ui-monospace,
+          "SF Mono",
+          Menlo,
+          Monaco,
+          Consolas,
+          monospace;
+        background: var(--subtle);
+        padding: 1px 6px;
+        border-radius: 3px;
+      }
+
+      header.page {
+        grid-area: header;
+        padding: 10px 20px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-elevated);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      header.page h1 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      header.page .project {
+        font-size: 12px;
+        color: var(--muted);
+        margin-left: 8px;
+      }
+      header.page .spacer {
+        flex: 1;
+      }
+      header.page .kit-version {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 11px;
+        color: var(--muted);
+        padding: 4px 8px;
+        background: var(--subtle);
+        border-radius: 4px;
+      }
+      header.page .viewport-switcher {
+        display: inline-flex;
+        background: var(--subtle);
+        padding: 2px;
+        border-radius: 6px;
+      }
+      header.page .viewport-switcher button {
+        font-size: 12px;
+        padding: 4px 10px;
+        background: transparent;
+        border: none;
+        border-radius: 4px;
+        color: var(--muted);
+      }
+      header.page .viewport-switcher button.active {
+        background: var(--bg-elevated);
+        color: var(--text);
+        box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+        font-weight: 500;
+      }
+      header.page .platform-switcher {
+        display: inline-flex;
+        gap: 4px;
+      }
+      header.page .platform-switcher button {
+        font-size: 12px;
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        background: var(--bg-elevated);
+        border-radius: 4px;
+        color: var(--muted);
+      }
+      header.page .platform-switcher button.active {
+        background: var(--text);
+        color: var(--bg-elevated);
+        border-color: var(--text);
+      }
+      header.page .signoff-btn {
+        padding: 6px 14px;
+        background: var(--olive);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      header.page .signoff-btn:hover {
+        opacity: 0.9;
+      }
+
+      aside.sidebar {
+        grid-area: sidebar;
+        border-right: 1px solid var(--border);
+        background: var(--bg-elevated);
+        overflow-y: auto;
+        padding: 16px 0;
+      }
+      .persona-block {
+        margin-bottom: 20px;
+      }
+      .persona-head {
+        padding: 8px 16px 4px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        font-family: ui-monospace, Menlo, monospace;
+      }
+      .persona-head .goal {
+        display: block;
+        font-weight: 400;
+        font-size: 11px;
+        text-transform: none;
+        letter-spacing: 0;
+        color: var(--muted);
+        margin-top: 2px;
+        font-family: inherit;
+      }
+      .flow-block {
+        margin-bottom: 12px;
+      }
+      .flow-head {
+        padding: 6px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .flow-head .flow-platform {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 9px;
+        color: var(--muted);
+        padding: 1px 5px;
+        background: var(--subtle);
+        border-radius: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .step-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .step-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 16px 5px 28px;
+        font-size: 12.5px;
+        color: var(--muted);
+        cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: background 120ms;
+      }
+      .step-item:hover {
+        background: var(--subtle);
+        color: var(--text);
+      }
+      .step-item.active {
+        background: var(--subtle);
+        color: var(--text);
+        border-left-color: var(--accent);
+        font-weight: 500;
+      }
+      .step-item .title {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .badge {
+        flex-shrink: 0;
+        font-size: 10px;
+        padding: 1px 6px;
+        border-radius: 3px;
+        font-family: ui-monospace, Menlo, monospace;
+        font-weight: 600;
+      }
+      .badge.pass {
+        background: var(--olive-bg);
+        color: var(--olive);
+      }
+      .badge.fail {
+        background: var(--red-bg);
+        color: var(--red);
+      }
+      .badge.needs-human-review {
+        background: var(--amber-bg);
+        color: var(--amber);
+      }
+      .badge.not-reviewed {
+        background: var(--subtle);
+        color: var(--muted);
+      }
+
+      main.stage {
+        grid-area: main;
+        overflow: auto;
+        padding: 20px;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 12px;
+        background: #0a0a0a;
+      }
+      .annotation {
+        background: var(--bg-elevated);
+        border-radius: 8px;
+        padding: 12px 16px;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .annotation .flow-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .annotation .step-desc {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .annotation .review-issues {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--subtle);
+        font-size: 12px;
+        color: var(--amber);
+        font-family: ui-monospace, Menlo, monospace;
+      }
+
+      .iframe-wrap {
+        display: grid;
+        place-items: center;
+        overflow: auto;
+        padding: 16px;
+      }
+      iframe#viewer {
+        background: white;
+        border: 1px solid rgb(255 255 255 / 0.08);
+        box-shadow: 0 20px 60px rgb(0 0 0 / 0.5);
+        display: block;
+      }
+
+      /* Sign-off modal */
+      dialog#signoff-dlg {
+        border: none;
+        padding: 0;
+        border-radius: 8px;
+        max-width: 520px;
+        width: 90%;
+      }
+      dialog#signoff-dlg::backdrop {
+        background: rgba(0, 0, 0, 0.55);
+      }
+      .signoff-inner {
+        padding: 24px;
+        background: var(--bg-elevated);
+        border-radius: 8px;
+      }
+      .signoff-inner h2 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+      .signoff-inner .desc {
+        margin: 0 0 16px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .signoff-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 12px;
+      }
+      .signoff-field label {
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .signoff-field input,
+      .signoff-field textarea {
+        font: inherit;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 13px;
+        background: var(--bg-elevated);
+      }
+      .signoff-field input:focus,
+      .signoff-field textarea:focus {
+        outline: none;
+        box-shadow: var(--focus);
+        border-color: var(--accent);
+      }
+      .signoff-check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        margin: 8px 0;
+      }
+      .signoff-hidden-info {
+        background: var(--subtle);
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 11px;
+        color: var(--muted);
+        margin: 12px 0;
+      }
+      .signoff-hidden-info .row {
+        display: flex;
+        justify-content: space-between;
+        padding: 2px 0;
+      }
+      .signoff-hidden-info .row .k {
+        color: var(--muted);
+      }
+      .signoff-hidden-info .row .v {
+        color: var(--text);
+        font-weight: 500;
+        max-width: 60%;
+        text-align: right;
+        overflow-wrap: anywhere;
+        word-break: break-all;
+      }
+      .signoff-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 16px;
+      }
+      .signoff-actions button.primary {
+        background: var(--olive);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .signoff-actions button.cancel {
+        background: transparent;
+        border: 1px solid var(--border);
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+      }
+      .signoff-actions button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .signoff-status {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        display: none;
+      }
+      .signoff-status.show {
+        display: block;
+      }
+      .signoff-status.success {
+        background: var(--olive-bg);
+        color: var(--olive);
+      }
+      .signoff-status.error {
+        background: var(--red-bg);
+        color: var(--red);
+      }
+
+      /* Platform filter */
+      body[data-platform-filter="webapp"] .flow-block[data-platform="mobile"],
+      body[data-platform-filter="webapp"] .flow-block[data-platform="admin"],
+      body[data-platform-filter="mobile"] .flow-block[data-platform="webapp"],
+      body[data-platform-filter="mobile"] .flow-block[data-platform="admin"],
+      body[data-platform-filter="admin"] .flow-block[data-platform="webapp"],
+      body[data-platform-filter="admin"] .flow-block[data-platform="mobile"] {
+        display: none;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body data-platform-filter="all">
+    <header class="page">
+      <h1>{{PROJECT_NAME}}</h1>
+      <span class="project">User flows · final sign-off</span>
+      <span class="spacer"></span>
+      <span class="kit-version">ui-kit v{{UI_KIT_VERSION}}</span>
+      <span class="kit-version">{{SCREENS_COUNT}} screens</span>
+      <div class="platform-switcher" id="platform-switcher">
+        <button data-platform="all" class="active">All</button>
+        <button data-platform="webapp">Webapp</button>
+        <button data-platform="mobile">Mobile</button>
+        <button data-platform="admin">Admin</button>
+      </div>
+      <div class="viewport-switcher" id="viewport-switcher">
+        <button data-w="390" data-h="844">390</button>
+        <button data-w="820" data-h="1180">820</button>
+        <button data-w="1400" data-h="900" class="active">1400</button>
+      </div>
+      <button class="signoff-btn" id="open-signoff">Sign off →</button>
+    </header>
+
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <main class="stage">
+      <div class="annotation" id="annotation">
+        <div class="flow-name" id="flow-name">Select a flow to preview</div>
+        <div class="step-desc" id="step-desc">
+          Click any step in the sidebar.
+        </div>
+        <div
+          class="review-issues"
+          id="review-issues"
+          style="display: none"
+        ></div>
+      </div>
+      <div class="iframe-wrap">
+        <iframe
+          id="viewer"
+          title="Screen preview"
+          sandbox="allow-same-origin allow-scripts"
+          width="1400"
+          height="900"
+        ></iframe>
+      </div>
+    </main>
+
+    <dialog id="signoff-dlg">
+      <div class="signoff-inner">
+        <h2>Sign off on user flows</h2>
+        <p class="desc">
+          This records your approval of {{SCREENS_COUNT}} screens at ui-kit
+          v{{UI_KIT_VERSION}}. Any change after sign-off invalidates it.
+        </p>
+        <form id="signoff-form">
+          <div class="signoff-field">
+            <label for="f-client">Your name / company</label>
+            <input id="f-client" required autocomplete="name" />
+          </div>
+          <div class="signoff-field">
+            <label for="f-comments">Comments (optional)</label>
+            <textarea
+              id="f-comments"
+              rows="3"
+              placeholder="Any final notes?"
+            ></textarea>
+          </div>
+          <label class="signoff-check">
+            <input type="checkbox" id="f-approved" checked />
+            I approve this set of screens for handoff to engineering
+          </label>
+          <div class="signoff-hidden-info">
+            <div class="row">
+              <span class="k">screensManifestHash</span
+              ><span class="v" id="h-screens">{{SCREENS_MANIFEST_HASH}}</span>
+            </div>
+            <div class="row">
+              <span class="k">visualReviewReportHash</span
+              ><span class="v" id="h-review"
+                >{{VISUAL_REVIEW_REPORT_HASH}}</span
+              >
+            </div>
+            <div class="row">
+              <span class="k">uiKitVersion</span
+              ><span class="v">{{UI_KIT_VERSION}}</span>
+            </div>
+            <div class="row">
+              <span class="k">screensApproved</span
+              ><span class="v">{{SCREENS_COUNT}}</span>
+            </div>
+          </div>
+          <div class="signoff-status" id="signoff-status"></div>
+          <div class="signoff-actions">
+            <button type="button" class="cancel" id="signoff-cancel">
+              Cancel
+            </button>
+            <button type="submit" class="primary" id="signoff-submit">
+              Sign off
+            </button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+
+    <script>
+      const MANIFEST = {{MANIFEST_JSON}};
+      const GATE = "{{GATE_API_BASE}}";
+      const UI_KIT_VERSION = "{{UI_KIT_VERSION}}";
+      const SCREENS_MANIFEST_HASH = "{{SCREENS_MANIFEST_HASH}}";
+      const VISUAL_REVIEW_REPORT_HASH = "{{VISUAL_REVIEW_REPORT_HASH}}";
+      const SCREENS_COUNT = {{SCREENS_COUNT}};
+
+      const $sidebar = document.getElementById("sidebar");
+      const $viewer = document.getElementById("viewer");
+      const $flowName = document.getElementById("flow-name");
+      const $stepDesc = document.getElementById("step-desc");
+      const $reviewIssues = document.getElementById("review-issues");
+      const $vpSwitcher = document.getElementById("viewport-switcher");
+      const $platformSwitcher = document.getElementById("platform-switcher");
+      const $signoffDlg = document.getElementById("signoff-dlg");
+
+      function esc(s) {
+        return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+      }
+
+      function renderSidebar() {
+        // Flows are the primary organizational unit. `primaryPersona` on each
+        // flow is metadata — we surface it as a pill on the flow header, and
+        // also render a tiny persona legend above the flows.
+        const flows = MANIFEST.flows || [];
+        const personas = MANIFEST.personas || [];
+        const personaById = Object.fromEntries(personas.map((p) => [p.id, p]));
+        const frag = document.createDocumentFragment();
+
+        // Legend row: which personas map to which flows
+        if (personas.length > 0) {
+          const legend = document.createElement("div");
+          legend.className = "persona-block";
+          legend.innerHTML = `
+            <div class="persona-head" style="border-bottom:none;margin-bottom:4px">
+              Personas
+              <span class="goal">${personas.length} user type${personas.length === 1 ? "" : "s"} — flows below are tagged per primary audience</span>
+            </div>
+          `;
+          frag.appendChild(legend);
+        }
+
+        flows.forEach((f) => {
+          const fBlock = document.createElement("div");
+          fBlock.className = "flow-block";
+          fBlock.dataset.platform = f.platform || "webapp";
+          const personaLabel = f.primaryPersona && personaById[f.primaryPersona]
+            ? personaById[f.primaryPersona].name.split(/\s*—\s*/)[0]
+            : (f.primaryPersona === "any" ? "any persona" : (f.primaryPersona || ""));
+          const steps = (f.steps || [])
+            .map((s, i) => `
+              <li class="step-item" data-file="${esc(s.file)}" data-screen-id="${esc(s.screenId)}" data-flow-name="${esc(f.name)}" data-step-desc="${esc(f.description || s.title || "")}" data-issues='${esc(JSON.stringify(s.issues || []))}'>
+                <span class="title">${i + 1}. ${esc(s.title || s.screenId)}</span>
+                <span class="badge ${esc(s.status || "not-reviewed")}">${esc(s.status || "not-reviewed")}</span>
+              </li>
+            `).join("");
+          fBlock.innerHTML = `
+            <div class="flow-head">
+              ${esc(f.name)}
+              <span class="flow-platform">${esc(f.platform || "webapp")}${personaLabel ? " · " + esc(personaLabel) : ""}</span>
+            </div>
+            <ul class="step-list">${steps}</ul>
+          `;
+          frag.appendChild(fBlock);
+        });
+
+        $sidebar.replaceChildren(frag);
+      }
+
+      $sidebar.addEventListener("click", (e) => {
+        const li = e.target.closest(".step-item");
+        if (!li) return;
+        $sidebar.querySelectorAll(".step-item.active").forEach((x) => x.classList.remove("active"));
+        li.classList.add("active");
+        $viewer.src = "../" + li.dataset.file;
+        $flowName.textContent = li.dataset.flowName;
+        $stepDesc.textContent = li.dataset.stepDesc || "";
+        let issues = [];
+        try { issues = JSON.parse(li.dataset.issues || "[]"); } catch { /* ignore */ }
+        if (issues.length > 0) {
+          $reviewIssues.style.display = "block";
+          $reviewIssues.textContent = "Visual-review flagged: " + issues.map((i) => i.rule || i).join(" · ");
+        } else {
+          $reviewIssues.style.display = "none";
+        }
+      });
+
+      $vpSwitcher.addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-w]");
+        if (!b) return;
+        $vpSwitcher.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
+        b.classList.add("active");
+        $viewer.width = Number(b.dataset.w);
+        $viewer.height = Number(b.dataset.h);
+      });
+
+      $platformSwitcher.addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-platform]");
+        if (!b) return;
+        $platformSwitcher.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
+        b.classList.add("active");
+        document.body.dataset.platformFilter = b.dataset.platform;
+      });
+
+      // Sign-off
+      document.getElementById("open-signoff").addEventListener("click", () => $signoffDlg.showModal());
+      document.getElementById("signoff-cancel").addEventListener("click", () => $signoffDlg.close());
+      document.getElementById("signoff-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const $submit = document.getElementById("signoff-submit");
+        const $status = document.getElementById("signoff-status");
+        $submit.disabled = true;
+        $submit.textContent = "Submitting…";
+        $status.className = "signoff-status";
+        const body = {
+          version: "1.0",
+          signedAt: new Date().toISOString().replace(/\.\d+Z$/, "Z"),
+          clientName: document.getElementById("f-client").value.trim(),
+          approved: document.getElementById("f-approved").checked,
+          comments: document.getElementById("f-comments").value,
+          screensApproved: SCREENS_COUNT,
+          screensManifestHash: SCREENS_MANIFEST_HASH,
+          visualReviewReportHash: VISUAL_REVIEW_REPORT_HASH,
+          uiKitVersion: UI_KIT_VERSION,
+        };
+        try {
+          const r = await fetch(`${GATE}/api/signoff`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const payload = await r.json().catch(() => ({}));
+          if (!r.ok) {
+            $status.className = "signoff-status show error";
+            $status.textContent = `Rejected: ${payload.error || r.statusText}. ${payload.reason || "Re-review the latest state."}`;
+            $submit.disabled = false;
+            $submit.textContent = "Sign off";
+            return;
+          }
+          $status.className = "signoff-status show success";
+          $status.textContent = `Sign-off accepted. Orchestrator advances to /architect.`;
+          $submit.textContent = "Signed ✓";
+          document.querySelectorAll("#signoff-form input, #signoff-form textarea").forEach((x) => (x.disabled = true));
+        } catch (err) {
+          $status.className = "signoff-status show error";
+          $status.textContent = `Network error: ${err.message}`;
+          $submit.disabled = false;
+          $submit.textContent = "Sign off";
+        }
+      });
+
+      // Keyboard nav
+      document.addEventListener("keydown", (e) => {
+        if (e.target.matches("input, textarea")) return;
+        const active = $sidebar.querySelector(".step-item.active");
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+          e.preventDefault();
+          const items = [...$sidebar.querySelectorAll(".step-item:not([style*='display: none'])")];
+          const visible = items.filter((x) => x.offsetParent !== null);
+          let idx = visible.indexOf(active);
+          idx += e.key === "ArrowDown" ? 1 : -1;
+          if (idx >= 0 && idx < visible.length) visible[idx].click();
+        }
+        if (e.key === "Escape" && $signoffDlg.open) $signoffDlg.close();
+      });
+
+      renderSidebar();
+      // Auto-load first step
+      const first = $sidebar.querySelector(".step-item");
+      if (first) first.click();
+    </script>
+  </body>
+</html>

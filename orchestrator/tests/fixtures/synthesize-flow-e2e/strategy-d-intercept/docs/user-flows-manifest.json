@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "schemaVersion": "2.0",
+  "generatedAt": "2026-04-30T00:00:00.000Z",
+  "projectName": "fixture-strategy-d",
+  "platforms": ["webapp"],
+  "uiKitVersion": "1.0.0",
+  "screensManifestHash": "sha256:fixture-d-screens",
+  "visualReviewReportHash": "sha256:fixture-d-vr",
+  "flows": [
+    {
+      "id": "flow-1",
+      "platform": "webapp",
+      "name": "Generate a single repo health report",
+      "description": "Read-only flow — repo-health-class. Submit a repo URL, see charts.",
+      "primaryPersona": "diane-em",
+      "steps": [
+        {
+          "screenId": "home",
+          "platform": "webapp",
+          "file": "docs/screens/webapp/home.html",
+          "status": "pass",
+          "title": "Home"
+        }
+      ],
+      "interactions": [
+        { "kind": "navigate", "to": "/" },
+        {
+          "kind": "fill",
+          "selector": "input[name=\"url\"]",
+          "value": "facebook/react"
+        },
+        {
+          "kind": "click",
+          "selector": "button[type=\"submit\"]"
+        },
+        {
+          "kind": "waitForResponse",
+          "urlPattern": "/api/report/",
+          "status": 200
+        },
+        {
+          "kind": "assertVisible",
+          "selector": "[data-kit-component=\"ChartFrame\"]"
+        }
+      ],
+      "seedingTier": "read-only"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+// .markdownlint-cli2.jsonc — scoping for markdownlint-cli2.
+//
+// Rules live in .markdownlint.jsonc. This file constrains WHICH files
+// markdownlint-cli2 runs against when invoked with no path arguments —
+// only brief files should be checked against the strict 20-section
+// structure. Other .md files (plans, contexts, README, scaffolding)
+// aren't brief-shaped and would spuriously fail MD043.
+{
+  "globs": ["brief.md", "brief-template.md"],
+  "ignores": [
+    "node_modules/**",
+    ".git/**",
+    "plans/**",
+    "contexts/**",
+    "scaffolding/**",
+  ],
+}

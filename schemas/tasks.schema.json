@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow/schemas/tasks.schema.json",
+  "title": "tasks.yaml — PM task graph v2 (refactor-004: features[] + agent_sequence[])",
+  "description": "Produced by /pm --mode=tasks. The primary input to the feature-graph phase of the orchestrator. Version 2.0 (refactor-004) introduces 'features[]' as a first-class grouping over tasks — each feature carries its own worktree, branch, and agent sequence. Version 1.0 (pre-refactor-004) had a flat 'tasks:' array with a single 'agent' field per task and no first-class feature concept; it is deprecated and the orchestrator will reject v1 tasks.yaml with a guidance error.",
+  "type": "object",
+  "required": ["version", "features"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "enum": ["2.0"],
+      "description": "Schema version. Must be '2.0' for refactor-004 tasks.yaml. Orchestrator reads this first — a missing/wrong version triggers a migration-guidance error, not a validation-failure retry."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp the PM agent wrote this file. Advisory; not hash-bound."
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Copied from docs/brief-summary.json.projectName. Round-tripped for human readability of the tasks.yaml in isolation."
+    },
+    "architecture_ref": {
+      "type": "string",
+      "description": "Path to architecture.yaml this tasks.yaml was generated against. Typically '.claude/architecture.yaml'. Provides audit trail when architecture + tasks evolve together."
+    },
+    "ui_kit_version": {
+      "type": "string",
+      "description": "Frozen snapshot of packages/ui-kit/package.json.version at PM run time. Builders check this against current kit version; mismatch triggers a kit-change-request detour."
+    },
+    "features": {
+      "type": "array",
+      "items": { "$ref": "./feature.schema.json" },
+      "minItems": 0,
+      "description": "Ordered list of features. Orchestrator runs features concurrently up to maxConcurrentFeatures, respecting feature.depends_on. An empty features[] is valid but suspicious (PM produced no work for a post-design project); PM should emit a warning when this happens."
+    },
+    "summary_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "total_features": { "type": "integer", "minimum": 0 },
+        "total_tasks": { "type": "integer", "minimum": 0 },
+        "by_agent": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 },
+          "description": "{ 'backend-builder': 12, 'web-frontend-builder': 18, 'tester': 30, ... } — sum of tasks assigned per agent across all features."
+        },
+        "by_priority": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "P0": { "type": "integer", "minimum": 0 },
+            "P1": { "type": "integer", "minimum": 0 },
+            "P2": { "type": "integer", "minimum": 0 },
+            "P3": { "type": "integer", "minimum": 0 }
+          }
+        }
+      },
+      "description": "Advisory aggregate counts. The orchestrator computes these independently from features[]; a discrepancy between declared and computed counts surfaces as a warning (not a hard fail)."
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Non-blocking issues the PM agent surfaced: 'features_count=0' if no work was produced, 'uncovered_brief_section' if a brief feature entry didn't map to a feature, 'circular_dependency_detected' if feature.depends_on forms a cycle (orchestrator will reject this at runtime)."
+    }
+  }
+}

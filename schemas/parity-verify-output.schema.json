@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ParityVerifyOutput",
+  "type": "object",
+  "properties": {
+    "ok": {
+      "type": "boolean"
+    },
+    "screensChecked": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "divergences": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "screen": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pattern": {
+            "type": "string",
+            "enum": [
+              "shell-stripping",
+              "layout-regrouping",
+              "token-drift",
+              "copy-sizing-drift",
+              "spacing-token-drift",
+              "identity-contract-broken",
+              "uncategorized"
+            ]
+          },
+          "detail": {
+            "type": "object",
+            "properties": {
+              "missing": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "extra": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "variantDrift": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "selector": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "mockupValue": {
+                      "type": "string"
+                    },
+                    "builtValue": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "selector",
+                    "mockupValue",
+                    "builtValue"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "styleDrift": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "selector": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "property": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "mockupValue": {
+                      "type": "string"
+                    },
+                    "builtValue": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "selector",
+                    "property",
+                    "mockupValue",
+                    "builtValue"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "missing",
+              "extra",
+              "variantDrift",
+              "styleDrift"
+            ],
+            "additionalProperties": false
+          },
+          "severity": {
+            "default": "P1",
+            "type": "string",
+            "enum": [
+              "P0",
+              "P1",
+              "P2"
+            ]
+          }
+        },
+        "required": [
+          "screen",
+          "pattern",
+          "detail",
+          "severity"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "warnings": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "durationMs": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "costUsd": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "required": [
+    "ok",
+    "screensChecked",
+    "divergences",
+    "warnings",
+    "durationMs",
+    "costUsd"
+  ],
+  "additionalProperties": false
+}

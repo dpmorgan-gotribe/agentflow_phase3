@@ -1,0 +1,15 @@
+phase0-step-037 — backend-builder + mobile-frontend-builder + web-frontend-builder subagents
+Date: 2026-05-27
+
+Action: bulk-cp 3 .md files from Phase 2.
+
+Files:
+- .claude/agents/backend-builder.md
+- .claude/agents/mobile-frontend-builder.md
+- .claude/agents/web-frontend-builder.md
+
+All 3 files present with parseable frontmatter. Each declares stack-skill dispatch surface (back-end/, mobile/, front-end/ via .claude/skills/agents/) ported in phase0-step-043/044.
+
+Smoke test (per-scope dispatch against test-app stub) deferred to Mode B (Phase 2 build orchestration row phase2-step-006).
+
+Verdict: GO (code-in-place).

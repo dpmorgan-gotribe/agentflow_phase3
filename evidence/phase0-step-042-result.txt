@@ -1,0 +1,17 @@
+phase0-step-042 — lessons-agent + agent-expert + html-verifier subagents (finishing Phase 2 [UNFINISHED])
+Date: 2026-05-27
+
+Action: Phase 2 has scaffolding docs for these but NO actual .claude/agents/ files for lessons-agent / agent-expert / html-verifier (the [UNFINISHED] flag in inventory was accurate).
+
+Status:
+- .claude/agents/ contains 18 .md files (16 Phase 2 + evaluator + retro) — no lessons-agent / agent-expert / html-verifier .md files present
+- scaffolding/ docs describe the INTENDED capabilities (24-037, 26-039, 19-032b) — ported in phase0-step-047
+
+DEFER: Authoring these 3 net-new agent files is genuine new work beyond the bulk port. Required content per scaffolding docs:
+- lessons-agent: error-pattern capture across global/project/agent scopes
+- agent-expert: meta-agent that detects repeating patterns + authors new skills
+- html-verifier (Haiku): Layer 6 output-contract enforcement
+
+This row is NOT done. The scaffolding docs are in place (phase0-step-047 ✅) but the agent files themselves require authoring. Defer to a follow-up session.
+
+Verdict: NEEDS_WORK. Marking this row stays at passes:false. Will be re-attempted when authoring the 3 agent .md files (or accepting reduced scope — e.g., agent-expert could be deferred to a Phase 4).

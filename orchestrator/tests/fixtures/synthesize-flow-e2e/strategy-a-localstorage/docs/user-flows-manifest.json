@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "schemaVersion": "2.0",
+  "generatedAt": "2026-04-30T00:00:00.000Z",
+  "projectName": "fixture-strategy-a",
+  "platforms": ["webapp"],
+  "uiKitVersion": "1.0.0",
+  "screensManifestHash": "sha256:fixture-a-screens",
+  "visualReviewReportHash": "sha256:fixture-a-vr",
+  "flows": [
+    {
+      "id": "flow-1",
+      "platform": "webapp",
+      "name": "Archive a completed card",
+      "description": "Mutation flow — kanban-class. Move a card to Done and archive it.",
+      "primaryPersona": "any",
+      "steps": [
+        {
+          "screenId": "home",
+          "platform": "webapp",
+          "file": "docs/screens/webapp/home.html",
+          "status": "pass",
+          "title": "Home"
+        }
+      ],
+      "interactions": [
+        { "kind": "navigate", "to": "/" },
+        {
+          "kind": "click",
+          "selector": "[data-kit-component=\"KanbanCard\"]:has-text(\"Refactor onboarding\")"
+        },
+        {
+          "kind": "click",
+          "selector": "role=button[name=\"Move to Done\"]"
+        },
+        {
+          "kind": "click",
+          "selector": "role=button[name=\"Archive completed\"]"
+        },
+        {
+          "kind": "assertVisible",
+          "selector": "[data-kit-component=\"Toast\"]:has-text(\"Archived\")"
+        }
+      ],
+      "seedingTier": "mutation"
+    }
+  ]
+}

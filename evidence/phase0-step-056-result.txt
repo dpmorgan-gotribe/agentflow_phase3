@@ -1,0 +1,16 @@
+phase0-step-056 — factory-root developer-experience config
+Date: 2026-05-27
+
+Action: bulk-cp from Phase 2:
+- .markdownlint.jsonc (MD043 + MD041 + MD025 config; locks brief heading list)
+- .markdownlint-cli2.jsonc (CLI-2 runner config)
+- .gitignore (covers node_modules, .claude/state runtime, dist, etc.)
+- .prettierignore (prettier exclusions)
+- .github/workflows/validate-brief.yml (CI gate on PR brief edits)
+
+Verification:
+- All 5 files present
+- .gitignore correctly excludes node_modules (verified after pnpm install — git status clean except code changes)
+- CI workflow file parses as valid YAML
+
+Verdict: GO.

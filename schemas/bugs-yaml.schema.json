@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BugsYaml",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "project_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "iteration": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "iteration_cap": {
+      "default": 5,
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "bugs": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^bug-(flow|orphan|coverage|runtime|compile|parity)-[a-z0-9-]+$"
+          },
+          "iteration": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "reachability-orphan",
+              "flow-execution-failure",
+              "runtime-error",
+              "dev-server-compile",
+              "visual-parity",
+              "pm-coverage-omission"
+            ]
+          },
+          "severity": {
+            "default": "P0",
+            "type": "string",
+            "enum": [
+              "P0",
+              "P1",
+              "P2"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "flow": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "failedStep": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "expectedScreenId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "actualScreenId": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "selector": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "screenshot": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "htmlDump": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "failedStep",
+              "expectedScreenId",
+              "actualScreenId",
+              "selector",
+              "screenshot",
+              "htmlDump"
+            ],
+            "additionalProperties": false
+          },
+          "orphan": {
+            "type": "object",
+            "properties": {
+              "componentPath": {
+                "type": "string",
+                "minLength": 1
+              },
+              "exportNames": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "suggestedImporters": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "componentPath",
+              "exportNames",
+              "suggestedImporters"
+            ],
+            "additionalProperties": false
+          },
+          "correlatedOrphanPath": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "owningFeature": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "affectsFiles": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "agentSequence": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "backend-builder",
+                "web-frontend-builder",
+                "mobile-frontend-builder",
+                "tester",
+                "reviewer",
+                "git-agent",
+                "security",
+                "devops"
+              ]
+            }
+          },
+          "status": {
+            "default": "pending",
+            "type": "string",
+            "enum": [
+              "pending",
+              "in-progress",
+              "completed",
+              "failed",
+              "skipped"
+            ]
+          },
+          "attempts": {
+            "default": 0,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "maxAttempts": {
+            "default": 3,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "flapResets": {
+            "default": 0,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "resolvedInIteration": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "bugPlanPath": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "errorLog": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "iteration",
+          "source",
+          "severity",
+          "summary",
+          "correlatedOrphanPath",
+          "owningFeature",
+          "affectsFiles",
+          "agentSequence",
+          "status",
+          "attempts",
+          "maxAttempts",
+          "flapResets",
+          "resolvedInIteration",
+          "bugPlanPath",
+          "errorLog"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "version",
+    "generated_at",
+    "project_name",
+    "source_run_id",
+    "iteration",
+    "iteration_cap",
+    "bugs"
+  ],
+  "additionalProperties": false
+}

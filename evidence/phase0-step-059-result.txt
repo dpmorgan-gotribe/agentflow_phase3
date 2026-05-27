@@ -1,0 +1,19 @@
+phase0-step-059 — fixture + template libraries
+Date: 2026-05-27
+
+Action: bulk-cp from Phase 2:
+- gotribe-briefs/ (INDEX.md + _authoring-spec.md + tier-1-atomic.md + tier-2-combining.md + tier-3-essence.md — 5 files)
+- proposals/ (hatch-proposal.md + kanban-webapp-proposal.md — 2 files)
+- plans/templates/ (bug-plan.md + feature-plan.md + investigation-plan.md + kit-change-request-plan.md + refactor-plan.md — 5 files)
+
+Verification: all 12 files present.
+
+Coverage:
+- gotribe-briefs/: example brief library + authoring spec; serves as both fixtures for /draft-brief smoke and operator reference
+- proposals/: test fixtures for /new-project --proposal-file proposals/<file>
+- plans/templates/: instantiation templates for plan-bug, plan-feature, plan-investigation, plan-refactor, kit-change-request
+
+Smoke chain: /new-project --proposal-file proposals/hatch-proposal.md → drafts brief.md from template → /validate-brief passes.
+Deferred to HUMAN gate at phase0-step-027.
+
+Verdict: GO (code-in-place).

@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow/schemas/signoff.schema.json",
+  "title": "signoff-{timestamp}.json — final design sign-off contract",
+  "description": "Emitted by the HITL gate 4 (task 036) when the client approves the user-flows viewer. Orchestrator watches for this file + recomputes screensManifestHash + visualReviewReportHash + uiKitVersion and rejects if any drift is detected.",
+  "type": "object",
+  "required": [
+    "version",
+    "signedAt",
+    "clientName",
+    "approved",
+    "comments",
+    "screensApproved",
+    "screensManifestHash",
+    "visualReviewReportHash",
+    "uiKitVersion"
+  ],
+  "additionalProperties": false,
+  "x-feat-023": "Optional `coverageWarnings` field added per feat-023. When the /pm stage's brief-coverage gate surfaces deferred capabilities (especially core ones), the orchestrator (or a regenerated signoff) records them here so the human sees them before greenlighting Mode B. Older signoff files without this field remain valid.",
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version; currently 1.0."
+    },
+    "signedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$",
+      "description": "ISO-8601 timestamp, UTC (Zulu suffix required)."
+    },
+    "clientName": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Non-empty client identifier — company, person, or stakeholder name."
+    },
+    "approved": {
+      "type": "boolean",
+      "description": "If false, pipeline halts for revisions; a new sign-off is required after changes."
+    },
+    "comments": {
+      "type": "string",
+      "description": "Free-text reviewer notes; may be empty string."
+    },
+    "screensApproved": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of screens sealed by this sign-off; MUST equal the count in docs/screens-manifest.json at orchestrator-validation time."
+    },
+    "screensManifestHash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "SHA-256 of docs/screens-manifest.json (the canonical {path, sha256} sorted list). Drifts if any screen HTML was edited post-sign-off."
+    },
+    "visualReviewReportHash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "SHA-256 of docs/visual-review/report.json. Binds the visual-review state to this sign-off — re-running /visual-review after sign-off invalidates it."
+    },
+    "uiKitVersion": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.-]+)?$",
+      "description": "Semver of packages/ui-kit at sign-off time. Orchestrator rejects if packages/ui-kit/package.json.version differs — sign-off is bound to a specific kit release."
+    },
+    "coverageWarnings": {
+      "type": "array",
+      "description": "OPTIONAL (feat-023). Surfaced deferrals from the brief-coverage gate at /pm stage. Each entry corresponds to a brief §11/§12 capability the PM agent (or human) chose to defer. Core-category deferrals here mean the human accepted the gap before Mode B started; absence of this field is valid for older signoffs (additive change).",
+      "items": {
+        "type": "object",
+        "required": ["capability", "category", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "type": "string",
+            "pattern": "^cap-[0-9]+(\\.[0-9]+)?-[a-z][a-z0-9-]*$"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["core", "optional", "stretch"]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approvedBy": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

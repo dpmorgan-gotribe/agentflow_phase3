@@ -1,0 +1,78 @@
+# Runtime state (transient, session-specific)
+.claude/state/
+.claude/worktrees/*
+!.claude/worktrees/README.md
+.claude/scheduled_tasks.lock
+# bug-013: orchestrator per-worktree runtime state — never commit
+.feature-context.json
+
+# Playwright MCP runtime cache (console logs + page snapshots per session)
+.playwright-mcp/
+
+# Pipeline stage outputs (regenerated each run)
+pipeline/
+
+# feat-026: orchestrator-managed bug tracking (per-project runtime artefacts)
+docs/bugs.yaml
+docs/bugs-archive/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+*.p12
+
+# Build outputs
+.next/
+dist/
+.expo/
+.turbo/
+# bug-014: Next.js static export, Playwright reports, TS incremental cache
+apps/*/out/
+apps/*/playwright-report/
+apps/*/test-results/
+apps/*/blob-report/
+apps/*/playwright/.cache/
+*.tsbuildinfo
+# bug-014 (investigate-005 follow-up): comprehensive generated-artifact coverage
+coverage/
+apps/*/next-env.d.ts
+.swc/
+apps/*/.swc/
+.vite/
+.vitest-cache/
+.eslintcache
+*.log
+pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+lerna-debug.log*
+storybook-static/
+desktop.ini
+$RECYCLE.BIN/
+.AppleDouble
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local settings (per-developer, not shared)
+.claude/settings.local.json
+
+# Generated projects live here. Each project is its own git repo.
+# Keep the directory itself (.gitkeep) but ignore its contents.
+projects/*
+!projects/.gitkeep

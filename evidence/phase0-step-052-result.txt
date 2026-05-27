@@ -1,0 +1,13 @@
+phase0-step-052 — justfile
+Date: 2026-05-27
+
+Action: bulk-cp justfile from Phase 2.
+
+Verification:
+- justfile present at factory root
+- `just --version` → 1.49.0 OK (verified in phase0-step-001)
+- Recipe inventory available via `just --list`
+
+Note: Per Phase 2's justfile preamble, this provides the curated whitelist for restricted-Bash mode (when `just`-only setting is enabled in .claude/settings.json). Current .claude/settings.json allows broad Bash patterns; operator can opt into restricted mode by editing settings.json to gate Bash to `just *` only (already present in allow-list).
+
+Verdict: GO. Restricted-mode opt-in available.

@@ -1,0 +1,16 @@
+phase0-step-053 — schema validator scripts
+Date: 2026-05-27
+
+Action: bulk-cp scripts/* (54 files) from Phase 2 includes all schema validators:
+- scripts/validate-architecture.mjs
+- scripts/validate-brief.mjs
+- scripts/validate-feature-context.mjs
+- scripts/validate-screens.mjs
+- scripts/validate-tasks-yaml.mjs
+
+Verification:
+- All 5 validator scripts present in scripts/
+- Each uses ajv + the corresponding schema from schemas/ (phase0-step-030)
+- Phase 2 test suite (orchestrator/tests/) validates Ajv 2020 compatibility (brief-capabilities-schema-ajv2020.test.ts passes)
+
+Verdict: GO.

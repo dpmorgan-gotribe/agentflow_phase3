@@ -1,0 +1,9 @@
+{
+  "_comment": "Consumer tsconfig for @repo/ui-kit. Consumers extend this to get the public-barrel path alias. Subpath wildcards are deliberately omitted — consumers cannot resolve deep paths at TypeScript's module-resolution layer, which mechanically enforces rule 1 of the consumption contract (packages/ui-kit/CONTRACT.md).",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@repo/ui-kit": ["./packages/ui-kit/src/index.ts"]
+    }
+  }
+}

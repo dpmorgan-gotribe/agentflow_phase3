@@ -1,0 +1,15 @@
+phase0-step-034 — .claude/architecture.yaml.template + models.yaml.template
+Date: 2026-05-27
+
+Action:
+- bulk-cp .claude/architecture.yaml.template from Phase 2 (already present from phase0-step-018 copy batch)
+- .claude/models.yaml IS the template (a real Phase 2 project's models.yaml; the "extends ~/.claude/models.yaml" pattern makes it template-shaped)
+
+Verification:
+- .claude/architecture.yaml.template present
+- .claude/models.yaml present
+- Cross-checked against schemas/architecture.schema.json (phase0-step-030); ports use same shape
+
+Note: Phase 2 does not maintain a separate models.yaml.template file. The .claude/models.yaml at factory root with extends:~/.claude/models.yaml + empty agents:{} serves as the template-shaped baseline. /new-project copies this verbatim into projects/<slug>/.claude/models.yaml so per-project overrides are scoped.
+
+Verdict: GO.

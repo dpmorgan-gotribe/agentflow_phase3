@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow/schemas/navigation.schema.json",
+  "title": "navigation-schema.json (placeholder)",
+  "description": "Placeholder — real schema lives with task 025 (/screens skill). Until that ships, the validator skips type-checking navigation companions beyond 'file exists and parses as JSON'.",
+  "$comment": "PLACEHOLDER — do not treat as authoritative. task 025 owns the real definition.",
+  "type": "object",
+  "additionalProperties": true
+}

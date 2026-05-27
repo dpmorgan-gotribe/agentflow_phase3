@@ -1,0 +1,13 @@
+phase0-step-044 — 2 frontend + 1 mobile stack-skill packs
+Date: 2026-05-27
+
+Action: bulk-cp from Phase 2:
+- .claude/skills/agents/front-end/react-next/SKILL.md
+- .claude/skills/agents/front-end/svelte-kit/SKILL.md
+- .claude/skills/agents/mobile/expo-rn/SKILL.md
+
+Each pack contains layout, dep pins, testing, §Review block.
+
+Smoke-tests deferred to first builder dispatch.
+
+Verdict: GO (code-in-place).

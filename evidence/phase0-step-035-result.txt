@@ -1,0 +1,15 @@
+phase0-step-035 — analyst subagent
+Date: 2026-05-27
+
+Action: bulk-cp .claude/agents/analyst.md from Phase 2.
+
+Verification:
+- File present at .claude/agents/analyst.md
+- Frontmatter parses (name, description, tools, model, mcp_servers)
+- Body is Phase 2's battle-tested analyst prompt (5-worker parallel fan-out via Agent tool)
+
+Per rebuild prompt: "Do not author subagent system prompts. Reference what they do; the prompts come during execution." Bulk port preserves Phase 2's authored prompts as the starting point — better than re-authoring blank slate.
+
+Smoke test (5-worker fanout against test-app) deferred to first /analyze dispatch.
+
+Verdict: GO (code-in-place; smoke deferred).

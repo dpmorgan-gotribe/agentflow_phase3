@@ -1,0 +1,198 @@
+import type { APIRequestContext } from "@playwright/test";
+
+/**
+ * Strategy C — real-DB hybrid (globalSetup baseline + per-block scoped).
+ *
+ * Source: `.claude/rules/testing-policy.md §E2E data-seeding strategy`.
+ *
+ * Use via:
+ *
+ *   - `playwright/global-setup.ts` — seeds read-only baseline data once
+ *     per run (e.g. catalog/lookup tables, fixtures every test reads).
+ *   - `test.describe(...)` blocks containing mutation flows wrap their
+ *     own `beforeAll: seedFixtures(...)` + `afterAll: cleanupFixtures(...)`
+ *     so the block's writes don't pollute siblings. Mutation-tier blocks
+ *     also opt into `test.describe.serial` (the synthesizer emits this
+ *     automatically when `seedingTier === "mutation"`).
+ *
+ * Per-test cost depends on fixture size; expect 50–500ms for typical
+ * payloads. Strategies A + D are wrong for DB-backed projects — A would
+ * 10× test wall-clock by re-seeding via the API, D can't fake what's
+ * actually persisted.
+ *
+ * ## Backend contract
+ *
+ * The project's API exposes THREE gated endpoints, only enabled when the
+ * `ENABLE_TEST_SEED=1` environment variable is set (NEVER in production):
+ *
+ *   POST /test/seed
+ *     body: { fixtures: { <table_name>: <row>[], ... } }
+ *     response: 204 on success, 4xx with { error } on validation failure
+ *
+ *   POST /test/cleanup
+ *     body: { tables: <table_name>[] }
+ *     response: 204 on success
+ *
+ *   POST /test/seed-baseline                                  (bug-042 Phase A.5)
+ *     body: {} (empty)
+ *     response: 204 on success
+ *     behavior: wraps the project's canonical db/seed.{ts,py} so playwright
+ *               globalSetup gets the FULL read-only baseline with one call
+ *               (one source of truth with CLI `db:seed`).
+ *
+ * The python-fastapi / node-fastify / node-trpc-nest stack skills
+ * (`.claude/skills/agents/back-end/{slug}/SKILL.md §Testing`) document the
+ * canonical implementation shape per stack. Cross-stack contract documented
+ * at `.claude/rules/testing-policy.md §Strategy-C-test-seed-contract`.
+ *
+ * Empirical reference: book-swap will be the first DB-backed project to
+ * ship; finance-track follows. No shipped reference yet — this template
+ * is the contract that defines what those projects implement.
+ */
+
+// bug-147 — resolution chain aligned with bug-070's global-setup.ts fix.
+// Default `:3001` matches the node-fastify majority (book-swap / finance-track /
+// gotribe-*); FastAPI projects override via NEXT_PUBLIC_API_BASE or
+// SEED_BASE_URL env vars.
+const SEED_BASE_URL =
+  process.env.SEED_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_BASE ??
+  process.env.API_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  "http://127.0.0.1:3001";
+
+/**
+ * Seed fixtures via the gated endpoint. Each top-level key is a table
+ * name; the value is an array of row objects matching the table schema.
+ * Throws if the request fails — `beforeAll` surfaces the error rather
+ * than running tests against unprepared state.
+ *
+ * Example:
+ *
+ *   await seedFixtures(request, {
+ *     users: [
+ *       { id: "u-alice", email: "alice@test.local", role: "admin" },
+ *       { id: "u-bob",   email: "bob@test.local",   role: "user"  },
+ *     ],
+ *     listings: [
+ *       { id: "l-1", owner_id: "u-alice", title: "The Pragmatic Programmer" },
+ *     ],
+ *   });
+ */
+export async function seedFixtures(
+  request: APIRequestContext,
+  fixtures: Record<string, unknown[]>,
+): Promise<void> {
+  // bug-147 — skip the POST entirely when there are no fixtures to seed.
+  // The factory's playwright-global-setup template ships with a placeholder
+  // `seedFixtures(ctx, {})` block whose contents are comments by default —
+  // calling the API with `{ fixtures: {} }` is a useless round-trip + would
+  // ECONNREFUSED on stacks where the backend isn't on :8000.
+  if (Object.keys(fixtures).length === 0) return;
+  const response = await request.post(`${SEED_BASE_URL}/test/seed`, {
+    data: { fixtures },
+    failOnStatusCode: false,
+  });
+  if (!response.ok()) {
+    const status = response.status();
+    const body = await response.text();
+    throw new Error(
+      `seedFixtures: POST ${SEED_BASE_URL}/test/seed → ${status} ${body}`,
+    );
+  }
+}
+
+/**
+ * Truncate the named tables. Use in `afterAll` to leave the run's
+ * baseline state untouched for subsequent describe blocks.
+ *
+ * Idempotent — succeeds even if some tables don't exist (the backend's
+ * `/test/cleanup` is expected to handle that gracefully).
+ */
+export async function cleanupFixtures(
+  request: APIRequestContext,
+  tables: string[],
+): Promise<void> {
+  // bug-147 — skip the POST when there are no tables to clean.
+  if (tables.length === 0) return;
+  const response = await request.post(`${SEED_BASE_URL}/test/cleanup`, {
+    data: { tables },
+    failOnStatusCode: false,
+  });
+  if (!response.ok()) {
+    // Don't throw on cleanup failure — the test that ran was the
+    // load-bearing operation; cleanup-failure shouldn't fail the whole
+    // run. Surface as a console warning so CI logs flag it.
+    const status = response.status();
+    const body = await response.text();
+    // eslint-disable-next-line no-console
+    console.warn(
+      `cleanupFixtures: POST ${SEED_BASE_URL}/test/cleanup → ${status} ${body}`,
+    );
+  }
+}
+
+/**
+ * bug-042 Phase A.5 — wraps the project's canonical db/seed.{ts,py} so
+ * globalSetup populates the full read-only baseline with one call. Empirical
+ * motivator: 2026-05-02 finance-track-01 where global-setup seeded ONLY
+ * fx_cache (11 rows) — every read-only flow landed on "No accounts yet"
+ * because the dashboard's load query found zero accounts.
+ *
+ * The backend wires this to its existing `seed()` function (e.g. fastify
+ * imports from `../db/seed.js`; FastAPI imports from `api.db.seed`). One
+ * source of truth with the CLI db:seed script.
+ *
+ * Example (Strategy C globalSetup):
+ *
+ *   export default async function globalSetup() {
+ *     const ctx = await request.newContext();
+ *     try {
+ *       await seedBaseline(ctx);
+ *     } finally {
+ *       await ctx.dispose();
+ *     }
+ *   }
+ */
+export async function seedBaseline(
+  request: APIRequestContext,
+): Promise<void> {
+  const response = await request.post(`${SEED_BASE_URL}/test/seed-baseline`, {
+    data: {},
+    failOnStatusCode: false,
+  });
+  if (!response.ok()) {
+    const status = response.status();
+    const body = await response.text();
+    throw new Error(
+      `seedBaseline: POST ${SEED_BASE_URL}/test/seed-baseline → ${status} ${body}`,
+    );
+  }
+}
+
+/**
+ * Convenience wrapper: seed + return a cleanup function that targets
+ * exactly the tables seeded. Useful when fixture composition changes
+ * across tests and you don't want to maintain a parallel list.
+ *
+ * Example:
+ *
+ *   test.describe.serial("listing creation", () => {
+ *     let cleanup: () => Promise<void>;
+ *     test.beforeAll(async ({ request }) => {
+ *       cleanup = await seedAndPrepareCleanup(request, {
+ *         users: [{ id: "u-test" }],
+ *       });
+ *     });
+ *     test.afterAll(async () => cleanup());
+ *     // ... tests ...
+ *   });
+ */
+export async function seedAndPrepareCleanup(
+  request: APIRequestContext,
+  fixtures: Record<string, unknown[]>,
+): Promise<() => Promise<void>> {
+  await seedFixtures(request, fixtures);
+  const tables = Object.keys(fixtures);
+  return () => cleanupFixtures(request, tables);
+}

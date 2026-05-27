@@ -1,0 +1,15 @@
+phase0-step-021 — orchestrator/src/pause.ts + agent-mcp-config.ts
+Date: 2026-05-27
+
+Action: bulk-cp both (147 + 171 lines) from Phase 2.
+
+Verification:
+- Both files present at orchestrator/src/
+- Tests pass (pause.test.ts + agent-mcp-config.test.ts in suite)
+
+Coverage:
+- pause: pauseRun() atomic write to paused.json + PauseSignal sentinel
+- agent-mcp-config: parses agent frontmatter mcp_servers:[]; filters factory .mcp.json per dispatch
+- Tolerates missing/malformed agent files (returns null for back-compat)
+
+Verdict: GO.

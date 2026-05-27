@@ -1,0 +1,17 @@
+phase0-step-025 — .claude/rules/{protected-files-policy.md, testing-policy.md}
+Date: 2026-05-27
+
+Action: bulk-cp both rule files from Phase 2.
+
+Verification:
+- .claude/rules/protected-files-policy.md present
+- .claude/rules/testing-policy.md present
+- Cross-references:
+  - protected-files-policy.md cites orchestrator/src/protected-files.ts (phase0-step-024) ✅
+  - testing-policy.md cites orchestrator/src/tester-diff-audit.ts (phase3-step-009) — module ported but row 009 deferred to Phase 3
+
+Coverage:
+- protected-files-policy: 4 classes + canonical manifest reference + reading-log-02 bug-077 empirical motivator
+- testing-policy: hybrid TDD (builder 60% / tester 80%), 3 hard constraints, 3 seeding strategies (A localStorage, D page.route intercept, C /test/seed), 6 anti-patterns that disqualify "interpretive latitude"
+
+Verdict: GO.

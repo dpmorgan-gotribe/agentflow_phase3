@@ -1,0 +1,25 @@
+phase0-step-028 — project-lifecycle skills batch
+Date: 2026-05-27
+
+Action: bulk-cp from Phase 2:
+- .claude/skills/draft-brief/SKILL.md
+- .claude/skills/validate-brief/SKILL.md
+- .claude/skills/scan-assets/SKILL.md
+- .claude/skills/delete-project/SKILL.md
+- .claude/skills/check-existing-work/SKILL.md (already ported in phase0-step-013 batch)
+
+Verification:
+- All 5 SKILL.md files present at .claude/skills/<slug>/
+- Frontmatter parses on each
+- Supporting scripts ported: scripts/validate-brief.mjs (phase0-step-053 batch covers validators)
+
+Coverage per skill:
+- draft-brief: freeform proposal → 20-section brief.md with NEEDS_CLARIFICATION markers; accepts --proposal text/file/URL
+- validate-brief: --frontmatter (schema) + --structure (MD043) + --codeblocks (§7+§10) + --companions (paths resolve) + --brief-capabilities
+- scan-assets: walks assets/, emits docs/asset-inventory.json + assets/INVENTORY.md; html-extractor for inferredBrandStyle slot
+- delete-project: soft-archive default; --nuke hard delete
+- check-existing-work: pre-flight audit (architecture version, tasks status, feature branches, worktree state)
+
+Smoke-test deferred to phase0-step-027 (HUMAN /new-project gate exercises draft-brief).
+
+Verdict: GO (code-in-place).

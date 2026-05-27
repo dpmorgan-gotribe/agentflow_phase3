@@ -1,0 +1,10 @@
+{
+  "name": "@repo/eslint-plugin-ui-kit-contract",
+  "version": "1.0.0",
+  "description": "ESLint rules enforcing the @repo/ui-kit consumption contract (see packages/ui-kit/CONTRACT.md). Referenced as '@repo/ui-kit-contract' in consumer .eslintrc — ESLint strips the eslint-plugin- prefix.",
+  "main": "index.js",
+  "private": true,
+  "peerDependencies": {
+    "eslint": ">=8.0.0"
+  }
+}

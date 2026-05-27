@@ -1,0 +1,13 @@
+# Prettier destroys YAML inside markdown frontmatter — it un-indents list
+# items so e.g. `companion-files:\n  - path: ...\n    type: navigation`
+# becomes `companion-files:\n\n- path: ...\n  type: navigation`, which
+# silently changes semantics when later top-level keys end up nested under
+# the last list item. Exclude brief files.
+brief.md
+brief-template.md
+
+# User-authored schemas must stay byte-exact.
+schemas/**/*.json
+
+# Lockfile — never reformat.
+pnpm-lock.yaml

@@ -1,0 +1,88 @@
+import type { Page, Route } from "@playwright/test";
+
+/**
+ * Strategy D — page.route() interception.
+ *
+ * Source: `.claude/rules/testing-policy.md §E2E data-seeding strategy`.
+ *
+ * Use in `test.beforeEach` to fake external API responses without hitting
+ * the real backend. The synthesized spec runs against the project's own
+ * dev server but every outbound API call from the SPA is intercepted at
+ * the network layer and resolved from the fixture map. Per-test cost
+ * effectively zero (no real network roundtrip).
+ *
+ * This strategy applies to projects whose persistence layer is "external
+ * API + in-memory proxy cache" — there's no project-managed database to
+ * seed, the backend is just a thin proxy in front of a third-party API
+ * (GitHub, OpenLibrary, etc.) the test must NOT hit during CI.
+ *
+ * Empirical reference: `projects/repo-health-dashboard-01/apps/web/e2e/
+ * compare.spec.ts:15` uses this pattern against the GitHub-proxy
+ * `/api/report/**`. The synthesizer's v2.0 path imports from this helper
+ * when `architecture.yaml.tooling.stack.persistence_layer` is
+ * `"external-api-only"` (or inferred as: database null + backend non-null).
+ */
+
+/** A canned response for one URL pattern. */
+export interface MockResponse {
+  status?: number;
+  /** Response body — JSON-serializable; the helper stringifies it. */
+  body: unknown;
+  /** Optional response headers (Content-Type defaults to application/json). */
+  headers?: Record<string, string>;
+  /** Optional delay before fulfillment (ms) — useful for loading-state tests. */
+  delayMs?: number;
+}
+
+/**
+ * Mock all matching requests on `page` with `response`. Subsequent matches
+ * resolve to the same response until `clearMocks(page)` fires. Pattern
+ * accepts a glob string (Playwright semantics: `**` for recursive,
+ * `*` for single segment) OR a RegExp.
+ *
+ * Example:
+ *
+ *   await mockApiResponse(page, "**\/api/report/facebook/react", {
+ *     status: 200,
+ *     body: { stars: 230_000, contributors: ["a", "b"] },
+ *   });
+ */
+export async function mockApiResponse(
+  page: Page,
+  urlPattern: string | RegExp,
+  response: MockResponse,
+): Promise<void> {
+  await page.route(urlPattern, async (route: Route) => {
+    if (typeof response.delayMs === "number" && response.delayMs > 0) {
+      await new Promise((r) => setTimeout(r, response.delayMs));
+    }
+    await route.fulfill({
+      status: response.status ?? 200,
+      contentType: response.headers?.["Content-Type"] ?? "application/json",
+      headers: response.headers,
+      body: JSON.stringify(response.body),
+    });
+  });
+}
+
+/**
+ * Mock a request to fail with a network error. Mirrors the
+ * `requestfailed`-class scenarios the spec's runtime-error capture
+ * surfaces (feat-027).
+ */
+export async function mockApiFailure(
+  page: Page,
+  urlPattern: string | RegExp,
+  failureCode: "blockedbyclient" | "internetdisconnected" | "timedout" = "internetdisconnected",
+): Promise<void> {
+  await page.route(urlPattern, (route) => route.abort(failureCode));
+}
+
+/**
+ * Remove all interceptions registered on the page. Run in
+ * `test.afterEach` to ensure no mock leaks across tests when re-using
+ * page contexts.
+ */
+export async function clearMocks(page: Page): Promise<void> {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+}

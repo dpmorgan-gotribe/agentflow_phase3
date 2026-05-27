@@ -1,0 +1,20 @@
+phase0-step-038 — tester + reviewer + security subagents
+Date: 2026-05-27
+
+Action: bulk-cp 3 .md files from Phase 2.
+
+Files:
+- .claude/agents/tester.md
+- .claude/agents/reviewer.md
+- .claude/agents/security.md
+
+All present, frontmatter parses.
+
+Cross-references in ported bodies:
+- tester.md cites .claude/rules/testing-policy.md (phase0-step-025 ✅)
+- reviewer.md cites docs/reviewer-playbook.md (phase0-step-058 ✅)
+- security.md cites docs/security-checklist.md (phase0-step-058 ✅)
+
+Tool surfaces declared per role: tester is write-test-only (no source edits enforced via prompt + tester-diff-audit phase3-step-009); reviewer is read-first; security is read-first.
+
+Verdict: GO (code-in-place).

@@ -1,0 +1,15 @@
+phase0-step-043 — 3 backend stack-skill packs
+Date: 2026-05-27
+
+Action: bulk-cp .claude/skills/agents/back-end/{node-fastify,node-trpc-nest,python-fastapi}/ from Phase 2.
+
+Files present:
+- .claude/skills/agents/back-end/node-fastify/SKILL.md
+- .claude/skills/agents/back-end/node-trpc-nest/SKILL.md
+- .claude/skills/agents/back-end/python-fastapi/SKILL.md
+
+Each pack contains: layout convention, dep pins (Phase 2 baseline 2026-04-30), testing setup, §Review additive block for reviewer agent.
+
+Smoke-tests (hello-world scaffold per pack) deferred to first dispatch via web-frontend-builder/backend-builder.
+
+Verdict: GO (code-in-place).

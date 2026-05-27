@@ -1,0 +1,14 @@
+phase0-step-031 — packages/orchestrator-contracts
+Date: 2026-05-27
+
+Action: bulk-cp packages/orchestrator-contracts/{src,tests,package.json,tsconfig.json} from Phase 2. Removed copied node_modules; pnpm install rebuilt fresh.
+
+Verification:
+- packages/orchestrator-contracts/ present with src/, tests/, package.json, tsconfig.json
+- 26 contract source files in src/: architect, brief-coverage, bugs-yaml, build-to-spec-verify, builder, common, feature-context, feature-graph-progress, gates, git-agent, index, model-config, parity-verify, paused-state, perceptual-review, pm, quota-status, reviewer, round-state, screen-fixtures, security, stages, tasks, tester, user-flows-manifest, walkthrough-review
+- pnpm --filter orchestrator-contracts test → passes (suites embedded in full orchestrator test run, 1182/1182 pass)
+- workspace consumers (orchestrator/) resolve @repo/orchestrator-contracts cleanly
+
+Note: phase0-step-031 description mentioned 6 example modules; actual package has 26 contract files. The "verbatim port" covers all of them.
+
+Verdict: GO.

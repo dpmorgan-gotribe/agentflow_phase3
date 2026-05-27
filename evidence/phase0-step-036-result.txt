@@ -1,0 +1,18 @@
+phase0-step-036 — architect + project-manager + ui-designer + skills-agent subagents
+Date: 2026-05-27
+
+Action: bulk-cp 4 .md files from Phase 2:
+- .claude/agents/architect.md
+- .claude/agents/project-manager.md
+- .claude/agents/ui-designer.md
+- .claude/agents/skills-agent.md
+
+All 4 files present with parseable frontmatter.
+
+Important note re: ui-designer MCP scope (Phase 2 [UNFINISHED] per inventory):
+The ported ui-designer.md retains Phase 2's hardcoded MCP scope. This is acknowledged-as-imperfect:
+- Phase 2's refactor-003 plan was to make MCP scope dynamic via invoke-agent + agent-mcp-config (phase0-step-022 + phase0-step-021)
+- The orchestrator infra IS now in place to support dynamic scope (per phase0-step-022 ports)
+- Cleanup row for ui-designer frontmatter (replace hardcoded MCP list with dynamic resolution) deferred to first ui-designer-dispatch surface
+
+Verdict: GO with caveat. ui-designer frontmatter still hardcoded; dynamic resolution available but not wired into this agent file specifically.

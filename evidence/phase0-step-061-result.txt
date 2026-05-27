@@ -1,0 +1,18 @@
+phase0-step-061 — orchestrator/scripts/ internal CLI helpers
+Date: 2026-05-27
+
+Action: bulk-cp orchestrator/scripts/* (6 files) from Phase 2.
+
+Files present:
+- dag-status.mjs (CLI face of /dag-status skill)
+- parity-verify.ts (CLI face of parity-verify orchestrator module)
+- probe-quota.mjs (Anthropic quota probe for /quota-status)
+- renormalize-walkthrough.ts (walkthrough output normalizer)
+- run-verifier.ts (CLI face of /build-to-spec-verify)
+- run-walkthrough.ts (CLI face of walkthrough-review module)
+
+Verification: ls orchestrator/scripts → 6 files OK.
+
+Skill ↔ helper wiring inherited from Phase 2 (skills reference these via `node orchestrator/scripts/<helper>` patterns).
+
+Verdict: GO.

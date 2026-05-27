@@ -1,0 +1,12 @@
+phase0-step-057 — factory .mcp.json
+Date: 2026-05-27
+
+Action: bulk-cp .mcp.json from Phase 2.
+
+Verification:
+- .mcp.json present at factory root
+- Distinct from .claude/mcp-defaults-design.json (the latter is the source list; the former is the live SDK-readable registration)
+
+Note: per phase0-step-057's design pattern, .mcp.json is updated by /register-mcp-servers (phase1-step-022) idempotently from mcp-defaults-design.json + architecture.yaml.tooling.mcp_servers[].
+
+Verdict: GO.

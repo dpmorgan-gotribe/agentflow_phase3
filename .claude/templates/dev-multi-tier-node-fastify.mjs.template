@@ -1,0 +1,376 @@
+#!/usr/bin/env node
+/**
+ * Project-level dev orchestrator — bug-040 Phase A.5 (node-fastify variant).
+ *
+ * Boots both halves of the multi-tier app (Fastify backend + Next.js frontend)
+ * with port coordination. Sister to dev-multi-tier-python-fastapi.mjs.template;
+ * same env-loading + port pre-flight + cross-platform process management; only
+ * the spawnBackend() shape differs.
+ *
+ * Why this exists:
+ *
+ *   `pnpm turbo dev` runs both processes in parallel but doesn't coordinate
+ *   ports between them. With no coordination, the frontend's
+ *   `${baseUrl}/api/...` URLs resolve same-origin (Next.js :3000) and 404 —
+ *   every API call fails because the backend isn't reached.
+ *
+ *   The user's constraint: don't hard-code the port. If apps/api/ is
+ *   running on :3001 (the fastify default per node-fastify SKILL.md) or :3007
+ *   (deliberate override), the frontend must follow.
+ *
+ * Cross-platform: Node's spawn + cross-platform `pnpm.cmd` / `pnpm` shim.
+ * Windows uses `taskkill /T /F` for tree teardown; POSIX uses
+ * `process.kill(-pid)` on detached groups.
+ *
+ * Usage:
+ *
+ *   node scripts/dev.mjs                  # boot backend on :3001 then frontend on :3000
+ *   PORT=3007 node scripts/dev.mjs        # backend on :3007; frontend follows
+ *
+ * Ctrl+C tears both processes down.
+ */
+import { spawn, spawnSync } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { get as httpGet } from "node:http";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const PROJECT_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
+const IS_WIN = process.platform === "win32";
+
+/**
+ * Parse a single .env-style file: KEY=VALUE per line, # comments, blank
+ * lines ignored. Returns a flat object. Quotes around values are stripped
+ * if matched. Does NOT do shell expansion.
+ */
+function parseEnvFile(text) {
+  const out = {};
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const eq = line.indexOf("=");
+    if (eq < 1) continue;
+    const key = line.slice(0, eq).trim();
+    let val = line.slice(eq + 1).trim();
+    // Strip surrounding double or single quotes if both ends match.
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
+    }
+    out[key] = val;
+  }
+  return out;
+}
+
+/**
+ * Load env vars from .env then .env.local at PROJECT_ROOT, with .env.local
+ * overriding .env. Pre-existing process.env values still WIN over file
+ * contents (so an explicit `PORT=3007 node scripts/dev.mjs` invocation
+ * isn't shadowed by a .env.local entry). Returns a merged object suitable
+ * to pass as the `env` field to child_process.spawn().
+ *
+ * Critical for bug-033: subprocess (Fastify) needs secrets like
+ * DATABASE_PATH / SESSION_SECRET that live in .env.local. Node doesn't
+ * auto-load .env.local — Next does, but only within its own process, not
+ * its spawned siblings.
+ */
+function loadEnvFiles() {
+  const merged = {};
+  for (const file of [".env", ".env.local"]) {
+    const path = join(PROJECT_ROOT, file);
+    if (!existsSync(path)) continue;
+    const parsed = parseEnvFile(readFileSync(path, "utf8"));
+    Object.assign(merged, parsed);
+  }
+  // process.env wins over file contents — explicit operator overrides take
+  // precedence (e.g. `PORT=3007 node scripts/dev.mjs`).
+  return { ...merged, ...process.env };
+}
+
+/** Redact secret-looking values for the boot-time log line. */
+function redactEnvForLog(env) {
+  const SECRET_HINTS = /token|secret|key|password|api_?_?key|private/i;
+  const out = {};
+  for (const k of Object.keys(env)) {
+    if (SECRET_HINTS.test(k)) {
+      out[k] = env[k] ? "<set>" : "<empty>";
+    }
+  }
+  return out;
+}
+
+const MERGED_ENV = loadEnvFiles();
+const REDACTED_SECRETS = redactEnvForLog(MERGED_ENV);
+if (Object.keys(REDACTED_SECRETS).length > 0) {
+  process.stdout.write(
+    `[dev] env-loaded secrets (redacted): ${JSON.stringify(REDACTED_SECRETS)}\n`,
+  );
+}
+
+/**
+ * Resolve the backend port. Precedence:
+ *   1. process.env.PORT (operator override)
+ *   2. .env.local PORT (highest file priority)
+ *   3. apps/api/.env (PORT=N line) — legacy per-tier convention
+ *   4. 3001 (Fastify default per node-fastify SKILL.md §dev-orchestrator)
+ *
+ * NOTE: bug-038 Phase A standardized 3001 as the node-fastify
+ * `STACK_DEFAULT_BACKEND_PORT` in `orchestrator/src/dev-server.ts:46`.
+ */
+function resolveBackendPort() {
+  if (MERGED_ENV.PORT) return Number(MERGED_ENV.PORT);
+  const apiEnvPath = join(PROJECT_ROOT, "apps", "api", ".env");
+  if (existsSync(apiEnvPath)) {
+    const text = readFileSync(apiEnvPath, "utf8");
+    const m = text.match(/^\s*PORT\s*=\s*(\d+)\s*$/m);
+    if (m) return Number(m[1]);
+  }
+  return 3001;
+}
+
+const BACKEND_PORT = resolveBackendPort();
+const BACKEND_URL = `http://localhost:${BACKEND_PORT}`;
+const FRONTEND_PORT = 3000;
+
+/**
+ * Spawn the Fastify backend via `pnpm --filter @repo/api dev`. The api
+ * package's `dev` script (typically `tsx watch src/server.ts`) reads PORT
+ * from env, so passing PORT=N in env is sufficient.
+ *
+ * pnpm-filter resolves `@repo/api` from the monorepo root (PROJECT_ROOT) —
+ * cwd is the project root, NOT apps/api/. Different from the FastAPI
+ * variant which spawns uv from inside apps/api/.
+ */
+function spawnBackend() {
+  const cmd = IS_WIN ? "pnpm.cmd" : "pnpm";
+  const child = spawn(cmd, ["--filter", "@repo/api", "dev"], {
+    cwd: PROJECT_ROOT,
+    stdio: ["ignore", "pipe", "pipe"],
+    detached: !IS_WIN,
+    windowsHide: true,
+    shell: IS_WIN,
+    // bug-071 sub-fix D (2026-05-07) — set ENABLE_TEST_SEED=1 by default in
+    // dev.mjs so operators who manually boot for review can subsequently run
+    // the verifier (synth-e2e specs need /test/seed-baseline). Operator can
+    // override by setting ENABLE_TEST_SEED=0 in their shell before running
+    // dev.mjs (rare; only if explicitly testing seed-route gating).
+    //
+    // bug-080 (2026-05-11) — read process.env.ENABLE_TEST_SEED directly, NOT
+    // MERGED_ENV. Empirical case: reading-log-02 + 3 sister projects shipped
+    // with ENABLE_TEST_SEED=0 in .env (architect/.env.example was generated
+    // with `=0` instead of `=1`); MERGED_ENV picks that up, the nullish-
+    // coalescing keeps "0", and dev sessions silently 404 on /test/cleanup.
+    // Reading only process.env limits "operator override" to the shell-level
+    // (the documented escape hatch), not file-state — which protects against
+    // stale / mis-scaffolded .env files.
+    env: {
+      ...MERGED_ENV,
+      PORT: String(BACKEND_PORT),
+      ENABLE_TEST_SEED: process.env.ENABLE_TEST_SEED ?? "1",
+    },
+  });
+  if (!IS_WIN && typeof child.unref === "function") child.unref();
+  // Track whether the spawn itself failed (e.g. pnpm not on PATH). Without
+  // this guard, a probe that hits a stale process on the same port from a
+  // previous session would falsely declare "backend ready" — masking the
+  // real spawn failure until much later.
+  child.on("error", (err) => {
+    process.stderr.write(`[api] spawn failed: ${err.message}\n`);
+    child.__spawnFailed = true;
+  });
+  child.on("exit", (code) => {
+    if (code !== null && code !== 0) child.__spawnFailed = true;
+  });
+  // Forward output with a [api] prefix so operator can distinguish.
+  if (child.stdout) {
+    child.stdout.on("data", (b) => process.stdout.write(`[api] ${b}`));
+  }
+  if (child.stderr) {
+    child.stderr.on("data", (b) => process.stderr.write(`[api] ${b}`));
+  }
+  return child;
+}
+
+/**
+ * Spawn the Next.js frontend via `pnpm -C apps/web dev`. NEXT_PUBLIC_API_BASE
+ * is set in the spawned env so the frontend's API client constructs URLs
+ * that hit the backend port, not same-origin.
+ */
+function spawnFrontend(apiBaseUrl) {
+  const cmd = IS_WIN ? "pnpm.cmd" : "pnpm";
+  const child = spawn(cmd, ["-C", "apps/web", "dev"], {
+    cwd: PROJECT_ROOT,
+    stdio: ["ignore", "pipe", "pipe"],
+    detached: !IS_WIN,
+    windowsHide: true,
+    shell: IS_WIN,
+    env: {
+      ...MERGED_ENV,
+      // PORT in .env / .env.local applies to the BACKEND. Force the frontend
+      // to FRONTEND_PORT so Next doesn't inherit the backend's port and
+      // collide with itself. (Discovered live during bug-033 fix smoke-test:
+      // .env.local's PORT=4000 bled into Next via MERGED_ENV → both halves
+      // tried to bind :4000.)
+      PORT: String(FRONTEND_PORT),
+      BROWSER: "none",
+      NEXT_PUBLIC_API_BASE: apiBaseUrl,
+    },
+  });
+  if (!IS_WIN && typeof child.unref === "function") child.unref();
+  if (child.stdout) {
+    child.stdout.on("data", (b) => process.stdout.write(`[web] ${b}`));
+  }
+  if (child.stderr) {
+    child.stderr.on("data", (b) => process.stderr.write(`[web] ${b}`));
+  }
+  return child;
+}
+
+/**
+ * Poll baseUrl/health until the backend responds with anything < 500. Most
+ * Fastify projects expose GET /health (per node-fastify SKILL.md §3); we
+ * accept anything < 500 to tolerate a 404 if the server is up but the
+ * health route isn't registered yet.
+ */
+async function waitForBackend(child, baseUrl, timeoutMs = 30_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    // Bail early if the spawn itself failed (pnpm missing, exit non-zero).
+    // Without this guard, a probe that hits a stale process on the same
+    // port from a previous session would falsely declare "backend ready"
+    // and mask the real spawn failure until much later.
+    if (child.__spawnFailed) {
+      throw new Error(
+        `backend process failed to start (pnpm missing or @repo/api dev script exited non-zero). ` +
+          `Run \`where.exe pnpm\` (Windows) / \`which pnpm\` (POSIX) to verify install. ` +
+          `Verify apps/api/package.json declares a \`dev\` script (typically \`tsx watch src/server.ts\`).`,
+      );
+    }
+    const code = await probeOnce(`${baseUrl}/health`);
+    if (code !== null && code < 500) return;
+    await sleep(500);
+  }
+  throw new Error(
+    `backend did not respond on ${baseUrl}/health within ${timeoutMs}ms`,
+  );
+}
+
+function probeOnce(url) {
+  return new Promise((resolveP) => {
+    const req = httpGet(url, (res) => {
+      res.resume();
+      resolveP(res.statusCode ?? null);
+    });
+    req.on("error", () => resolveP(null));
+    req.setTimeout(2000, () => {
+      req.destroy();
+      resolveP(null);
+    });
+  });
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/** Cross-platform process-tree kill. Best-effort. */
+function killTree(child) {
+  if (!child || !child.pid) return;
+  try {
+    if (IS_WIN) {
+      spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
+        stdio: "ignore",
+      });
+    } else {
+      try {
+        process.kill(-child.pid, "SIGTERM");
+      } catch {}
+      try {
+        process.kill(child.pid, "SIGTERM");
+      } catch {}
+    }
+  } catch {}
+}
+
+async function main() {
+  console.error(`[dev] backend port:  ${BACKEND_PORT} (${BACKEND_URL})`);
+  console.error(`[dev] frontend port: ${FRONTEND_PORT}`);
+
+  // Pre-flight: refuse to start if either port is already in use.
+  //
+  // Backend port: if a stale process responds, our probe would falsely
+  // declare it "ready" and we'd boot the frontend pointed at the stale
+  // process — masking spawn failures + giving stale-data symptoms.
+  //
+  // Frontend port: Next.js auto-falls-back to :3001 when :3000 is taken,
+  // BUT the backend's CORS_ORIGIN allowlist is `http://localhost:3000` —
+  // a frontend on :3001 makes EVERY API call fail CORS preflight. Better
+  // to refuse at boot than to surface as cryptic CORS errors mid-test.
+  for (const { port, label, url, hint } of [
+    {
+      port: BACKEND_PORT,
+      label: "backend",
+      url: BACKEND_URL,
+      hint: "another fastify? a different project's API? kill it before retrying.",
+    },
+    {
+      port: FRONTEND_PORT,
+      label: "frontend",
+      url: `http://localhost:${FRONTEND_PORT}`,
+      hint: "Next.js auto-falls-back to :3001 — but backend CORS allowlist is :3000, so cross-origin requests from :3001 will fail. kill the orphan and re-run.",
+    },
+  ]) {
+    const code = await probeOnce(`${url}/`);
+    if (code !== null) {
+      console.error(
+        `[dev] ERROR: ${url} is already responding (status ${code}) — ` +
+          `another process is bound to port ${port} (${label}). ${hint}\n` +
+          `Kill it:\n` +
+          (IS_WIN
+            ? `  $pid = (Get-NetTCPConnection -LocalPort ${port} -State Listen).OwningProcess; Stop-Process -Id $pid -Force\n`
+            : `  lsof -ti:${port} | xargs kill -9\n`) +
+          `Then re-run \`node scripts/dev.mjs\`.`,
+      );
+      process.exit(1);
+    }
+  }
+
+  console.error(`[dev] booting Fastify...`);
+  const backend = spawnBackend();
+
+  let teardownInFlight = false;
+  const teardown = () => {
+    if (teardownInFlight) return;
+    teardownInFlight = true;
+    console.error(`\n[dev] tearing down...`);
+    killTree(backend);
+    if (typeof frontend !== "undefined") killTree(frontend);
+    setTimeout(() => process.exit(0), 500);
+  };
+  process.on("SIGINT", teardown);
+  process.on("SIGTERM", teardown);
+
+  try {
+    await waitForBackend(backend, BACKEND_URL);
+  } catch (err) {
+    console.error(`[dev] ERROR: ${err.message}`);
+    killTree(backend);
+    process.exit(1);
+  }
+  console.error(`[dev] backend ready at ${BACKEND_URL}/health`);
+
+  console.error(
+    `[dev] booting Next.js with NEXT_PUBLIC_API_BASE=${BACKEND_URL}...`,
+  );
+  const frontend = spawnFrontend(BACKEND_URL);
+
+  // Hold the process open. SIGINT triggers teardown.
+  await new Promise(() => {});
+}
+
+main().catch((err) => {
+  console.error(err.stack ?? err.message);
+  process.exit(1);
+});

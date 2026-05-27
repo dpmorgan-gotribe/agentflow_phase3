@@ -1,0 +1,6 @@
+tooling:
+  stack:
+    web_framework: react-next
+    backend_framework: null
+    database: null
+    persistence_layer: localStorage

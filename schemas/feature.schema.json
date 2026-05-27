@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow/schemas/feature.schema.json",
+  "title": "feature — one post-design unit-of-work with an assigned worktree and agent sequence",
+  "description": "A feature is the first-class primitive of tasks.yaml v2. It groups related tasks that share a worktree + branch + agent sequence. The orchestrator (task 035) executes each feature inside its own git worktree by invoking the declared agent_sequence[] in order. Features can skip[] agents that aren't needed for their scope. Parallelism across features is governed by feature.depends_on[]. Refactor-004 introduces this primitive; it does not exist in tasks.yaml v1.",
+  "type": "object",
+  "required": [
+    "id",
+    "worktree",
+    "branch",
+    "priority",
+    "agent_sequence",
+    "tasks"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^feat-[a-z][a-z0-9-]{1,48}$",
+      "description": "Feature ID; kebab-case slug prefixed with 'feat-'. Stable across tasks.yaml regenerations so depends_on references survive."
+    },
+    "worktree": {
+      "type": "string",
+      "pattern": "^feat-[a-z][a-z0-9-]{1,48}$",
+      "description": "Directory name under .claude/worktrees/{worktree}/ where git-agent checks out this feature's branch. Matches feature id by convention but kept as a separate field so alternate worktree naming is possible."
+    },
+    "branch": {
+      "type": "string",
+      "pattern": "^feat/[a-z][a-z0-9-]{1,48}$",
+      "description": "Git branch name; forked from main by git-agent at checkout-feature time."
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "description": "P0 = critical path, P1 = important, P2 = nice-to-have, P3 = polish / deferrable."
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^feat-[a-z][a-z0-9-]{1,48}$"
+      },
+      "description": "Feature IDs that must complete before this feature's worktree can be opened. Governs inter-feature parallelism. Default: [] (no dependencies → runs as early as concurrency permits)."
+    },
+    "skip": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "web",
+          "mobile",
+          "backend"
+        ]
+      },
+      "description": "Surfaces the feature does NOT touch. If skip contains 'mobile', the mobile-frontend-builder is skipped even if listed in agent_sequence. Allows tasks.yaml schema to remain uniform while feature scope varies."
+    },
+    "agent_sequence": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "backend-builder",
+          "web-frontend-builder",
+          "mobile-frontend-builder",
+          "tester",
+          "reviewer",
+          "git-agent",
+          "security",
+          "devops"
+        ]
+      },
+      "minItems": 1,
+      "description": "Ordered list of agents that must run on this feature. Orchestrator invokes each in order, passing only the tasks[] entries whose agent field matches the current sequence step. After the final agent, git-agent implicitly runs close-feature. agent_sequence never includes git-agent explicitly — the worktree lifecycle is orchestrator-owned."
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/task"
+      },
+      "minItems": 1,
+      "description": "Concrete work units inside this feature. Each task has an 'agent' field that must match one of the entries in agent_sequence — otherwise the task never runs."
+    },
+    "summary": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Short human-readable description of what this feature delivers. Appears in plan manifests + orchestrator progress logs."
+    },
+    "brief_reference": {
+      "type": "string",
+      "description": "Reference into brief.md (e.g., 'brief.md §12 auth flow') or a flow ID from docs/analysis/{platform}/flows.md. Lets builders cross-check feature scope against the brief."
+    },
+    "affects_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "bug-015 Phase 2: glob list of files this feature is expected to mutate. PM authors at task-graph emission time. Orchestrator uses overlap detection to serialize features that share files (auto-add depends_on). Conservative — when in doubt, list more globs."
+    }
+  },
+  "definitions": {
+    "task": {
+      "type": "object",
+      "required": [
+        "id",
+        "agent"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,80}$",
+          "description": "Task ID; kebab-case. Unique within the feature."
+        },
+        "agent": {
+          "type": "string",
+          "enum": [
+            "backend-builder",
+            "web-frontend-builder",
+            "mobile-frontend-builder",
+            "tester",
+            "reviewer",
+            "security",
+            "devops"
+          ],
+          "description": "The agent responsible for this task. MUST be a member of the parent feature.agent_sequence — otherwise the task never runs (schema + orchestrator both enforce)."
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Task IDs within the SAME feature that must complete before this task runs. Cross-feature deps are expressed at feature.depends_on level, not task level."
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Skill IDs the agent should load when executing this task (from .claude/skills/). Example: ['stripe-connect', 'zod-refinement']."
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "P0",
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "description": "Inherits from parent feature if omitted."
+        },
+        "integration_ref": {
+          "type": "string",
+          "description": "Pointer into architecture.yaml when the task implements a vendor integration. Example: 'architecture.yaml#apps.api.integrations.payments'."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "in-progress",
+            "completed",
+            "blocked",
+            "skipped"
+          ],
+          "description": "Updated by orchestrator + executing agents. Initial value: pending."
+        },
+        "estimated_screens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "For frontend tasks only: approximate screen count. Used for budget projection."
+        },
+        "screens": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(webapp|mobile|admin|desktop)/[a-z0-9][a-z0-9-]*$"
+          },
+          "default": [],
+          "description": "feat-012: exact `{platform}/{screenId}` set this task owns. Frontend-builder tasks populated by PM from flows.md + screens-manifest.json; backend / tester / reviewer / devops tasks MUST leave empty. Two features claiming the same entry → tasks.yaml warnings[] (PM does not auto-resolve). Builders scope their work to this list; they do NOT read docs/screens/{platform}/*.html as a wildcard."
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Short human-readable description."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Free-form notes, test fixtures, or architecture cross-references. Agents read this for context."
+        }
+      }
+    }
+  }
+}

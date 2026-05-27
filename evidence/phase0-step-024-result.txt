@@ -1,0 +1,15 @@
+phase0-step-024 — orchestrator/src/protected-files.ts
+Date: 2026-05-27
+
+Action: bulk-cp protected-files.ts (327 lines) from Phase 2.
+
+Verification:
+- File present at orchestrator/src/
+- Tests: bug-091 protected-files guard test cases pass (3 cases: deletes postcss.config.mjs → rollback; strips @tailwind directive → rollback; benign dispatch → merge)
+
+Coverage:
+- 4 classes: PROTECTED_FILES (absolute paths), PROTECTED_PACKAGES_FILES (glob per package), PROTECTED_CONTENT_INVARIANTS (must-contain substrings), first-match tuples
+- Post-dispatch verifyProtectedFiles() rolls back merge on violation
+- Canonical machine manifest cited by .claude/rules/protected-files-policy.md
+
+Verdict: GO. Bug-091 hardening preserved.

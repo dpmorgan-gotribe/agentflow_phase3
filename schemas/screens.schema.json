@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow/schemas/screens.schema.json",
+  "title": "screens.json (v3.0) — per-platform screen catalog",
+  "description": "Analyst phase-4 output per platform. Downstream agents (UI Designer, /mockups, /screens) read this instead of re-parsing the brief.",
+  "type": "object",
+  "required": ["version", "generatedAt", "app"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": "3.0" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "app": { "$ref": "#/$defs/app" }
+  },
+  "$defs": {
+    "app": {
+      "type": "object",
+      "required": [
+        "appId",
+        "appName",
+        "appType",
+        "layoutSkill",
+        "defaultNavigation",
+        "screens"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "appId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "Platform-qualified kebab-case id, e.g. 'runclub-mobile'."
+        },
+        "appName": { "type": "string", "minLength": 1 },
+        "appType": { "enum": ["mobile", "webapp", "admin", "desktop"] },
+        "layoutSkill": { "enum": ["mobile", "webapp", "desktop"] },
+        "defaultNavigation": { "$ref": "#/$defs/navigation" },
+        "screens": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/screen" }
+        }
+      }
+    },
+    "navigation": {
+      "type": "object",
+      "required": ["header", "footer", "sidemenu"],
+      "additionalProperties": false,
+      "properties": {
+        "header": { "$ref": "#/$defs/header" },
+        "footer": { "$ref": "#/$defs/footer" },
+        "sidemenu": { "$ref": "#/$defs/sidemenu" }
+      }
+    },
+    "header": {
+      "type": "object",
+      "required": ["variant"],
+      "additionalProperties": false,
+      "properties": {
+        "variant": {
+          "enum": ["minimal", "standard", "admin", "transparent"]
+        },
+        "actions": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "footer": {
+      "type": "object",
+      "required": ["variant"],
+      "additionalProperties": false,
+      "properties": {
+        "variant": { "enum": ["tab-bar", "hidden"] },
+        "tabs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "activeTab": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "variant": { "const": "tab-bar" } } },
+          "then": { "required": ["tabs"] }
+        }
+      ]
+    },
+    "sidemenu": {
+      "type": "object",
+      "required": ["visible"],
+      "additionalProperties": false,
+      "properties": {
+        "visible": { "type": "boolean" },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "activeSection": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "visible": { "const": true } } },
+          "then": { "required": ["items"] }
+        }
+      ]
+    },
+    "screen": {
+      "type": "object",
+      "required": [
+        "id",
+        "file",
+        "name",
+        "description",
+        "section",
+        "navigation",
+        "components",
+        "icons",
+        "flows"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "file": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*\\.html$"
+        },
+        "routePattern": {
+          "type": "string",
+          "description": "bug-025: canonical URL for this screen, framework-agnostic colon-prefixed param syntax (e.g. '/report/:owner/:repo'). Both feat-home (which navigates) and feat-report (which owns the route file) read this string verbatim — no inventing per-feature. Optional for now (existing screens.json files predate this field); when present, builders MUST honor it for both the route file location AND any nav target.",
+          "pattern": "^/[a-zA-Z0-9._\\-/:*[\\]]*$"
+        },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "section": { "type": "string", "minLength": 1 },
+        "navigation": { "$ref": "#/$defs/navigation" },
+        "components": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "icons": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "flows": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentflow/schemas/tasks-coverage.schema.json",
+  "title": "tasks-coverage.json — PM's mapping from brief capabilities to tasks.yaml task IDs",
+  "description": "Emitted by /pm --mode=tasks between step 7b (file-affinity) and step 8 (write tasks.yaml). Cross-checked by scripts/audit-brief-coverage.mjs. Authoritative spec: plans/active/feat-023-pm-stage-brief-coverage-assertion.md. Zod mirror: packages/orchestrator-contracts/src/brief-coverage.ts.",
+  "type": "object",
+  "required": ["version", "covers"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "covers": {
+      "type": "object",
+      "description": "Map: capability ID → array of ≥1 task IDs that deliver it.",
+      "patternProperties": {
+        "^cap-[0-9]+(\\.[0-9]+)?-[a-z][a-z0-9-]*$": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "deferred": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "required": ["capability", "reason", "approvedBy"],
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "type": "string",
+            "pattern": "^cap-[0-9]+(\\.[0-9]+)?-[a-z][a-z0-9-]*$"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approvedBy": {
+            "type": "string",
+            "minLength": 1,
+            "description": "'pm-agent-decision' for PM-initiated; 'human:<name>' for human-driven."
+          }
+        }
+      }
+    }
+  }
+}

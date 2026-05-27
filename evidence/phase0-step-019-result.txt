@@ -1,0 +1,16 @@
+phase0-step-019 — orchestrator/src/budget-tracker.ts
+Date: 2026-05-27
+
+Action: bulk-cp budget-tracker.ts (202 lines) from Phase 2.
+
+Verification:
+- File present at orchestrator/src/
+- Tests: orchestrator/tests/budget-tracker.test.ts passes
+
+Coverage:
+- Pipeline-wide cost accumulator with per-model breakdowns (Sonnet/Opus/Haiku)
+- Pipeline cap + per-stage caps
+- BudgetExceededError sentinel
+- Wired into stage-runner (Phase 1 row) + invoke-agent (post-dispatch spend recording)
+
+Verdict: GO.
