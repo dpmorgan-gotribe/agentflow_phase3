@@ -32,15 +32,26 @@
 
 ## ADR-001 — Cross-worktree prompt-cache reuse via excludeDynamicSections
 
-- **Status:** accepted
-- **Date:** 2026-05-27
-- **Context:** Phase 2's parallel worktree fan-out (Mode B) misses Anthropic prompt cache on every worktree because the SDK auto-injects per-machine cwd/git/platform sections into the system prefix. Per RESEARCH.md §A.1 + §F.6, this is the highest single-ROI performance issue in the entire system.
-- **Decision:** Set `excludeDynamicSections: true` on every `query()` call in the orchestrator. Default `auth-provider.ts` to API-key mode (Max OAuth is ToS-violating for headless SDK + breaks cache_control as of Mar 2026). Set `ENABLE_PROMPT_CACHING_1H=1`.
-- **Consequences:** ProjectDiscovery precedent: cache-hit ratio 7% → 84%. For 4-worktree Mode B run with ~10K-token prefix, this saves 30K tokens of cache writes per run (~$0.09 on Sonnet × N runs/day). First-turn cache reads in worktrees 2-4 become non-zero.
+- **Status:** accepted (revised 2026-05-28 — auth-provider change reverted)
+- **Date:** 2026-05-27 (revised 2026-05-28)
+- **Context:** Phase 2's parallel worktree fan-out (Mode B) misses Anthropic prompt cache on every worktree because the SDK auto-injects per-machine cwd/git/platform sections into the system prefix. Per RESEARCH.md §A.1 + §F.6, this is a high-ROI performance issue.
+- **Decision (load-bearing):** Set `excludeDynamicSections: true` on every `query()` call in the orchestrator. This is auth-mode-independent.
+- **Decision (recommended, not enforced):** When operator uses `provider: anthropic-api`, also set `ENABLE_PROMPT_CACHING_1H=1` in env (1h TTL improves long-loop cache economics).
+- **Consequences:** ProjectDiscovery precedent: cache-hit ratio 7% → 84%. For 4-worktree Mode B run with ~10K-token prefix, this saves 30K tokens of cache writes per run.
 - **Alternatives considered:**
-  - Keep Max OAuth (current Phase 2 default) — rejected: ToS violation + HTTP 400 on cache_control
-  - Defer the change — rejected: cheap to ship from day one
-- **References:** RESEARCH.md §A "Agentflow Retrieval Layer" + §F "Advanced Prompt Caching", row phase0-step-049
+  - Defer the change — rejected: cheap to ship from day one.
+
+### Revision 2026-05-28 — reverted forced API-key default
+
+The original 2026-05-27 ADR also said "Default `auth-provider.ts` to API-key mode (Max OAuth is ToS-violating for headless SDK + breaks cache_control as of Mar 2026)." That change was made at the factory project level via `.claude/models.yaml`. **Reverted 2026-05-28** after the operator flagged that:
+
+1. They run on a Claude Max 20x subscription with no `ANTHROPIC_API_KEY`. Forcing API-key default breaks their orchestrator runs.
+2. The RESEARCH.md claims about Max OAuth being ToS-violating for SDK use were treated as authoritative without operator validation. The right behavior is to surface the tradeoff in `docs/agent-sdk-auth-providers.md` and let the operator choose, not to pin a factory-level default that overrides the user's own `~/.claude/models.yaml`.
+3. `excludeDynamicSections: true` is the load-bearing performance change. Auth-mode choice is the operator's call.
+
+Lesson captured in `LESSONS.md` (will be added next /capture-lesson run): "Do not pin operator-facing defaults from RESEARCH.md claims without validating against the actual operator's setup. Factory project-level overrides of user-home config are aggressive; recommend, document, and let the operator opt in."
+
+- **References:** RESEARCH.md §A "Agentflow Retrieval Layer" + §F "Advanced Prompt Caching", row phase0-step-049, docs/agent-sdk-auth-providers.md
 
 ## ADR-002 — Hybrid TDD authority split (builder 60% / tester 80%)
 

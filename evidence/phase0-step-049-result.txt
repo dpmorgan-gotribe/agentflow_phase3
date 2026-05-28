@@ -7,19 +7,13 @@ Status of each sub-adopt:
    - ALREADY DONE in Phase 2 invoke-agent.ts (line 2626, inside the systemPrompt preset block, with full explanatory comment at lines 2615-2622). Ported verbatim in phase0-step-022.
    - Confirmed via grep: only orchestrator/src/invoke-agent.ts contains a query() callsite with systemPrompt config; the option is set.
 
-2. **API-key auth default for orchestrator path**
-   - Added to .claude/models.yaml at factory project level:
-     ```yaml
-     provider:
-       provider: anthropic-api
-       apiKeyEnvVar: ANTHROPIC_API_KEY
-     ```
-   - This OVERRIDES whatever ~/.claude/models.yaml has at user level (per project > user precedence in model-config.ts merge).
-   - Operator can revert to Max OAuth by editing this section (with the ToS-violation acknowledgment).
+2. **API-key auth default for orchestrator path — REVERTED 2026-05-28**
+   - Originally added to .claude/models.yaml: `provider: anthropic-api`. Reverted same day after operator flagged they run on Claude Max 20x with no API key. Factory `.claude/models.yaml` now lets `~/.claude/models.yaml` decide (no project-level override).
+   - The RESEARCH.md claim ("Max OAuth ToS-violating for headless SDK") was treated as authoritative; the right behavior was to surface the tradeoff and let the operator choose. See DECISIONS.md ADR-001 revision section + LESSONS.md entry "phase0-step-049 — RESEARCH adopts must be validated against operator setup".
+   - Net result: auth is operator-chosen. `claude-max-subscription` (default for Max users), `anthropic-api`, `bedrock`, `vertex` all supported by auth-provider.ts (unchanged).
 
 3. **ENABLE_PROMPT_CACHING_1H=1**
-   - Documented in CLAUDE.md "Model configuration" section: required env for orchestrator runs.
-   - Cited in DECISIONS.md ADR-001 rationale.
+   - Documented in CLAUDE.md "Model configuration" section as RECOMMENDED for `anthropic-api` users on long fix-loop / multi-worktree runs. No-op on `claude-max-subscription` (Claude Code session manages caching). Not mandated.
 
 4. **Cache-hit-ratio metric**
    - ALREADY DONE in Phase 2 budget-tracker.ts: tracks cacheReadInputTokens + cacheCreationInputTokens per dispatch (lines 36-37, 132-133, 142-143, 149-152).
