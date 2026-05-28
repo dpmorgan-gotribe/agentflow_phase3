@@ -676,6 +676,46 @@ Single standalone HTML page. This is NOT a docs grid. **The preview MUST read as
 
 10. **Header / Nav / Logo MUST appear as a top section. — phase1-step-032 / feat-001.** Before this step existed, design-system-preview.html omitted the header entirely; the section list jumped from "Hero composition" to "Service overview". Every project's preview MUST now include an explicit `<section id="header">` (or top-of-page header element) that renders the Nav primitive + Logo pattern matching the extracted shape. The reviewer sees what `/screens` will reach for when composing every screen's header. No header = abort with `success: false` and `errors: ["design-system-preview.html missing header/nav/logo section"]`.
 
+11. **Required sub-sections (project-agnostic) — phase1-step-034 / bug-002.** Every preview MUST contain ALL of these sub-sections regardless of which project / style / mockup is being processed. Each gets its own `<section id="...">` element and contains live, interactive instances. The mechanical audit at the end of step 17 verifies presence — missing any section aborts the skill with `success:false`. **The previous Full-coverage assertion lived in prose only; the LLM author followed it inconsistently across projects. The fix is project-agnostic + mechanically enforced.**
+
+    | Required sub-section                                                                                                      | What goes in it                                                                                                                                                                                                                                                                                                               |
+    | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | `<section id="header">`                                                                                                   | Nav + Logo (Wordmark composition) + primary CTA — per principle 10.                                                                                                                                                                                                                                                           |
+    | `<section id="realistic-chrome">` (or per-screen sections like `#hero`, `#services`, `#work`, `#testimonial`, `#contact`) | The analyst-observed patterns rendered in the project's actual screen contexts. This is the existing "real app chrome" content from principles 1+5. Wordmark + MarketingLayout get `data-comp` annotations on the existing nodes here (e.g. `<header data-comp="Nav" id="header">` + `<main data-comp="MarketingLayout">`).   |
+    | `<section id="form-controls">`                                                                                            | Input + Textarea + Select + Checkbox + Radio + Switch + Slider — every one rendered live + interactive (Switch toggles, Slider drags, etc.). Required even if the project's screens don't use them (per UX principle 3).                                                                                                      |
+    | `<section id="overlays">`                                                                                                 | Triggers for Tabs (click to switch panel), Tooltip (hover-reveal), Toast (button fires `fireToast()`), Modal (button opens `<dialog>.showModal()` + Esc closes + backdrop closes), Drawer (button opens with `transform: translateX` + backdrop closes), plus a Skeleton sample showing the kit's loading placeholder.        |
+    | `<section id="data-views">`                                                                                               | DataTable (sample rows + sortable headers + pagination row) + CommandPalette (button opens a search combobox).                                                                                                                                                                                                                |
+    | `<section id="button-variants">`                                                                                          | One rendered instance per `variants[]` entry in `.components-shapes.json` Button. Each carries `data-comp="Button · <variantName> variant · …"` so the audit grep matches `data-comp="Button[^"]*·\s*<variantName>\s+variant`.                                                                                                |
+    | `<section id="card-variants">`                                                                                            | Same pattern for Card's `variants[]` (raised / ghost / feature / etc. per the extracted shape).                                                                                                                                                                                                                               |
+    | `<section id="badge-variants">`                                                                                           | Same pattern for Badge's `variants[]` (highlight / accent / neutral / success / etc.).                                                                                                                                                                                                                                        |
+    | `<section id="icon-catalog">`                                                                                             | Every distinct icon name appearing in `docs/analysis/{platform}/screens.json[*].icons[]` rendered as inline SVG with `data-icon="<name>"` on the SVG element. Uniform size (e.g. 32×32) on a grid for visual comparison. Reviewer signs off on icon style + scale + weight here, before the icons propagate across N screens. |
+
+    **Operator-facing rationale (bug-002 origin):** _"it's crucial we see everything on the stylesheet at this stage as the user may want components changed and it's best we fix here as the source of truth rather than fixing them everywhere they are used upstream."_ The preview is the kit-lock review surface — if a component isn't here at gate 3, the operator can't change it before it gets shipped across N screens.
+
+### 17a. Mechanical coverage audit — phase1-step-034 / bug-002
+
+After writing `docs/design-system-preview.html`, invoke the factory-level audit script:
+
+```bash
+node $FACTORY_ROOT/scripts/audit-preview-coverage.mjs
+```
+
+(Run from the project's cwd. `$FACTORY_ROOT` resolves to the path of the agentflow factory checkout that scaffolded this project — typically two directory levels up from `projects/<slug>/`.)
+
+The script reads:
+
+- `docs/analysis/shared/components.md` JSON trailer → `primitives ∪ patterns ∪ layouts ∪ projectSpecific` (analyst-observed) + `canonicalCoverage.primitivesUnused ∪ canonicalCoverage.patternsUnused`
+- `packages/ui-kit/.components-shapes.json` → per-primitive `variants[*].name` (required variant coverage)
+- `docs/brief-summary.json.detectedPlatforms` + each `docs/analysis/{platform}/screens.json` → distinct icon names across all platforms
+
+It greps the preview for `data-comp="<Name>"`, `data-comp="<Name>[^"]*· <variant> variant"`, and `data-icon="<name>"` annotations.
+
+On any gap (non-empty `missingObserved` / `missingCanonicalUnused` / `missingVariants` arrays), the script exits 1 with a human-readable report. Icons are warning-only by default; pass `--strict` to fail on missing icons too.
+
+**Hard-abort contract:** if the audit exits non-zero, this skill ABORTS with `success: false` and `errors[]` populated from the audit's reported missing items. Do NOT regenerate the preview blindly — re-read `components.md` + `.components-shapes.json` + `screens.json` first to confirm the required-coverage union didn't change, then re-author the preview ADDING the missing sub-sections (don't rewrite the whole file).
+
+This is the mechanical enforcement that the prose Full-coverage assertion (below) was missing. The prose stays for context; the script is what the skill commits to per bug-002.
+
 **Tooltip implementation — ship this snippet verbatim in every preview:**
 
 ```html
@@ -758,7 +798,7 @@ Single standalone HTML page. This is NOT a docs grid. **The preview MUST read as
 
 The outline-on-hover + dashed rectangle is a universal affordance: hovering reveals every reviewable element at a glance. Reviewer can scan the page for olive dashed outlines to find anything unreviewed.
 
-**Full-coverage assertion (unchanged).** Before writing the preview, verify: every entry in `components.md`'s JSON trailer (`primitives`, `patterns`, `layouts`, `projectSpecific` combined) has at least one corresponding rendered instance with a matching `data-comp` attribute. If any analyst-observed component is missing from the preview, abort — this is the load-bearing contract that prevents unreviewed components leaking into `/screens`.
+**Full-coverage assertion (mechanically enforced per bug-002).** Before writing the preview, verify: every entry in `components.md`'s JSON trailer (`primitives`, `patterns`, `layouts`, `projectSpecific` combined) AND every entry in `canonicalCoverage.{primitivesUnused, patternsUnused}` AND every variant from `.components-shapes.json` `primitives[*].variants[]` has at least one corresponding rendered instance with a matching `data-comp` annotation. If any required component is missing, abort. The mechanical post-write check at the end of step 17 (step 17a — `scripts/audit-preview-coverage.mjs`) is the load-bearing enforcement — the prose assertion above describes the contract; the script enforces it. This is what prevents unreviewed components from leaking into `/screens`.
 
 **Default-shape parity assertion — phase1-step-032 / feat-001.** After writing the preview, for every primitive that has an entry in `.components-shapes.json` with `instancesObserved > 0`, verify the preview's render of that primitive uses the extracted `tailwindClass` for border-radius (e.g. Button preview must use `rounded-full` if the mockup's Button was pill). On mismatch, abort with `errors: ["Button preview uses rounded-md but mockup default is rounded-full per .components-shapes.json"]` — this prevents the empirical regression that motivated phase1-step-032.
 
@@ -790,6 +830,7 @@ This skill's verify covers ONLY the agnostic surface it ships. The ≥12-mandato
 - Run `pnpm typecheck` in the monorepo IF a tsconfig + node_modules already exist at project root. The agnostic surface has no React imports, so typecheck should pass with `noEmit`. If typecheck fails for reasons OUTSIDE this skill's outputs (e.g. an upstream package has TS errors), record as warning but don't fail.
 - `validate-consumer` is NOT run against the kit itself — its purpose is to scan `apps/**`, which don't exist yet at this stage. The real implementation lands via `/stylesheet-primitives` step 4.
 - **Bug-077 invariant check** — grep `packages/ui-kit/src/styles/globals.css` for `@tailwind base` `@tailwind components` `@tailwind utilities`. If any of the three directives is missing, fail with `globals-css-missing-tailwind-directives` — this is a load-bearing contract that production consumers' Tailwind utility classes depend on.
+- **Coverage audit (bug-002 / phase1-step-034)** — invoke `node $FACTORY_ROOT/scripts/audit-preview-coverage.mjs` from the project cwd. On exit code != 0, abort with `success:false` and populate `errors[]` with the audit's reported missing items (missingObserved / missingCanonicalUnused / missingVariants). Mechanical enforcement of step 17's Full-coverage assertion; project-agnostic.
 - **No `data-kit-component` retrofit yet** — that codemod targets `packages/ui-kit/src/{primitives,layouts}/**/*.tsx` which don't exist at this stage. Moved to `/stylesheet-primitives` step 8.
 - Emit return JSON per the "Return JSON" section below.
 
@@ -989,6 +1030,8 @@ Server lifecycle: started when orchestrator enters gate 3, killed when signoff i
 - [ ] `docs/design-system-preview.html` covers every analyst-observed primitive + pattern + layout + custom component (verified by grep against `.components-plan.json`)
 - [ ] `docs/design-system-preview.html` contains a top-of-page header/nav/logo section (phase1-step-032 / feat-001 — step 17 UX principle 10 + assertion)
 - [ ] `docs/design-system-preview.html` primitive previews use extracted default-shapes from `.components-shapes.json` — Button is pill when mockup is pill, not the hardcoded `rounded-md` default (phase1-step-032 / feat-001 — step 17 UX principle 8 + parity assertion)
+- [ ] `docs/design-system-preview.html` contains all required sub-sections per step 17 principle 11 — `<section id="header">`, `#form-controls`, `#overlays`, `#data-views`, `#button-variants`, `#card-variants`, `#badge-variants`, `#icon-catalog` plus realistic-chrome composition. Project-agnostic — every project's preview ships these sections regardless of which analyst-observed components are in use (phase1-step-034 / bug-002 — step 17 principle 11)
+- [ ] `node $FACTORY_ROOT/scripts/audit-preview-coverage.mjs` exits 0 from the project cwd — required-coverage union (analyst-observed + canonical-unused + per-primitive variants) all present in the preview (phase1-step-034 / bug-002 — step 17a mechanical enforcement)
 - [ ] Full asset-download wave respects budget; on exhaustion writes `docs/design-system-gaps.md` + partial kit
 - [ ] De-duplicates against `docs/mockups/style-{K}/manifest.json.assets[]`
 - [ ] Re-run with unchanged inputs is a no-op (`noChange: true` in return JSON; byte-identical agnostic surface)

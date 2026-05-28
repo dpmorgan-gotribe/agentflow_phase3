@@ -365,6 +365,18 @@ Empirical regression surfaced 2026-05-28: same Hatch proposal that produced P2-g
 
 These two rows together close the empirical regression. Once validation evidence files land (`evidence/phase1-step-032-result.txt` + `evidence/phase1-step-033-result.txt`), the rows flip to `passes:true` via the verify-gate.mjs evidence-read gate. Until then, the rebuild manifest reflects these as in-flight: a clean rebuild from `phase-1-start` + this section's deltas should land the SKILL.md changes; empirical validation is the litmus test, not the rebuild test.
 
+**Row 034 — `/stylesheet` preview-coverage mechanical enforcement (bug-002)** (`.claude/skills/stylesheet/SKILL.md` + `scripts/audit-preview-coverage.mjs`):
+
+Surfaced during the row 032 rerun on `projects/test-app` (2026-05-28T21:15Z) — the new Spark Studio preview was missing 2 analyst-observed components (`Wordmark` / `MarketingLayout`), 12 canonical-unused components (`Tabs` / `Tooltip` / `Toast` / `Modal` / `Drawer` / `Slider` / `Switch` / `Radio` / `Skeleton` / `Select` / `CommandPalette` / `DataTable`), 5 primitives' variants, and the full 23-icon catalog. Root cause: step 17's "Full-coverage assertion" + UX principle 3 lived in prose only — the LLM author followed them inconsistently across projects. Project-agnostic three-part fix:
+
+- New `scripts/audit-preview-coverage.mjs` — factory-level Node script. Reads `docs/analysis/shared/components.md` JSON trailer (`primitives ∪ patterns ∪ layouts ∪ projectSpecific ∪ canonicalCoverage.primitivesUnused ∪ canonicalCoverage.patternsUnused`) + `packages/ui-kit/.components-shapes.json` (per-primitive `variants[*].name`) + `docs/analysis/{platform}/screens.json` (distinct `icons[]` across all platforms). Greps `docs/design-system-preview.html` for `data-comp="<Name>"`, `data-comp="<Name>[^"]*· <variant> variant"`, and `data-icon="<name>"` annotations. Exits 0 on full coverage, 1 on any gap. `--strict` to fail on missing icons (default warning only). `--json` for machine-readable output. Same script works on test-app, future agency portfolios, SaaS dashboards, mobile-first projects — it reads each project's own `components.md` to compute the required-coverage union. (added 2026-05-28 after phase1-step-034)
+- New step 17 principle 11 + table of required sub-sections — every preview MUST contain `<section id="header">` + `#form-controls` + `#overlays` + `#data-views` + `#button-variants` + `#card-variants` + `#badge-variants` + `#icon-catalog` plus the realistic-chrome composition. Project-agnostic — the sub-section requirement holds regardless of which mockup or screen list a given project carries. (added 2026-05-28 after phase1-step-034)
+- New step 17a "Mechanical coverage audit" — invokes `node $FACTORY_ROOT/scripts/audit-preview-coverage.mjs` from the project cwd after writing the preview. Hard-abort with `success:false` + `errors[]` populated from the audit's missing-items report. The prose Full-coverage assertion stays for context; the script is the load-bearing enforcement. (added 2026-05-28 after phase1-step-034)
+- Acceptance criteria + Output contract summary updated to reference the audit script + required sub-sections. (added 2026-05-28 after phase1-step-034)
+- **Validation status:** passes:false in feature_list.json pending re-run of `/stylesheet` on `projects/test-app` producing a preview that the audit script passes (exit 0). (added 2026-05-28 after phase1-step-034)
+
+The rebuild guarantee for rows 032 + 033 + 034 combined: a clean rebuild from `phase-1-start` + this §F section should land all SKILL.md additions + the audit script; empirical validation is the litmus test that the changes actually fix the regression class.
+
 ---
 
 # Phase 2 — Build orchestration (Mode B)

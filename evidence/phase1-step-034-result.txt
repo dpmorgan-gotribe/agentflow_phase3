@@ -1,0 +1,111 @@
+phase1-step-034 — /stylesheet preview-coverage mechanical enforcement — empirical validation
+=============================================================================================
+
+Run: 2026-05-28
+Parent plan: plans/active/bug-002-stylesheet-preview-coverage-prose-only.md
+Surfaced by: phase1-step-032 rerun on projects/test-app (post-feat-001 Spark Studio preview audit)
+
+Three-part fix shipped at factory level (project-agnostic):
+
+  Part A — scripts/audit-preview-coverage.mjs (factory)
+    - Reads docs/analysis/shared/components.md JSON trailer
+      → primitives ∪ patterns ∪ layouts ∪ projectSpecific ∪ canonicalCoverage.{unused}
+    - Reads packages/ui-kit/.components-shapes.json
+      → per-primitive variants[*].name
+    - Reads docs/brief-summary.json + each docs/analysis/{platform}/screens.json
+      → distinct icons[] across platforms
+    - Greps docs/design-system-preview.html for
+      data-comp="<Name>", data-comp="<Name>[^"]*· <variant> variant",
+      data-icon="<name>" (icon regex fixed to [a-z][a-z0-9-]* — accepts single-char names)
+    - Exits 0 on full coverage, 1 on any gap
+    - Flags: --json (machine output) | --strict (fail on missing icons)
+
+  Part B — .claude/skills/stylesheet/SKILL.md step 17 extension
+    - New UX principle 11 + required-sub-section table (Header / Form Controls /
+      Overlays / Data Views / Button-variant matrix / Card-variant matrix /
+      Badge-variant matrix / Icon catalog) — project-agnostic; every preview
+      ships these sections regardless of project / style / mockup
+    - New step 17a "Mechanical coverage audit" — wires the script as post-write
+      verifier with hard-abort semantics + populates errors[] from script output
+    - Full-coverage assertion reworded — prose stays for context; script is
+      load-bearing enforcement
+    - Acceptance criteria + Output contract summary updated with new invariants
+
+  Part C — phase-plan.md §F update
+    - New "Row 034 — /stylesheet preview-coverage mechanical enforcement"
+      paragraph documenting durable behavior + audit script + required
+      sub-sections + step 17a hard-abort
+    - validation-status line noted for rebuild manifest tracking
+
+Empirical validation on projects/test-app (Spark Studio):
+
+  BEFORE Part A+B applied (the rerun preview):
+  ─────────────────────────────────────────────
+  audit-preview-coverage — ✗ FAIL
+    required: 26 analyst-observed + 13 canonical-unused + 19 variants + 23 icons
+    present: 27 component names + 0 icon names
+    ✗ 2 analyst-observed missing (Wordmark, MarketingLayout)
+    ✗ 12 canonical-unused missing (Tabs / Tooltip / Toast / Modal /
+       Drawer / Slider / Switch / Radio / Skeleton / Select /
+       CommandPalette / DataTable)
+    ✗ 5 primitives' variants missing (Button icon-only; Badge neutral
+       + success; Link inline; Hero full-bleed-photo + split-photo;
+       Avatar stack-item)
+    ⚠ 23 icons not in catalog (warning only)
+
+  AFTER Part A+B+preview re-author:
+  ─────────────────────────────────
+  audit-preview-coverage — ✓ PASS
+    required: 26 analyst-observed + 13 canonical-unused + 19 variants + 23 icons
+    present: 42 component names + 23 icon names
+    ✓ All required components + variants present.
+
+  AFTER --strict run (icons enforced):
+  ──────────────────────────────────────
+  ✓ PASS (icons regex fix lets single-char "x" match correctly)
+
+  Negative regression test:
+  ──────────────────────────
+  Disabled data-comp="Tabs" annotation → audit exits 1 with:
+    ✗ Canonical-unused components missing from preview (1):
+        - Tabs
+  Restored → audit exits 0 again.
+
+Cross-project agnosticism:
+
+The audit script reads each project's own components.md / .components-shapes.json
+/ screens.json. The required-coverage union is COMPUTED FROM EACH PROJECT — there
+is no project-specific config. Same script works on:
+  - Hatch portfolio (this test) — 26 + 13 + 19 + 23 required
+  - book-swap (when it runs) — different required-union per its components.md
+  - finance-track (when it runs) — different required-union per its components.md
+  - gotribe-* (when they run) — different per-project required-union
+The mechanism is structural, not content-specific. Future projects automatically
+benefit without any factory edit.
+
+Required sub-sections shipped in projects/test-app preview (project-specific
+content composed from Spark Studio extracted shapes + tokens):
+
+  ✓ <header id="header">    — Nav + Logo (Wordmark composition) + primary CTA
+  ✓ <section id="hero">     — Hero with stat-tile overlays + hero-badge
+  ✓ #realistic-chrome content (existing services / work / testimonial)
+  ✓ <section id="form-controls"> — Input / Textarea / Select / Checkbox /
+                                   Radio / Switch (interactive) / Slider (live)
+  ✓ <section id="overlays">     — Tabs / Tooltip / Toast (trigger) /
+                                   Modal (dialog.showModal) / Drawer (trans-X) /
+                                   Skeleton (animated)
+  ✓ <section id="data-views">   — DataTable (sortable + paginated) +
+                                   CommandPalette (trigger)
+  ✓ <section id="button-variants"> — primary / secondary / ghost /
+                                     icon-only / destructive
+  ✓ <section id="card-variants">   — raised / ghost / feature
+  ✓ <section id="badge-variants">  — highlight / accent / neutral / success
+  ✓ <section id="icon-catalog">    — 23 lucide icons at 32×32 with data-icon
+
+Conclusion: phase1-step-034 (bug-002) empirically validated. /stylesheet's
+"Full-coverage assertion" is now mechanically enforced project-agnostically.
+The drift class — preview missing components that downstream screens / builders
+later need — is closed at the factory level.
+
+Status: PASS — bug-002 ships verified.
+Row flips to passes:true on operator verify-gate read.

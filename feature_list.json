@@ -4371,6 +4371,55 @@
       "depends_on": [],
       "closed_at": null,
       "outcome_summary": ""
+    },
+    {
+      "id": "phase1-step-034",
+      "category": "mode-a-design-pipeline",
+      "description": "Ship bug-002 — /stylesheet preview-coverage rule was prose-only, no mechanical enforcement; surfaced empirically during the phase1-step-032 rerun on test-app (post-feat-001 Spark Studio preview missing 2 analyst-observed + 12 canonical-unused + 5 variant-coverage + 23 icon-catalog items). Three-part fix: (A) author scripts/audit-preview-coverage.mjs — project-agnostic node script that reads docs/analysis/shared/components.md JSON trailer + packages/ui-kit/.components-shapes.json variants[] + docs/analysis/{platform}/screens.json icons[], greps design-system-preview.html for data-comp + data-variant + data-icon annotations, exits non-zero on any gap; (B) extend .claude/skills/stylesheet/SKILL.md step 17 with explicit required sub-sections (Header / Form Controls / Overlays / Data Views / Button-variant matrix / Card-variant matrix / Icon catalog) + wire the audit script as post-write verifier with hard-abort semantics; (C) update phase-plan.md §F with the coverage-mechanism paragraph. Parent plan: plans/active/bug-002-stylesheet-preview-coverage-prose-only.md. Empirical motivator + operator framing: 'it's crucial we see everything on the stylesheet at this stage as the user may want components changed and it's best we fix here as the source of truth rather than fixing them everywhere they are used upstream.'",
+      "steps": [
+        "Author scripts/audit-preview-coverage.mjs (project-agnostic; reads components.md trailer + .components-shapes.json + screens.json; computes required-coverage union; greps preview HTML; exits 0/1 per coverage; --strict to fail icons; --json for machine-readable)",
+        "Extend .claude/skills/stylesheet/SKILL.md step 17 with explicit required sub-sections + post-write audit invocation + hard-abort semantics",
+        "Update phase-plan.md §F with the coverage-mechanism paragraph documenting durable behavior",
+        "Re-author projects/test-app/docs/design-system-preview.html with the gap sections (Wordmark + MarketingLayout annotations; Form Controls / Overlays / Data Views / variant matrices / icon catalog)",
+        "Run scripts/audit-preview-coverage.mjs from projects/test-app/ cwd — confirm exit code 0 + 'PASS' output",
+        "Write evidence/phase1-step-034-result.txt with before/after audit output",
+        "Commit on master with descriptive message (factory edits at .claude/skills/stylesheet/SKILL.md + scripts/audit-preview-coverage.mjs + phase-plan.md §F)",
+        "Negative-regression check: delete one canonical-unused section from preview, re-run audit, confirm exit code 1 + reports the deleted item missing",
+        "Flip passes:true ONLY after evidence file is read (verify-gate.mjs gate)"
+      ],
+      "approach": "bug-002 closes the meta-bug surfaced by feat-001's rerun. The prior rule lived in step 17 prose ('Every component is active — no greyed-out unused canonical state' + 'Full-coverage assertion') with no mechanical check; LLM authors followed it inconsistently. The fix is project-agnostic: a single audit script works for test-app, future agency portfolio runs, SaaS dashboards, mobile-first projects — it reads each project's own components.md to compute the required-coverage union. Closes drift class where /stylesheet ships an incomplete preview and operator finds the gap downstream at /screens or builders.",
+      "rejected_alternatives": [
+        {
+          "approach": "Add another prose principle to step 17 saying 'really render every canonical component'",
+          "reason": "Same root cause — prose without mechanical enforcement. More prose doesn't fix the gap; only a mechanical check does."
+        },
+        {
+          "approach": "Filter /screens to only use components present in the preview",
+          "reason": "Wrong leverage point. Gate 3 is the kit-lock review; if /screens filters by preview presence, operator's leverage at gate 3 is reduced to a subset. The fix lives upstream in /stylesheet, not downstream in /screens."
+        },
+        {
+          "approach": "Move coverage enforcement to /verify-html (Layer 6 task 032b)",
+          "reason": "/verify-html is generic HTML schema; coverage is project-specific (per project's components.md). Audit lives naturally in /stylesheet's post-write where project context is loaded."
+        },
+        {
+          "approach": "Don't render canonical-unused; trust /stylesheet-primitives to author them post-architect",
+          "reason": "Gate 3 is the last review point BEFORE architect. Canonical-unused primitives shipped post-architect without operator review at gate 3 means the FULL kit isn't reviewed. UX principle 3 exists precisely to prevent this."
+        }
+      ],
+      "expected_outcomes": [
+        "scripts/audit-preview-coverage.mjs exists and runs without project-specific config; takes --json + --strict flags",
+        "skills/stylesheet/SKILL.md step 17 documents the new required sub-sections + names the audit script as post-write verifier with hard-abort",
+        "Re-running /stylesheet on projects/test-app produces a preview that passes the audit (exit 0)",
+        "Audit script fails-fast (exit 1) when a required component is missing from any project's preview — confirmed via negative-regression test",
+        "phase-plan.md §F has a coverage-mechanism paragraph (durable behavior captured in rebuild manifest)"
+      ],
+      "evidence": "evidence/phase1-step-034-result.txt",
+      "polished": false,
+      "passes": false,
+      "attempt_count": 0,
+      "depends_on": ["phase1-step-032"],
+      "closed_at": null,
+      "outcome_summary": ""
     }
   ]
 }
