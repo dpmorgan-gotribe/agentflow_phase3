@@ -59,5 +59,7 @@ if (noEvidence.length) {
 
 fs.writeFileSync(FL, JSON.stringify(data, null, 2) + "\n");
 
-console.log(`flipped ${flipped.length} row(s) to passes:true (closed_at=${TODAY}):`);
+console.log(
+  `flipped ${flipped.length} row(s) to passes:true (closed_at=${TODAY}):`,
+);
 for (const id of flipped) console.log(`  ${id}`);

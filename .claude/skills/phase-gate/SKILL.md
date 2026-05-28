@@ -23,7 +23,7 @@ Read `phase-plan.md` for the phase's definition-of-done. Then read `feature_list
 - Count `passes:true` and `passes:false`.
 - Count `polished:true`.
 
-If `passes:true` is < 80% of the phase's rows, emit a warning *before* invoking the retro:
+If `passes:true` is < 80% of the phase's rows, emit a warning _before_ invoking the retro:
 
 ```
 WARNING: Phase {N} is {pct}% passing — recommend NOT closing yet.
@@ -99,6 +99,6 @@ Append:
 
 ## What this skill does NOT do
 
-- Doesn't write skills or rules. The retro *recommends*; the human decides; a follow-up `/plan-feature` files the work.
+- Doesn't write skills or rules. The retro _recommends_; the human decides; a follow-up `/plan-feature` files the work.
 - Doesn't tag the git ref. That's a human action.
 - Doesn't advance the phase. There's no "current phase" file the harness mutates — the phase is implicit in `feature_list.json` row id prefixes.

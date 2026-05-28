@@ -9,7 +9,7 @@
 > The frozen kickoff snapshot of any phase is `git show phase-N-start:phase-plan.md`.
 > The working copy is always the source of truth.
 >
-> Source of truth for capability scope: `feature_list.json` (134 rows). This doc encodes the *why*
+> Source of truth for capability scope: `feature_list.json` (134 rows). This doc encodes the _why_
 > behind those rows + the architectural decisions they implement.
 
 ---

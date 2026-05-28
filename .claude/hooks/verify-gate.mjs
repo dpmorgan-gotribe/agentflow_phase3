@@ -16,7 +16,12 @@ import path from "node:path";
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 const FEATURE_LIST_PATH = path.join(PROJECT_DIR, "feature_list.json");
-const READS_FILE = path.join(PROJECT_DIR, ".claude", "state", "evidence-reads.json");
+const READS_FILE = path.join(
+  PROJECT_DIR,
+  ".claude",
+  "state",
+  "evidence-reads.json",
+);
 
 function allow() {
   process.exit(0);
@@ -35,7 +40,10 @@ function deny(reason) {
 }
 
 function normalize(p) {
-  return p.toLowerCase().replace(/\\/g, "/").replace(/^([a-z]):/, "/$1");
+  return p
+    .toLowerCase()
+    .replace(/\\/g, "/")
+    .replace(/^([a-z]):/, "/$1");
 }
 
 // --- Self-test mode ---
@@ -123,7 +131,8 @@ try {
     } else {
       const idx = curText.indexOf(oldStr);
       if (idx === -1) allow();
-      nextText = curText.slice(0, idx) + newStr + curText.slice(idx + oldStr.length);
+      nextText =
+        curText.slice(0, idx) + newStr + curText.slice(idx + oldStr.length);
     }
   } else if (toolName === "MultiEdit") {
     nextText = curText;
@@ -135,7 +144,8 @@ try {
       } else {
         const idx = nextText.indexOf(oldStr);
         if (idx === -1) allow();
-        nextText = nextText.slice(0, idx) + newStr + nextText.slice(idx + oldStr.length);
+        nextText =
+          nextText.slice(0, idx) + newStr + nextText.slice(idx + oldStr.length);
       }
     }
   }
@@ -147,7 +157,9 @@ const flips = detectFlips(curText, nextText);
 if (flips.length === 0) allow();
 
 const reads = readsList();
-const readPaths = new Set(reads.map((r) => normalize(path.resolve(PROJECT_DIR, r.file_path || ""))));
+const readPaths = new Set(
+  reads.map((r) => normalize(path.resolve(PROJECT_DIR, r.file_path || ""))),
+);
 
 const unverified = flips.filter((f) => {
   if (!f.evidence) return true;

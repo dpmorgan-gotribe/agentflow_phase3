@@ -29,7 +29,7 @@ Before producing the report, run a **drift audit** on the phase's rows:
 1. Pick 5 rows at random where `passes:true`. (If < 5 such rows exist, audit all of them.)
 2. For each sampled row, find the section of `phase-plan.md` that should describe it.
 3. Run `git diff phase-N-start..HEAD -- <files-touched-by-row>` and inspect for durable behavior (validation, retry, rate-limit, cache, schema, control-flow inversion — same list the evaluator uses).
-4. Confirm each durable behavior is reflected in the *current* `phase-plan.md` (not just the frozen snapshot).
+4. Confirm each durable behavior is reflected in the _current_ `phase-plan.md` (not just the frozen snapshot).
 5. Score: how many of the 5 rows have full plan-parity?
 
 This is the single most important check the retro does. The phase cannot be closed if plan-parity is < 80%.

@@ -26,7 +26,8 @@ try {
 const toolName = payload.tool_name || "";
 if (toolName !== "Read") process.exit(0);
 
-const filePath = payload.tool_input?.file_path || payload.tool_input?.path || "";
+const filePath =
+  payload.tool_input?.file_path || payload.tool_input?.path || "";
 if (!filePath) process.exit(0);
 
 let entries = [];

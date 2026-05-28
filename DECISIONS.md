@@ -53,4 +53,3 @@
   - Tester-only (no builder tests) — rejected: tester has no implementation context; produces vacuous tests
   - Builder-only (no tester) — rejected: builder cannot self-skeptic; misses edge cases
 - **References:** `.claude/rules/testing-policy.md` (phase0-step-025), rows phase2-step-008 + phase3-step-009
-

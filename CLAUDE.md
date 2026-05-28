@@ -4,7 +4,7 @@
 
 This is the **factory** that generates agentic apps. Phase 3 is a rebuild of `agentflow_phase2` onto a harness pattern (ported from `agentmark`). It holds:
 
-- **Agentic resources** under `.claude/` — agents, skills, hooks, rules, templates that are *cloned into* generated projects
+- **Agentic resources** under `.claude/` — agents, skills, hooks, rules, templates that are _cloned into_ generated projects
 - **Orchestrator** under `orchestrator/` — the TypeScript SDK driver for Mode A (design) and Mode B (build)
 - **Shared contracts + schemas** under `packages/orchestrator-contracts/` and `schemas/`
 - **Factory scripts** under `scripts/` + `orchestrator/scripts/`

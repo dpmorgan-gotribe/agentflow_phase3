@@ -36,4 +36,3 @@
   - 048 (HUMAN Phase 0 closure) — needs operator + retro after rows 042, 049, 050, 055 land
   - 049, 050, 055 (RESEARCH adopts + POST-MVP cost-projection) — deferred until orchestrator runs prove the baseline
 - **STOP GATE phase0-step-027 (HUMAN — /new-project smoke test):** operator exercises `/new-project test-app --proposal-file proposals/hatch-proposal.md` (or similar) and signs off in `evidence/phase0-step-027-result.txt`.
-

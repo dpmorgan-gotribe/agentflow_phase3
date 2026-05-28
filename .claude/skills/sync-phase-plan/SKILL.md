@@ -28,6 +28,7 @@ The 200-bugs-of-drift problem in Phase 2: every fix landed in code, but `phase-p
 For each non-trivial change in the diff, decide: durable or not.
 
 **Durable (sync to plan):**
+
 - Validation rules (`quantity > 0`, `symbol in allowlist`, schema field required)
 - Retry / circuit-breaker policies (max attempts, backoff curve)
 - Rate-limits / throttles / semaphores
@@ -38,6 +39,7 @@ For each non-trivial change in the diff, decide: durable or not.
 - Protected-files additions (`.claude/rules/protected-files-policy.md` cited)
 
 **NOT durable (skip):**
+
 - Logging, imports, type hints, formatting
 - Refactor-only changes (rename, file move, extract function)
 - Test-only changes (test code, fixtures, mocks)
@@ -69,6 +71,7 @@ Annotate each addition with `(added YYYY-MM-DD after <row-id>)` for provenance:
 ```
 
 Rules for the delta:
+
 - Surgical. Add lines; do not rewrite paragraphs.
 - Specific. "Cap = 3 per screen" beats "limited retries".
 - Provenanced. Every line ends with `(added YYYY-MM-DD after <row-id>)`.
@@ -101,6 +104,7 @@ If the decision is **architectural** (new pattern, not a single validation rule)
 
 ```md
 ## ADR-NNN — Adopted {pattern} (YYYY-MM-DD)
+
 - Context: {row-id} surfaced {problem}
 - Decision: {one-line summary}
 - Rationale: {one-line — why this approach over alternatives}
@@ -124,6 +128,7 @@ Plan ↔ code parity confirmed. Safe to flip passes:true.
 ### 9. ONLY NOW — flip passes:true
 
 The caller (the executing builder turn) proceeds to:
+
 - Invoke `/capture-lesson` if not already done.
 - Read the evidence file (triggers `track-read.mjs`).
 - Edit `feature_list.json` to flip `passes:true` (or `polished:true`).

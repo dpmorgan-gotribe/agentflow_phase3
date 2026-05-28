@@ -28,7 +28,7 @@ Every feature lands in exactly one phase:
 
 ## Human-inspection gates
 
-After every feature-block that ends in an interactive boundary, append a feature-task whose owner is the human operator. The task is: *"manually exercise this step, inspect outputs, confirm expectations met."* Interactive boundaries include — but are not limited to — create-new-project, analyze, stylesheet, mockups, screens, architect, pm, start-build, and each verifier-tier completion. Identify any others you find in the codebase.
+After every feature-block that ends in an interactive boundary, append a feature-task whose owner is the human operator. The task is: _"manually exercise this step, inspect outputs, confirm expectations met."_ Interactive boundaries include — but are not limited to — create-new-project, analyze, stylesheet, mockups, screens, architect, pm, start-build, and each verifier-tier completion. Identify any others you find in the codebase.
 
 ## Methodology — execute these passes in order
 
@@ -53,6 +53,7 @@ After every feature-block that ends in an interactive boundary, append a feature
 A single file at the working directory root: `feature_list.json`. Schema matches input 3. Phases ordered 0 → 1 → 2 → 3; feature-tasks within each phase ordered by dependency; human-inspection tasks are first-class entries.
 
 After writing the file, print a short summary:
+
 - Total feature-task count per phase.
 - List of items adopted from `RESEARCH.md` and items deferred/skipped with one-line reasons.
 - Any open questions that blocked a decision.

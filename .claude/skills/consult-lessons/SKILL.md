@@ -27,10 +27,10 @@ allowed-tools: Read, Bash, Grep
 Two passes:
 
 a. **Tag-exact match (high precision):**
-   `grep -niE '^- \*\*Tags\*\*:.*#({kw1}|{kw2}|...)\b' LESSONS.md`
+`grep -niE '^- \*\*Tags\*\*:.*#({kw1}|{kw2}|...)\b' LESSONS.md`
 
 b. **Keyword-anywhere match (high recall, falls back if tag pass yields zero):**
-   `grep -niE '({kw1}|{kw2}|...)' LESSONS.md`
+`grep -niE '({kw1}|{kw2}|...)' LESSONS.md`
 
 For each match, walk back to find the nearest `## ` heading (the start of the lesson block).
 
@@ -62,6 +62,7 @@ Found {N} relevant lessons in LESSONS.md (top {K} shown):
 ```
 
 End with one of:
+
 - `No lessons matched — proceed without prior-art constraint.`
 - `Lessons matched — consider whether any change the approach.`
 

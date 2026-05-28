@@ -26,6 +26,7 @@ Use this template exactly:
 
 ```md
 ## {row-id} — {short title} ({YYYY-MM-DD})
+
 - **What we set out to do**: {1 sentence}
 - **What actually happened**: {1 sentence — successes AND surprises}
 - **Root cause (if a mistake or surprise)**: {1 sentence — or "n/a"}
@@ -73,6 +74,7 @@ PROGRESS.md updated: {yes/no}
   Audience: someone rebuilding the system from the plan alone.
 
 A typical row close uses both:
+
 1. `/sync-phase-plan {row-id}` — fold the design decision into the plan.
 2. `/capture-lesson {row-id}` — capture the process lesson about how the decision was reached.
 3. Then flip `passes:true`.
