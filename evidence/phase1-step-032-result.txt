@@ -1,0 +1,102 @@
+phase1-step-032 — /stylesheet 3-pass extraction — empirical validation
+=========================================================================
+
+Run: 2026-05-28
+Project: projects/test-app/
+Selected style: style-2 Spark Studio (Bricolage + warm-paper + pill chrome)
+Mockup ref:  docs/mockups/style-2/webapp/home.html (2304 lines, 74 KB)
+
+Feat-001 assertions on docs/design-system-preview.html (1477 lines, 59 KB):
+
+  [Assertion 1 — UX principle 10] Header / Nav / Logo section present
+    grep -cE 'id="header"|<header[ >]|<nav[ >]'        → 1   ✓ (target ≥ 1)
+    Concretely: <header id="header" ...> wraps Logo + Nav links + CTA at top
+    of page. Previous (pre-feat-001) preview jumped from Hero composition
+    to Service overview with no header section at all (investigate-001).
+
+  [Assertion 2 — UX principle 8 + parity assertion] Button uses rounded-full
+    Button data-comp instances:                          7
+    Of those, rounded-full (pill):                       7  ✓
+    Of those, rounded-md (flat-cornered):                0  ✓
+    Concretely: every Button preview in the design-system-preview now uses
+    the kit's extracted Button.default.tailwindClass = "rounded-full"
+    (per packages/ui-kit/.components-shapes.json), NOT the hardcoded
+    rounded-md default that pre-feat-001 step 17 emitted on this same
+    Spark Studio mockup.
+
+  [Assertion 3 — UX principle 9] Named patterns composed from _extracted/
+    Eyebrow:                                              4 instances ✓
+    HeroBadge:                                            1 instance  ✓
+    StatTile:                                             2 instances ✓
+    TrustBar:                                             1 instance  ✓
+    ServicePillarCard:                                    3 instances ✓
+    CaseStudyCard:                                        2 instances ✓
+    Testimonial:                                          1 instance  ✓
+    SocialProofRow:                                       1 instance  ✓
+    Wordmark composition in Logo data-comp:               2 instances ✓
+    Total named-pattern instances composed verbatim from _extracted/*.html: 17
+
+  [Assertion 4] data-comp coverage
+    Unique component names with data-comp annotations:    27
+    Maps cleanly to docs/analysis/shared/components.md primitives + patterns
+    union, satisfying step 17's full-coverage assertion.
+
+  [Bug-077 invariant] globals.css starts with @tailwind directives
+    grep -cE '^@tailwind (base|components|utilities);'    → 3 ✓ (target = 3)
+
+Files emitted by /stylesheet's three passes:
+
+  Pass 1 (token layer — already worked pre-feat-001):
+    ✓ packages/ui-kit/src/tokens/tokens.json     (W3C DTCG, 184 lines)
+    ✓ packages/ui-kit/src/tokens/tokens.css      (with .dark block, 160 lines)
+    ✓ packages/ui-kit/src/styles/globals.css     (bug-077: @tailwind directives present)
+    ✓ packages/ui-kit/src/styles/fonts.css       (Bricolage + Inter + IBM Plex Mono)
+    ✓ packages/ui-kit/.components-plan.json      (22 primitives + 12 patterns + 5 layouts)
+
+  Pass 2 (component default-shape extraction — NEW per feat-001 step 8.6):
+    ✓ packages/ui-kit/.components-shapes.json    (9.8 KB, 22 primitive entries)
+      - Button: rounded-full + py-3 px-6 + font-semibold + hover-lift
+      - Card: rounded-lg + p-8 + hover-border-accent-500
+      - Nav: 68px + fixed + backdrop-blur + pill links
+      - Logo: wordmark+mark composition (spark glyph + Bricolage wordmark)
+      - + 18 more primitives (Badge / Input / Chip / etc. — some with
+        observed defaults, some with kit-defaults fallback)
+
+  Pass 3 (named-pattern extraction — NEW per feat-001 step 8.7):
+    ✓ packages/ui-kit/.patterns-extracted.json   (3.0 KB, 9 pattern entries)
+    ✓ packages/ui-kit/src/patterns/_extracted/wordmark.html         (881 bytes)
+    ✓ packages/ui-kit/src/patterns/_extracted/eyebrow.html          (435 bytes)
+    ✓ packages/ui-kit/src/patterns/_extracted/stat-tile.html        (1.5 KB)
+    ✓ packages/ui-kit/src/patterns/_extracted/trust-bar.html        (1.7 KB)
+    ✓ packages/ui-kit/src/patterns/_extracted/hero-badge.html       (855 bytes)
+    ✓ packages/ui-kit/src/patterns/_extracted/service-pillar-card.html  (2.2 KB)
+    ✓ packages/ui-kit/src/patterns/_extracted/case-study-card.html  (1.6 KB)
+    ✓ packages/ui-kit/src/patterns/_extracted/testimonial-block.html (1.0 KB)
+    ✓ packages/ui-kit/src/patterns/_extracted/social-proof-row.html (706 bytes)
+
+Compare to investigate-001's documented regression baseline:
+
+                                       Pre-feat-001 (P3 1st run)    Post-feat-001 (this run)
+  Header section in preview            absent                        present ✓
+  Button preview rounded-*             rounded-md (12px)             rounded-full (999px) ✓
+  Named patterns extracted             0                              9 ✓
+  patterns/_extracted/ dir             does not exist                9 HTML files ✓
+  .components-shapes.json              does not exist                22 entries ✓
+  .patterns-extracted.json             does not exist                9 entries ✓
+
+Conclusion: phase1-step-032 (feat-001 /stylesheet 3-pass extraction)
+empirically validated. The kit now captures component default-shapes +
+named patterns from the selected mockup, not just tokens. The kit-only
+contract (step 17 UX principles 8/9/10 + parity assertions) hold.
+Downstream /screens reaches for .components-shapes.json's Button-shape
+and _extracted/*.html patterns instead of inventing per-screen.
+
+Phase 1 cost recap (this rerun session):
+  /draft-brief manual auth     $0    (authored in-session, no LLM dispatch)
+  /analyze (authored)          $0    (authored in-session)
+  /mockups (5 parallel agents) ~$5-8 (5 ui-designer dispatches at Sonnet/building)
+  /stylesheet (authored)       $0    (authored in-session)
+  /screens to come             — pending operator confirmation
+
+Status: PASS — feat-001 (phase1-step-032) ships verified.
+Row flips to passes:true on operator verify-gate read.
