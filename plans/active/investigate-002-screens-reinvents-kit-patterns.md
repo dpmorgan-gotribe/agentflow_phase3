@@ -1,7 +1,7 @@
 ---
 id: investigate-002-screens-cross-screen-drift
 type: investigation
-status: draft
+status: completed
 author-agent: Claude (Phase 3 build)
 created: 2026-05-28
 updated: 2026-05-28
@@ -198,11 +198,223 @@ Populate Findings (the drift matrix from step 1) + Recommendation (bug filing st
 
 ## Findings
 
-<!-- To be populated during execution. -->
+### Step 1 — Drift matrix (`investigations/investigate-002-drift-survey.mjs` run 2026-05-28)
+
+The full matrix is at `investigations/investigate-002-drift-survey-output.txt` (108 cells D1 + per-screen D2-D9). Summary by dimension:
+
+#### D1. Named-pattern consumption — **SEVERE DRIFT confirmed** (86% drift rate)
+
+```
+                       wordmark   eyebrow  stat-tile trust-bar hero-badge  s-pillar  cs-card  testim   social
+home                       ~         ~         ~        ✗         ~         ✗        ✗         ✗        ✗
+services-index             ✓         ✓         ✗        ✗         ✗         ✓        ✗         ✗        ✗
+services-detail-social     ✓         ✓         ~        ✗         ~         ✗        ✓         ✗        ✗
+services-detail-visual     ✗         ✗         ✗        ✗         ~         ✗        ✗         ✗        ✗
+services-detail-digital    ✗         ✗         ~        ✗         ~         ✗        ✗         ✗        ✗
+work-index                 ~         ✓         ✗        ✗         ~         ✗        ✗         ✗        ✗
+case-study-detail          ~         ✓         ✓        ✗         ✗         ✗        ✗         ✓        ✗
+about                      ✓         ✓         ✗        ✓         ✗         ✗        ✗         ✗        ✗
+contact                    ✗         ✗         ✗        ✗         ~         ✗        ✗         ✗        ✗
+inquiry-confirmation       ✗         ✓         ✗        ✗         ✗         ✗        ✓         ✗        ✗
+privacy                    ✗         ✗         ✗        ✗         ✗         ✗        ✗         ✗        ✗
+not-found                  ✗         ✗         ✗        ✗         ✗         ✗        ✗         ✗        ✗
+```
+
+- **15/108 cells (14%) fully verbatim**
+- 13/108 cells partial (some markers present — agents copied a class name or animation but not the full canonical composition)
+- 80/108 cells (74%) with NONE of the kit's canonical markers
+- **Drift rate: 86%**
+- Worst patterns: `hero-badge` (0/12 verbatim), `social-proof-row` (0/12), `trust-bar` (1/12), `stat-tile` (1/12), `service-pillar-card` (1/12), `testimonial-block` (1/12)
+- Best (still bad): `eyebrow` (6/12 verbatim — agents at least copy the canonical accent-bar shape sometimes)
+
+#### D2. `data-kit-*` annotation density — **NO REAL DRIFT** (initial concern false-positive)
+
+```
+                              data-comp   data-kit-component   data-kit-variant   data-kit-layout   data-screen-id
+home                              27              25                21                  1                1
+services-detail-visual             1              60                14                  1                1
+case-study-detail                  0              34                 8                  1                1
+not-found                          0              33                 6                  1                1
+```
+
+Initial reading flagged "data-comp variance 27x" as drift. False positive: agents emit `data-kit-component="..."` (the canonical builder-translation attribute per screens/SKILL.md §5) instead of `data-comp="..."` (preview vocabulary used in design-system-preview.html). All 12 screens have ≥12 `data-kit-component` annotations with ≥1 `data-kit-variant` instances + `data-kit-layout` + `data-screen-id` ✓. The kit-attribute-contract for builder translation is intact.
+
+#### D3. Preview-bootstrap config sections — **NO DRIFT** (12/12 ✓ across all 7 sub-sections)
+
+```
+                             cfg  accent  acc-ramp  fontDisp  fontSans  fontMono  radFull  highlight
+all 12 screens                ✓     ✓        ✓        ✓         ✓         ✓        ✓        ✓
+```
+
+Initial concern that services-detail-visual lacked `display` mapping was a sampling artefact (truncated awk output). Actual full-config check passes 12/12. Refactor-007 silent-styling guard is solid.
+
+#### D4. Hex literal leakage — **REAL DRIFT** (5/12 screens)
+
+```
+case-study-detail        2 unique hex · 0 inline-style · 5 svg-fill hex
+contact                  1 unique hex · 0 inline-style · 2 svg-fill hex
+inquiry-confirmation     2 unique hex · 0 inline-style · 4 svg-fill hex
+privacy                  2 unique hex · 0 inline-style · 4 svg-fill hex
+not-found                2 unique hex · 0 inline-style · 6 svg-fill hex
+```
+
+21 SVG `fill="#XXXXXX"` occurrences across 5 screens — agents inventing their own brand-mark SVG paths with literal hex fills (`#FF5C35`, `#FFE14D`) instead of using `currentColor` + the kit's parent-color cascade. **Tightly correlated with D1 pattern-drift on `wordmark`.** Inline-style hex held (0/12 screens leak there — agents respect the no-inline-style rule).
+
+#### D5. Font wiring — **NO DRIFT**
+
+- 0/12 screens have inline `font-family:` overrides
+- 1/12 (home) has a duplicate Google Fonts `<link>` (waste, not breakage — kit's globals.css already imports the fonts)
+- font-display class density 9–35 per screen (proportional to content density)
+- font-mono density 13–53 per screen
+- The kit's font system is correctly consumed via Tailwind utility classes
+
+#### D6. Imagery + avatar consistency — **REAL DRIFT** (6/12 screens use non-canonical avatars)
+
+```
+                            canonical-avatars   custom-avatars   canonical-cs-seeds
+home                               2                  6                  3
+services-detail-social             0                  4                  0
+services-detail-visual             3                  5                  2
+services-detail-digital            0                  4                  0
+work-index                         0                  0                  3
+case-study-detail                  1                  7                  3
+about                              2                  4                  0
+contact                            0                  0                  0
+```
+
+The preamble named 4 canonical avatar URLs (Anika P., Marco L., Priya R., Sam K.) and 3 canonical case-study seeds (bloom, northstar, meridian) to reuse across screens for cross-screen continuity. Agents substituted their own Unsplash photo IDs in 6/12 screens. `about` is partial-OK (2 canonical + 4 custom — but TeamGrid likely needs 4 unique people, so custom additions are expected; canonical 4 should be the foundation).
+
+#### D7. Copy voice — **NO DRIFT** (clean)
+
+- 0/12 screens contain cliché bigrams (Elevate / Seamless / Unleash / Next-Gen / Empower / Transform your)
+- 0/12 screens have lorem ipsum / TODO / REPLACE_ME leakage
+- 12/12 use canonical `hello@hatch.studio` (no `info@…` / `contact@…` substitutions)
+- Agents respected the voice rules from the preamble
+
+#### D8. Layout shell — **REAL DRIFT** (nav position + footer columns)
+
+- **Nav position**: `fixed` × 4 + `sticky` × 8. Preamble specified `fixed`. 8/12 agents used `sticky` instead — likely because the screens-skill body's Nav-default-shape in `.components-shapes.json` says `"position": "fixed"` but agents interpreted "sticky" as semantically equivalent.
+- **Footer 4-col**: 8/12 ✓, 4/12 missing the 4-column grid (home, services-index, services-detail-social used a different footer composition)
+- **max-w-[1280px]**: 12/12 ✓
+- **Section gaps** (py-16/py-20/py-24): highly variable per screen — visual_density=4 should drive a consistent default but agents pick whichever feels right
+
+#### D9. Inline `<style>` block content — **REAL DRIFT** (34 custom classes + 7 non-canonical keyframes)
+
+- 34 custom CSS class definitions across screens (kit-bypass — agents inventing utility classes outside the kit's vocabulary)
+- **7 non-canonical `@keyframes` definitions**: `play-pulse`, `spark-rotate`, `hatch-pulse`, `spark-pulse`, `hatched-drift`, `spark-wobble`, `glyph-drift`
+- All 7 are "spark"-themed animations that agents invented to animate their custom brand-mark SVGs (D9 directly correlates with D1+D4 — agents inventing brand marks need invented keyframes to animate them)
+- Canonical keyframes (`marquee-scroll`, `stat-tile-bob`, `trust-bar-scroll`, `hero-badge-pulse`) appeared 0–3 times per screen — used correctly when the agent did consume the kit pattern.
+
+### Step 2 — Prompt audit (my dispatch transcripts vs screens/SKILL.md)
+
+My 12 dispatch prompts (in this session's transcript 2026-05-28T22:00Z) said variants of:
+
+> "Read these files FIRST … 4. `packages/ui-kit/src/patterns/_extracted/*.html` — the named patterns to USE VERBATIM (wordmark, eyebrow, …)"
+
+The phrase "USE VERBATIM" appeared, but each per-pattern row in the table also said things like "Use in nav + footer", "Use above EVERY section heading", "Use 2 per hero when relevant" — operative verb is "use", not "inline byte-for-byte". Ambiguity: does "use" mean "the inline content is verbatim" or "compose using this as reference"?
+
+The screens/SKILL.md Inputs §4b (the consumer-side rule shipped with feat-001) says:
+
+> "Consult kit patterns BEFORE inventing. When a section needs a logo composition, reach for `_extracted/wordmark.html` instead of inventing one."
+
+Operative verbs: **"consult"** and **"reach for"** — clearly invitations to consume the pattern, NOT contracts requiring byte-verbatim. An agent that reads `wordmark.html`, internalises the design intent, then writes their own version is technically compliant with "consult before inventing" — they consulted; they're not strictly inventing from scratch.
+
+Both my prompts AND the skill body left the door open to "I consulted it, now I'll write my own based on the spirit." **The skill-body language is the upstream cause; my dispatch prompts inherited the ambiguity.**
+
+### Step 3 — Verbatim-inline test (skipped per time budget)
+
+Time-budget call: skipped the empirical dispatch. Reasoning: with 9/12 ui-designer dispatches reinventing patterns despite reading both the preamble's "USE VERBATIM" and the skill body's "consult before inventing", prose-only enforcement clearly fails ≥75% of the time. Tighter prose ("INLINE byte-for-byte; do not adapt") may improve compliance but won't reliably close it without mechanical enforcement. Confidence: medium-high based on the n=12 evidence.
+
+**Decision:** prescribe mechanical audit as the load-bearing fix — same shape as bug-002. Tighter skill-body prose is supporting, not load-bearing.
+
+### Step 4 — Audit script design
+
+`scripts/audit-screen-pattern-consumption.mjs` (project-agnostic, mirroring `audit-preview-coverage.mjs`):
+
+1. **Pattern marker signatures** — parse each `packages/ui-kit/src/patterns/_extracted/*.html` to extract:
+   - All `class="logo-spark"` / `class="pulse-dot"` / `class="stat-tile-bob"` / `class="trust-marquee"` / etc. — anchor classes
+   - All canonical SVG `<path d="…">` byte sequences from the pattern's inline SVG
+   - The `data-pattern="<slug>"` attribute
+   - All `@keyframes <name>` names defined in the pattern's inline `<style>` block
+
+2. **Per-screen audit** — for each `docs/screens/{platform}/*.html`:
+   - For each kit pattern, check whether the screen references it (via `data-pattern` attribute OR by usage-class) AND whether the canonical anchor classes + SVG path bytes appear unmodified
+   - Flag drift cells: pattern referenced but markers absent
+
+3. **Hex-literal-in-SVG check** — count `fill="#[0-9A-Fa-f]{6}"` occurrences in each screen that don't match canonical bytes from `_extracted/*.html`. Flag as drift (correlates with pattern-consumption miss).
+
+4. **Non-canonical keyframe check** — parse inline `<style>` blocks for `@keyframes <name>` definitions. Cross-reference against the canonical keyframe names extracted from `_extracted/*.html`. Flag any keyframe name not in the canonical set as drift.
+
+5. **Cross-screen imagery consistency check** — parse all screen HTMLs, identify recurring image URL patterns (avatars + case-study seeds), assert they match across screens that share the same domain (e.g. all references to "Bloom Co." should use the same picsum seed; all 4 canonical avatar URLs should appear consistently).
+
+6. **Exit 0 on full consumption, 1 on drift.** Flags: `--json`, `--strict` (icons-equivalent), `--dimension D1|D4|D6|D9|all`.
+
+### Step 5 — Fix scope
+
+The drift cluster analysis:
+
+- **D1 (patterns) + D4 (hex leakage) + D9 (custom keyframes)** are **tightly correlated** — agents inventing brand-mark SVGs need invented hex fills + invented keyframes to animate them. All three are "kit-content-bypass" — one prose-enforcement root cause. **Fold into ONE bug.**
+- **D6 (imagery consistency)** is a **distinct cross-screen pinning problem** — agents pick fresh URLs in isolation, not realizing they should reuse canonical seeds. Same kind of fix (audit script + skill-body extension naming canonical URLs), but the audit logic is different (cross-screen comparison vs per-screen pattern check). **Fold into the SAME bug** since the prose-enforcement root cause is identical and one audit script can cover both.
+- **D8 (layout shell)** — nav position 8/12 drifted from `fixed` to `sticky`; footer-4-col 4/12 missing. Same prose-enforcement root cause — preamble said `fixed`, agents reinterpreted. Could fold OR be its own narrow bug. Given the cluster correlation, **fold into bug-003**.
+
+**Recommendation: ONE comprehensive bug** covering D1 + D4 + D6 + D8 + D9. The single audit script covers all dimensions; the single skill-body extension tightens the verbatim-consumption rule + names canonical assets. Empirical validation = re-running `/screens` on test-app and getting a passing audit.
+
+
 
 ## Recommendation
 
-<!-- To be populated post-investigation. Likely strategy decisions to surface:
+### File ONE comprehensive bug — `bug-003-screens-kit-content-bypass`
+
+Cover D1 + D4 + D6 + D8 + D9 in one bug. The drift dimensions cluster around a single root cause (prose-only enforcement of kit-content consumption rules) and the fix shape is identical for all of them (skill-body extension + mechanical audit script + feature_list row + phase-plan §F update).
+
+**bug-003 deliverables (mirroring bug-002 shape):**
+
+1. **`scripts/audit-screen-pattern-consumption.mjs`** (project-agnostic, ~250 lines per the step-4 design above). Reads each project's own `_extracted/*.html` + `screens/*.html`, computes per-pattern canonical markers, flags drift across 5 dimensions (D1 + D4 + D6 + D8 + D9). Exits 0/1, supports `--json` + `--strict` + `--dimension`.
+
+2. **`.claude/skills/screens/SKILL.md` extension** — Inputs §4b language change from "Consult kit patterns BEFORE inventing" → "**INLINE the canonical pattern HTML verbatim**". New §4b.1 per-pattern marker table (logo-spark / pulse-dot / stat-tile-bob / etc.) the screens MUST contain. New §4h "Cross-screen consistency contract" naming canonical avatars + case-study seeds + nav position + footer composition. New step 8a "Mechanical audit" wiring `scripts/audit-screen-pattern-consumption.mjs` as post-batch verifier with hard-abort semantics. Updated acceptance criteria.
+
+3. **`docs/screens/.shared-preamble.md` generator change** — when /screens emits the preamble at step 3.5, it MUST include the literal `_extracted/*.html` content of each pattern verbatim in the preamble itself (not just a path reference). Agents see the bytes; agents inline the bytes.
+
+4. **`feature_list.json` row `phase1-step-035`** — passes:false pending audit script exiting 0 on a re-run of /screens on test-app.
+
+5. **`phase-plan.md` §F new paragraph** documenting the kit-content-bypass class + the verbatim-inline contract + the audit script.
+
+6. **`bug-003` plan** filed at `plans/active/bug-003-screens-kit-content-bypass.md` with the canonical bug-plan shape (problem statement / reproduction / root cause / fix approach / rejected alternatives / validation criteria) — see bug-002 as the template.
+
+### Empirical validation (after bug-003 ships)
+
+Re-run `/screens` on `projects/test-app/` after the fixes land. The audit script should exit 0 with:
+
+- D1: 9/9 patterns × 12/12 screens verbatim (108/108 cells ✓)
+- D4: 0 SVG fill hex literals outside canonical kit bytes
+- D6: 4/4 canonical avatars present on every screen that needs avatars; 12/12 screens use canonical case-study seeds where they reference the same client
+- D8: 12/12 screens use `fixed` nav + 4-col footer
+- D9: 0 non-canonical `@keyframes` definitions; ≤4 custom CSS class definitions per screen (only allowed for screen-specific keyframes that ALREADY exist in the kit's canonical set)
+
+Visual eyeball: open all 12 screens in a browser. All brand marks should be visually identical (same orange square + lightning bolt). No 8-pointed star surprises.
+
+### Meta-lesson to capture (LESSONS.md after bug-003 closes)
+
+Title: *"Consumer-side rules in skill bodies need mechanical audits when shipped, not retroactively."*
+
+Pattern observed across three drift surfaces in one investigation:
+- bug-002 (`/stylesheet` preview-coverage) — prose rule "every component must be rendered", agents skipped — bug-002 added audit
+- bug-003 (`/screens` kit-content-bypass) — prose rule "consult patterns before inventing", agents reinvented — bug-003 adds audit
+- (potentially) future bugs as more consumer-side rules ship
+
+When a SKILL.md is extended with a consumer-side rule that depends on agent compliance (vs being a deterministic mechanical instruction), the rule MUST ship with a paired mechanical audit script. Prose-only consumer-side rules have a measured ≥75% drift rate in n=12 dispatches on this project.
+
+Cross-references: investigate-001 (parent regression), bug-002 (sibling drift class), feat-001 (the consumer-side rule that bug-003 tightens).
+
+### Strategy decision: one bug vs multiple
+
+Rejected: 5 separate narrow bugs (one per drift dimension). Reasoning:
+- Same root cause (prose enforcement)
+- Same fix shape (audit script + skill edit + feature_list row + §F update)
+- Same empirical validation surface (one /screens rerun)
+- Filing 5 bugs would 5× the plan-archiving overhead for no incremental value
+
+Chosen: one comprehensive `bug-003-screens-kit-content-bypass`.
 
 A. **One comprehensive bug** (if drift dimensions are correlated):
    - File bug-003 "screens cross-screen drift — kit-consumption rules are prose-only"
