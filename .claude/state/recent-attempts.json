@@ -1,110 +1,5 @@
 [
   {
-    "hash": "f07dd15b825d",
-    "timestamp": 1779975539847,
-    "tool": "TaskCreate"
-  },
-  {
-    "hash": "7d21441cfaae",
-    "timestamp": 1779975544017,
-    "tool": "TaskCreate"
-  },
-  {
-    "hash": "a0a590722095",
-    "timestamp": 1779975547651,
-    "tool": "TaskCreate"
-  },
-  {
-    "hash": "0a0dc9d09ce4",
-    "timestamp": 1779975551251,
-    "tool": "TaskCreate"
-  },
-  {
-    "hash": "67792af9cd7a",
-    "timestamp": 1779975554592,
-    "tool": "TaskCreate"
-  },
-  {
-    "hash": "483178b2396c",
-    "timestamp": 1779975557454,
-    "tool": "TaskUpdate"
-  },
-  {
-    "hash": "45238b77ecef",
-    "timestamp": 1779975560675,
-    "tool": "Bash"
-  },
-  {
-    "hash": "de2014c383b6",
-    "timestamp": 1779975565739,
-    "tool": "Bash"
-  },
-  {
-    "hash": "3db7de4cb15d",
-    "timestamp": 1779975569748,
-    "tool": "TaskUpdate"
-  },
-  {
-    "hash": "378c6ce5745f",
-    "timestamp": 1779975572670,
-    "tool": "TaskUpdate"
-  },
-  {
-    "hash": "d1e6b665f5a8",
-    "timestamp": 1779975579691,
-    "tool": "Read"
-  },
-  {
-    "hash": "dcea83c1b95d",
-    "timestamp": 1779975584289,
-    "tool": "Bash"
-  },
-  {
-    "hash": "454a1d52445e",
-    "timestamp": 1779975589959,
-    "tool": "Read"
-  },
-  {
-    "hash": "aa28cf42a0ed",
-    "timestamp": 1779975602545,
-    "tool": "Bash"
-  },
-  {
-    "hash": "70be4407063e",
-    "timestamp": 1779975687492,
-    "tool": "Agent"
-  },
-  {
-    "hash": "647e17198a18",
-    "timestamp": 1779975737645,
-    "tool": "Agent"
-  },
-  {
-    "hash": "2f8b9ae3bac0",
-    "timestamp": 1779975784869,
-    "tool": "Agent"
-  },
-  {
-    "hash": "1d05a6b7e371",
-    "timestamp": 1779975818989,
-    "tool": "Write"
-  },
-  {
-    "hash": "c9aeb3b193c3",
-    "timestamp": 1779975864311,
-    "tool": "Write"
-  },
-  {
-    "hash": "110d675d7daa",
-    "timestamp": 1779975948313,
-    "tool": "Write"
-  },
-  {
-    "hash": "5ab0bcfadf59",
-    "timestamp": 1779976031370,
-    "tool": "TaskUpdate"
-  },
-  {
     "hash": "d111b6486222",
     "timestamp": 1779976034173,
     "tool": "TaskUpdate"
@@ -248,5 +143,110 @@
     "hash": "a251d027c5e0",
     "timestamp": 1779976892258,
     "tool": "TaskUpdate"
+  },
+  {
+    "hash": "a1e44ed7f9e4",
+    "timestamp": 1779978745615,
+    "tool": "Bash"
+  },
+  {
+    "hash": "fa50fe078992",
+    "timestamp": 1779978755564,
+    "tool": "Read"
+  },
+  {
+    "hash": "b74dca903cc7",
+    "timestamp": 1779978760150,
+    "tool": "Bash"
+  },
+  {
+    "hash": "7412415f6822",
+    "timestamp": 1779978795700,
+    "tool": "Bash"
+  },
+  {
+    "hash": "ccd0c4a8eacb",
+    "timestamp": 1779978801139,
+    "tool": "Bash"
+  },
+  {
+    "hash": "4329673d8bba",
+    "timestamp": 1779978812485,
+    "tool": "Bash"
+  },
+  {
+    "hash": "b9b9ff3b555d",
+    "timestamp": 1779978819930,
+    "tool": "Bash"
+  },
+  {
+    "hash": "29006c0c15a7",
+    "timestamp": 1779978829330,
+    "tool": "Read"
+  },
+  {
+    "hash": "1c02b1b45544",
+    "timestamp": 1779978835274,
+    "tool": "Read"
+  },
+  {
+    "hash": "ce70df21006b",
+    "timestamp": 1779978841643,
+    "tool": "TaskCreate"
+  },
+  {
+    "hash": "c388bce69344",
+    "timestamp": 1779978846455,
+    "tool": "TaskCreate"
+  },
+  {
+    "hash": "0aa7ce616f61",
+    "timestamp": 1779978850637,
+    "tool": "TaskCreate"
+  },
+  {
+    "hash": "07da3ed5de45",
+    "timestamp": 1779978856221,
+    "tool": "TaskCreate"
+  },
+  {
+    "hash": "5aa8f2fd9806",
+    "timestamp": 1779978860639,
+    "tool": "TaskCreate"
+  },
+  {
+    "hash": "04e33e93342d",
+    "timestamp": 1779978865920,
+    "tool": "TaskCreate"
+  },
+  {
+    "hash": "21b829dc9e40",
+    "timestamp": 1779978870605,
+    "tool": "TaskCreate"
+  },
+  {
+    "hash": "b7035a5cf7a4",
+    "timestamp": 1779978873908,
+    "tool": "TaskUpdate"
+  },
+  {
+    "hash": "d14abf297bcd",
+    "timestamp": 1779978878543,
+    "tool": "Bash"
+  },
+  {
+    "hash": "521019efbe6f",
+    "timestamp": 1779978917637,
+    "tool": "Write"
+  },
+  {
+    "hash": "faf4cc5ccd12",
+    "timestamp": 1779979025938,
+    "tool": "Write"
+  },
+  {
+    "hash": "53c59465207f",
+    "timestamp": 1779979120836,
+    "tool": "Write"
   }
 ]
