@@ -64,6 +64,8 @@ packages/ui-kit/
 ├── tsconfig.consumer.json      # from 022b — path aliases expose ONLY the public barrel (barrel itself written by /stylesheet-primitives)
 ├── .input-fingerprint.json     # hash of resolved inputs; enables no-op re-runs
 ├── .components-plan.json       # generation plan (canonical + custom) — consumed by /screens AND /stylesheet-primitives
+├── .components-shapes.json     # phase1-step-032 / feat-001 — extracted default visual contract per primitive from the selected mockup
+├── .patterns-extracted.json    # phase1-step-032 / feat-001 — index of patterns/_extracted/*.html written by step 8.7
 ├── src/
 │   ├── tokens/
 │   │   ├── tokens.json         # W3C DTCG — source of truth
@@ -82,11 +84,13 @@ packages/ui-kit/
 │   ├── icons/
 │   │   ├── generated/          # SVG → React components via svgr (asset prep; consumed by /stylesheet-primitives' barrel)
 │   │   └── index.ts            # icon barrel (intermediate; re-exported from src/index.ts by /stylesheet-primitives)
-│   └── illustrations/          # optional; gated by --nanobanana
-│       ├── empty-states/
-│       ├── onboarding/
-│       ├── hero/
-│       └── manifest.json       # provenance per illustration (generated | vector | user)
+│   ├── illustrations/          # optional; gated by --nanobanana
+│   │   ├── empty-states/
+│   │   ├── onboarding/
+│   │   ├── hero/
+│   │   └── manifest.json       # provenance per illustration (generated | vector | user)
+│   └── patterns/
+│       └── _extracted/         # phase1-step-032 / feat-001 — per-mockup pattern HTML references (wordmark.html, eyebrow.html, stat-tile.html, trust-bar.html, hero-badge.html, service-pillar-card.html, case-study-card.html, etc.); /screens reads these as composition references; /stylesheet-primitives generates React patterns from them
 ├── eslint-plugin/              # SKELETON from /new-project step 5b; rules filled in by /stylesheet-primitives (not here)
 └── scripts/
     └── validate-consumer.ts    # SKELETON from /new-project step 5b; real implementation in /stylesheet-primitives
@@ -426,6 +430,147 @@ The derivation is deterministic. Document it in `packages/ui-kit/src/tokens/READ
 
 Downstream: `/stylesheet-primitives` step 5's public barrel exports EVERY component in the plan (primitives + patterns + custom patterns + layouts). This skill's step 17 preview renders EVERY component with its analyst-derived screen count (or "Available, no current screens use it" for unused canonicals) — even though the React surface doesn't exist yet, the HTML preview asserts coverage so gate-3 can sign off on the FULL component set before `/stylesheet-primitives` runs.
 
+### 8.6. Component default-shape extraction from the mockup — phase1-step-032 / feat-001
+
+**Why this step exists.** Steps 4-8 extracted the TOKEN layer from the mockup (colors, font families, radius/spacing/shadow VALUES). The TOKEN layer is correct; the COMPONENT-DEFAULT-SHAPE layer wasn't being captured. Empirical regression (investigate-001): the selected Spark Studio mockup uses pill-shaped buttons (`border-radius: var(--radius-pill)` = 999px), but the kit's Button preview rendered `rounded-md` (12px) — the LLM author of step 17 had no extracted shape to read, so it defaulted. Every screen then composed flat-cornered buttons. The fix is to extract default visual contracts BEFORE step 17 runs.
+
+This step is STACK-AGNOSTIC — it captures shape as HTML + Tailwind utility classes + kit-token references. `/stylesheet-primitives` reads the extracted shapes and generates the stack-bound React primitives to match.
+
+**For each canonical primitive in the components plan (Button, Card, Badge, Input, Textarea, Select, Checkbox, Radio, Switch, Slider, Link, Nav, Logo, Hero, Avatar, Tabs, Tooltip, Toast, Modal, Drawer, Skeleton, EmptyState, …):**
+
+1. **Locate one or more instances in the selected-mockup HTML** at `docs/mockups/style-{K}/webapp/*.html`. Use these detection heuristics:
+   - **Button** — `<button>` elements + `<a>` elements styled as buttons (look for `.btn-*` classes, padding ≥ `4px`, border-radius declared, font-weight ≥ 500).
+   - **Card** — element with border-radius ≥ md tier AND padding ≥ 16px AND distinct background or border.
+   - **Badge** — small inline element with border-radius = pill/full AND font-size ≤ sm AND padding x ≤ 12px.
+   - **Input / Textarea / Select** — form-control elements with border-radius declared.
+   - **Nav** — `<nav>` element OR a fixed-position element at the top of `<body>` containing a link list.
+   - **Logo** — brand mark composition inside the nav (svg / img / icon + wordmark text). Note whether it's wordmark-only, mark-only, or composite.
+   - **Hero** — first `<section>` after the header, typically full-bleed or near-full-width.
+   - **Avatar** — round image with avatar context (user/client/team).
+   - **Card with image at top** — list-card pattern; detect as a Card variant.
+   - **EmptyState** — illustration + heading + body + CTA inside a Card-like container.
+2. **For each found instance, extract its default visual contract:**
+   - `border-radius` → named to the CLOSEST kit token (`--radius-sm` / `--radius-md` / `--radius-lg` / `--radius-xl` / `--radius-full`). Pill-shaped (≥ 900px) maps to `--radius-full` / Tailwind `rounded-full`.
+   - `padding` → named to closest spacing token (`--spacing-2` / `--spacing-4` / etc.). For asymmetric padding (e.g. `10px 22px`), pick the closest two-axis pair.
+   - `font-weight` (named token if available, else literal value).
+   - `font-size` → named to closest typography token.
+   - `box-shadow` → named to closest shadow token (`--shadow-md` / `--shadow-lg`).
+   - **Hover treatment** — note any `:hover` transform / color shift / shadow change. Common patterns: `translateY(-1px)` lift, `bg-{token}-{step+1}` color darken, warmer shadow.
+   - **For Nav specifically**: height, position (fixed/sticky/relative), backdrop (`backdrop-filter: blur(*px)` with alpha background), link-button shape (pill links have `border-radius: pill`), CTA presence.
+   - **For Logo specifically**: composition kind (`wordmark-only` / `mark-only` / `wordmark+mark`), brand-mark shape (square / circle / custom), brand-mark color (accent vs neutral vs custom).
+3. **Reconcile multiple instances.** If the mockup uses different shapes for the same primitive in different sections (e.g. one section has `rounded-md` buttons and another has `rounded-full`), pick the DOMINANT shape (most frequent). Note the variants in a `variants[]` array.
+4. **Write `packages/ui-kit/.components-shapes.json`** — the machine-readable extraction record. Schema:
+   ```json
+   {
+     "extractedFrom": "docs/mockups/style-{K}/webapp/{file}.html",
+     "primitives": {
+       "Button": {
+         "default": {
+           "borderRadiusToken": "--radius-full",
+           "tailwindClass": "rounded-full",
+           "paddingToken": "spacing-3 spacing-6",
+           "tailwindPaddingClass": "py-3 px-6",
+           "fontWeightToken": "font-weight-semibold",
+           "tailwindFontWeightClass": "font-semibold",
+           "boxShadowToken": "shadow-md",
+           "hover": {
+             "transform": "translateY(-1px)",
+             "shadow": "shadow-lg-warm",
+             "bgShift": "+1"
+           }
+         },
+         "variants": [
+           { "name": "primary", "bg": "accent-500", "fg": "text-inverted" },
+           {
+             "name": "secondary",
+             "bg": "transparent",
+             "border": "border-strong"
+           },
+           { "name": "icon-only", "shape": "rounded-full", "size": "h-14 w-14" }
+         ],
+         "instancesObserved": 7
+       },
+       "Nav": {
+         "height": "68px",
+         "position": "fixed",
+         "backdrop": "blur-16 bg-surface-base/92",
+         "linkShape": "rounded-full",
+         "linkPadding": "py-1_5 px-3_5",
+         "ctaPresent": true,
+         "instancesObserved": 1
+       },
+       "Logo": {
+         "composition": "wordmark+mark",
+         "markShape": "square-rounded",
+         "markColor": "accent-500",
+         "markSize": "h-7 w-7",
+         "wordmarkWeight": "font-bold",
+         "wordmarkSize": "text-2xl"
+       }
+     }
+   }
+   ```
+5. **Step 17 reads this file** when authoring the design-system-preview.html. Button-preview composition uses `tailwindClass: "rounded-full"` literally (not the hardcoded `rounded-md` default). Nav-preview includes the header section. Logo-preview includes the mark.
+
+**Acceptance check for this step**: every primitive in the components plan whose detection heuristic finds at least one mockup instance gets an entry in `.components-shapes.json`. Primitives whose detection finds no instance (e.g. Slider, Accordion may be unused in the mockup) get a fallback entry: `{ "default": "kit-defaults", "instancesObserved": 0 }` — step 17 then renders them with neutral defaults.
+
+### 8.7. Named-pattern extraction from the mockup — phase1-step-032 / feat-001
+
+**Why this step exists.** Mockups carry distinctive multi-element compositions that aren't single primitives — Wordmark (logo + brand mark), Eyebrow (small mono uppercase label above section headings), StatTile (floating stat overlay on hero), TrustBar (named-brand logo strip), HeroBadge (small pill above the H1), ServicePillarCard (icon + heading + body + bulleted list + CTA), CaseStudyCard (image + tag + title + outcome). When these aren't captured at /stylesheet time, /screens reinvents them per-screen and they drift; /stylesheet-primitives later authors React patterns from scratch with no reference.
+
+This step captures them as HTML pattern files so they're available to both downstream surfaces (preview + primitives).
+
+**Pattern detection — scan the selected mockup for instances of:**
+
+| Pattern slug          | What to look for                                                                                            | Required-field shape                                                                |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `wordmark`            | Logo composition inside `<nav>` (brand-mark + wordmark text, or wordmark-only)                              | mark element (if present), text element, layout (gap, alignment)                    |
+| `eyebrow`             | Small mono / uppercase label above a section heading (`section-tag`, `kicker`, `overline`)                  | text content slot, typography tokens (mono font, xs size, wide tracking, uppercase) |
+| `stat-tile`           | Floating overlay card with icon + numeric value + label (e.g. "48hrs / Average brief to kickoff")           | icon slot, value slot, label slot, container with shadow                            |
+| `trust-bar`           | Strip of named-brand logos (text or img) under the hero, typically uppercase mono labels separated by space | brand-name slots × N, layout (flex row, gap, alignment)                             |
+| `hero-badge`          | Small pill above the H1 (e.g. "Now taking on new projects", "Editorial · est. 2003")                        | text content slot, pill shape, optional indicator dot                               |
+| `service-pillar-card` | Large card with icon badge + heading + body paragraph + bulleted feature list + CTA link                    | icon-badge, heading, body, list × N, cta                                            |
+| `case-study-card`     | Image + overlay/below tag + title + optional outcome metric                                                 | image slot, tag, title, metric (optional)                                           |
+| `testimonial-block`   | Pull quote + attribution + optional headshot                                                                | quote, attribution, photo (optional)                                                |
+| `marquee-strip`       | Horizontally scrolling client/partner roster                                                                | brand-name slots, animation keyframe, reduced-motion respect                        |
+| `social-proof-row`    | Stacked avatars + numeric + line of text (e.g. "50+ brands launched")                                       | avatar stack, count, text                                                           |
+
+(Patterns NOT in the mockup are skipped — no need to invent.)
+
+**For each detected pattern:**
+
+1. Extract the canonical composition (HTML + Tailwind classes drawing on kit primitives + kit tokens).
+2. Write `packages/ui-kit/src/patterns/_extracted/{slug}.html` with:
+   - The pattern's HTML composition.
+   - A `data-pattern="{slug}"` attribute on the root element.
+   - A `<style>` block ONLY if the pattern requires custom CSS that can't be expressed via Tailwind + extracted kit tokens (rare — prefer token-based composition). If a `<style>` block IS needed, use `var(--*)` token references (never literal hex or px).
+3. Record each pattern in `packages/ui-kit/.patterns-extracted.json`:
+   ```json
+   {
+     "extractedFrom": "docs/mockups/style-{K}/webapp/{file}.html",
+     "patterns": [
+       {
+         "slug": "wordmark",
+         "file": "packages/ui-kit/src/patterns/_extracted/wordmark.html",
+         "instances": 2
+       },
+       {
+         "slug": "stat-tile",
+         "file": "packages/ui-kit/src/patterns/_extracted/stat-tile.html",
+         "instances": 4
+       },
+       {
+         "slug": "trust-bar",
+         "file": "packages/ui-kit/src/patterns/_extracted/trust-bar.html",
+         "instances": 1
+       }
+     ]
+   }
+   ```
+4. **`/stylesheet-primitives` reads `.patterns-extracted.json`** at its pattern-authoring step and generates the corresponding React patterns matching the extracted shape. Until that lands, `/screens` reads `_extracted/*.html` directly as composition references.
+
+**Acceptance check**: at minimum 3 patterns extracted when the mockup contains them. If the mockup is unusually flat (no distinctive multi-element compositions), the file may have fewer entries; surface a `warnings[]` note "Mockup contained limited distinctive patterns — kit will rely on canonical patterns from /stylesheet-primitives".
+
 ### Steps 9, 10, 11 — MOVED to `/stylesheet-primitives` (feat-074)
 
 - **Step 9 (Generate primitives — 12 core mandatory + 8 extended on-demand)** → `/stylesheet-primitives` step 1
@@ -525,6 +670,12 @@ Single standalone HTML page. This is NOT a docs grid. **The preview MUST read as
 
 7. **Every rendered instance carries a `data-comp` attribute** with this shape: `"ComponentName · tier · usage-line"` (e.g. `"Button · primary variant · 571 screens · all platforms"`). The tooltip JS (below) splits on `·` and renders the parts with distinct styling.
 
+8. **Component default-shapes come from `packages/ui-kit/.components-shapes.json` — phase1-step-032 / feat-001.** When composing each primitive's preview render, READ the extracted default shape and use it literally. Concretely: when you compose a Button preview, look up `primitives.Button.default.tailwindClass` and use that for `border-radius` — do NOT default to `rounded-md`. Look up `primitives.Button.default.hover` and apply the hover treatment. Same for every primitive. If a primitive has no entry (instancesObserved: 0), use kit-defaults conservatively. **Empirical motivator**: before this step existed, step 17's Button preview used `rounded-md` while the mockup used `rounded-full` — the preview was visibly off; /screens then composed buttons of the wrong shape on every screen.
+
+9. **Named patterns come from `packages/ui-kit/.patterns-extracted.json` — phase1-step-032 / feat-001.** When composing realistic app sections (Hero, Service-overview, Featured-work, Testimonial, etc.), CONSULT the extracted patterns first. If the mockup carried a `wordmark` pattern, the preview's header uses the wordmark composition verbatim. If the mockup carried a `stat-tile` pattern, the Hero section's preview includes floating stat tiles. If the mockup carried an `eyebrow` pattern, every section heading is preceded by an eyebrow. This is what makes the preview look LIKE the mockup, not GENERIC.
+
+10. **Header / Nav / Logo MUST appear as a top section. — phase1-step-032 / feat-001.** Before this step existed, design-system-preview.html omitted the header entirely; the section list jumped from "Hero composition" to "Service overview". Every project's preview MUST now include an explicit `<section id="header">` (or top-of-page header element) that renders the Nav primitive + Logo pattern matching the extracted shape. The reviewer sees what `/screens` will reach for when composing every screen's header. No header = abort with `success: false` and `errors: ["design-system-preview.html missing header/nav/logo section"]`.
+
 **Tooltip implementation — ship this snippet verbatim in every preview:**
 
 ```html
@@ -609,6 +760,10 @@ The outline-on-hover + dashed rectangle is a universal affordance: hovering reve
 
 **Full-coverage assertion (unchanged).** Before writing the preview, verify: every entry in `components.md`'s JSON trailer (`primitives`, `patterns`, `layouts`, `projectSpecific` combined) has at least one corresponding rendered instance with a matching `data-comp` attribute. If any analyst-observed component is missing from the preview, abort — this is the load-bearing contract that prevents unreviewed components leaking into `/screens`.
 
+**Default-shape parity assertion — phase1-step-032 / feat-001.** After writing the preview, for every primitive that has an entry in `.components-shapes.json` with `instancesObserved > 0`, verify the preview's render of that primitive uses the extracted `tailwindClass` for border-radius (e.g. Button preview must use `rounded-full` if the mockup's Button was pill). On mismatch, abort with `errors: ["Button preview uses rounded-md but mockup default is rounded-full per .components-shapes.json"]` — this prevents the empirical regression that motivated phase1-step-032.
+
+**Header-section assertion — phase1-step-032 / feat-001.** After writing the preview, grep for `id="header"` OR a top-of-page `<header>` element OR a top-of-page `<nav>` element. If none present, abort with `errors: ["design-system-preview.html missing header/nav section — see UX philosophy principle 10"]`.
+
 **Grep-based verifier:** after writing, grep for `data-comp=` and confirm the unique component-name set matches `.components-plan.json`'s union. Abort on any mismatch (missing OR extra).
 
 **Interaction smoke-check before emitting:** open the file in a headless browser (via the `chrome-devtools` MCP in the `ui-designer`-scoped set) and click each trigger (Open Dialog / Open Drawer / fire Toast). Confirm no JS errors in console. If the MCP isn't available at runtime, skip with a `warnings[]` note.
@@ -686,6 +841,45 @@ Running `/stylesheet` twice with the same `docs/selected-style.json` and unchang
   "previewPath": "docs/design-system-preview.html",
   "componentsPlanPath": "packages/ui-kit/.components-plan.json",
   "previewBootstrapPath": "packages/ui-kit/src/styles/preview-bootstrap.html",
+  "componentsShapesPath": "packages/ui-kit/.components-shapes.json",
+  "patternsExtractedPath": "packages/ui-kit/.patterns-extracted.json",
+  "componentsExtracted": [
+    {
+      "name": "Button",
+      "instancesObserved": 7,
+      "borderRadiusToken": "--radius-full",
+      "tailwindClass": "rounded-full"
+    },
+    {
+      "name": "Nav",
+      "instancesObserved": 1,
+      "height": "68px",
+      "linkShape": "rounded-full"
+    },
+    { "name": "Logo", "instancesObserved": 2, "composition": "wordmark+mark" }
+  ],
+  "patternsExtracted": [
+    {
+      "slug": "wordmark",
+      "file": "packages/ui-kit/src/patterns/_extracted/wordmark.html",
+      "instances": 2
+    },
+    {
+      "slug": "stat-tile",
+      "file": "packages/ui-kit/src/patterns/_extracted/stat-tile.html",
+      "instances": 4
+    },
+    {
+      "slug": "trust-bar",
+      "file": "packages/ui-kit/src/patterns/_extracted/trust-bar.html",
+      "instances": 1
+    },
+    {
+      "slug": "eyebrow",
+      "file": "packages/ui-kit/src/patterns/_extracted/eyebrow.html",
+      "instances": 8
+    }
+  ],
   "budgetExhausted": false,
   "gapsPath": null,
   "warnings": [],
@@ -693,7 +887,7 @@ Running `/stylesheet` twice with the same `docs/selected-style.json` and unchang
 }
 ```
 
-Matches the agnostic-surface subset of `StylesheetOutput` in task 034b. The primitives/patterns/layouts/storybook fields are emitted by `/stylesheet-primitives` and merged downstream where consumers read both return JSONs.
+Matches the agnostic-surface subset of `StylesheetOutput` in task 034b. The primitives/patterns/layouts/storybook fields are emitted by `/stylesheet-primitives` and merged downstream where consumers read both return JSONs. The `componentsExtracted[]` + `patternsExtracted[]` arrays (phase1-step-032 / feat-001) summarize the mockup-extraction record — `/stylesheet-primitives` reads them to generate stack-bound React primitives + patterns matching the extracted shapes.
 
 ## Output contract summary
 
@@ -702,9 +896,14 @@ Matches the agnostic-surface subset of `StylesheetOutput` in task 034b. The prim
 - `packages/ui-kit/src/styles/globals.css` starts with `@tailwind base/components/utilities` (bug-077)
 - `packages/ui-kit/src/styles/preview-bootstrap.html` present (refactor-007 contract for `/mockups` + `/screens`)
 - `packages/ui-kit/.components-plan.json` present (consumed by `/screens` AND `/stylesheet-primitives`)
+- `packages/ui-kit/.components-shapes.json` present (phase1-step-032 / feat-001 — extracted default visual contract per primitive from the selected mockup; consumed by step 17 of THIS skill + by `/stylesheet-primitives` + by `/screens`)
+- `packages/ui-kit/.patterns-extracted.json` present (phase1-step-032 / feat-001 — index of `src/patterns/_extracted/*.html` files written by step 8.7; consumed by `/stylesheet-primitives` + by `/screens`)
+- `packages/ui-kit/src/patterns/_extracted/*.html` present for every distinctive named pattern detected in the selected mockup (Wordmark, Eyebrow, StatTile, TrustBar, HeroBadge, ServicePillarCard, CaseStudyCard) — pattern-by-pattern populated; only patterns the mockup carries
 - `packages/ui-kit/package.json` is the stub form (no React peerDeps yet)
 - `packages/ui-kit/CHANGELOG.md` entry written
 - `docs/design-system-preview.html` is the gate-3 review artifact (HTML preview — no Storybook yet)
+- `docs/design-system-preview.html` contains a top-of-page `<header>` / `<nav>` / `<section id="header">` rendering the extracted Nav primitive + Logo pattern (phase1-step-032 / feat-001 — closes the empirical gap surfaced by investigate-001 where the preview's section list jumped from "Hero composition" to "Service overview" with no header)
+- Every primitive's preview in `docs/design-system-preview.html` uses the extracted default-shape from `.components-shapes.json` (Button's `tailwindClass` matches the mockup's pill / flat / round shape; not a hardcoded `rounded-md`)
 - `docs/design-system-gaps.md` exists ONLY when budget was exhausted mid-run
 - Return JSON matches the agnostic subset of `StylesheetOutput` schema
 
@@ -782,10 +981,14 @@ Server lifecycle: started when orchestrator enters gate 3, killed when signoff i
 - [ ] `globals.css` starts with `@tailwind base/components/utilities` (bug-077 invariant)
 - [ ] Dial → token mapping rules applied: `visual_density` drives spacing defaults, `motion_intensity` drives duration defaults, `design_variance` drives layout-template defaults
 - [ ] `.components-plan.json` written with the full canonical + custom union (consumed by `/screens` AND `/stylesheet-primitives`)
+- [ ] `.components-shapes.json` written per step 8.6 with default visual contract per primitive (phase1-step-032 / feat-001)
+- [ ] `.patterns-extracted.json` + `src/patterns/_extracted/*.html` written per step 8.7 for every distinctive named pattern in the selected mockup (phase1-step-032 / feat-001)
 - [ ] `--nanobanana` gates only the `illustrations/` step; everything else is always code-gen
 - [ ] Illustrations fall back to unDraw vectors when `--nanobanana` is off
 - [ ] `package.json` stub form: version `0.1.0-tokens-only`, exports only `./styles/*` + `./tokens/*`; no React peerDeps, no Storybook scripts (those land via `/stylesheet-primitives`)
 - [ ] `docs/design-system-preview.html` covers every analyst-observed primitive + pattern + layout + custom component (verified by grep against `.components-plan.json`)
+- [ ] `docs/design-system-preview.html` contains a top-of-page header/nav/logo section (phase1-step-032 / feat-001 — step 17 UX principle 10 + assertion)
+- [ ] `docs/design-system-preview.html` primitive previews use extracted default-shapes from `.components-shapes.json` — Button is pill when mockup is pill, not the hardcoded `rounded-md` default (phase1-step-032 / feat-001 — step 17 UX principle 8 + parity assertion)
 - [ ] Full asset-download wave respects budget; on exhaustion writes `docs/design-system-gaps.md` + partial kit
 - [ ] De-duplicates against `docs/mockups/style-{K}/manifest.json.assets[]`
 - [ ] Re-run with unchanged inputs is a no-op (`noChange: true` in return JSON; byte-identical agnostic surface)
