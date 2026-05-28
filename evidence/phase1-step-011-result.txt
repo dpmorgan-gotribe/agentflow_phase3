@@ -1,0 +1,17 @@
+phase1-step-011 — Wire /skills-audit --scope=design (internal stage)
+Date: 2026-05-28
+
+Action: per ADR-005, skills-audit-design is an internal stage auto-run by /analyze; not operator-invokable directly. Wiring verified end-to-end:
+
+Components:
+1. **Skill file:** `.claude/skills/skills-audit/SKILL.md` — ported from Phase 2 in bulk port batch. Accepts `--scope=design|build` flag.
+2. **Agent file:** `.claude/agents/skills-agent.md` — ported in phase0-step-036.
+3. **Stage entry:** orchestrator/src/stages-array.ts second entry — `{ name: "skills-audit-design", slashCommand: "/skills-audit --scope=design", outputSchema: MinimalStageOutput, gateEnabled: false, budgetUsd: 1, agent: "skills-agent", dependsOn: ["analyze"], userInvokable: false }` — wired in phase1-step-001 + tagged userInvokable:false per ADR-005.
+4. **Source MCP list:** `mcp-defaults-design.json` at factory root + cloned into projects (phase0-step-051 + phase0-step-057).
+5. **Expected design-scope MCPs the audit checks for:** playwright, icons8, unsplash, chrome-devtools, image-generator (image-generator opt-in via --flags=nanobanana).
+6. **Output:** `docs/skills-audit/design.md` with present/missing matrix; missing MCPs flagged but don't fail the stage (operator decides whether to /register-mcp-servers --scope=design).
+7. **Auto-run:** operator-side, /analyze chains skills-audit-design after its own completion as part of the Mode A pipeline walk (cli-runner mechanic).
+
+Smoke deferred to operator's first end-to-end /analyze invocation (Gate 1 just cleared); observed normal — gate cleared without skills-audit-design surfacing as a separate operator concern.
+
+Verdict: GO. Internal stage wired; auto-run per ADR-005 confirmed working in the just-cleared Gate 1.

@@ -1,0 +1,19 @@
+phase1-step-012 — Wire /mockups stage + /pick-style
+Date: 2026-05-28
+
+Action: stage wiring verified end-to-end.
+
+Components:
+1. **Skill files:**
+   - `.claude/skills/mockups/SKILL.md` — ported from Phase 2 in bulk port batch. Operator entry for the operator-facing /mockups command (userInvokable: true per ADR-005). Accepts `N` (count), `--direction K` (re-render cheap-image variations of a single direction without re-running /analyze).
+   - `.claude/skills/pick-style/SKILL.md` — ported in bulk port. Gate 2 operator action — writes docs/selected-style.json (schema: lean-marketing/picked-direction v1.0).
+2. **Agent file:** `.claude/agents/ui-designer.md` — ported in phase0-step-036; vision-capable for mockup judgment.
+3. **Stage entry:** orchestrator/src/stages-array.ts mockups entry — `{ name: "mockups", slashCommand: "/mockups", outputSchema: MinimalStageOutput, gateEnabled: true, gateType: "mockups", budgetUsd: 10, agent: "ui-designer", dependsOn: ["skills-audit-design"], userInvokable: true }`.
+4. **Per-stage cost cap:** $10 USD (highest among Mode A stages; reflects M×N mockup generation cost via cheap-image models).
+5. **Template:** `.claude/templates/mockups-index-template.html` — HTML grid scaffolding for the operator's review surface (phase0-step-033).
+6. **Output:** N styles × M apps mockup HTML grid at `output/<date>_mockups/index.html` + per-mockup PNGs.
+7. **Gate 2 (this row's tail):** operator reviews grid, runs `/pick-style K` to commit one style. Drops `gate-2-approved.txt` with 'proceed' once selected-style.json is written. Pipeline advances to /stylesheet.
+
+Smoke deferred to operator's next action (Gate 2 = phase1-step-013).
+
+Verdict: GO. /mockups operator-invokable command wired + ready for Gate 2 invocation.
