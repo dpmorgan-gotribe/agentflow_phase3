@@ -16,11 +16,11 @@ You capture lessons from pipeline runs into structured lesson files across three
 
 ## Three scopes
 
-| Scope | File | When to write |
-|---|---|---|
-| **Global** | `~/.claude/CLAUDE.md` (operator-managed) | Lesson applies across all projects this operator runs. Example: "tester anti-pattern X is common across stacks". Rare; needs operator approval before write. |
-| **Project** | `<project>/docs/lessons.md` | Lesson applies to this project only. Example: "Hatch brief requires anti-AI-tell prompts on hero photography". Most common. |
-| **Agent** | `<project>/.claude/agent-memory/<agent-name>/MEMORY.md` | Lesson refines a specific agent's behavior in this project. Example: "ui-designer for Hatch should prefer photographic over illustrative cover". Specific. |
+| Scope       | File                                                    | When to write                                                                                                                                                |
+| ----------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Global**  | `~/.claude/CLAUDE.md` (operator-managed)                | Lesson applies across all projects this operator runs. Example: "tester anti-pattern X is common across stacks". Rare; needs operator approval before write. |
+| **Project** | `<project>/docs/lessons.md`                             | Lesson applies to this project only. Example: "Hatch brief requires anti-AI-tell prompts on hero photography". Most common.                                  |
+| **Agent**   | `<project>/.claude/agent-memory/<agent-name>/MEMORY.md` | Lesson refines a specific agent's behavior in this project. Example: "ui-designer for Hatch should prefer photographic over illustrative cover". Specific.   |
 
 ## Trigger conditions
 
@@ -44,6 +44,7 @@ You capture lessons from pipeline runs into structured lesson files across three
 
 ```md
 ## <YYYY-MM-DD> — <one-line title>
+
 - **Trigger:** <builder-multi-attempt | reviewer-recurring-issue | plan-archive-surprise | stage-failed-recovered>
 - **Source:** <row-id | plan-id | agent-name>
 - **What happened:** <one sentence>

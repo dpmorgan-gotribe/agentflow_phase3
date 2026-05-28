@@ -59,6 +59,7 @@ Alternative tiers (same dispatch):
 ### 4. Recommendation
 
 Based on the alternatives:
+
 - If chosen tier is opus AND haiku cost ≤ 10% of opus → suggest "consider routing to haiku for this dispatch"
 - If chosen tier is sonnet AND cacheHitRatio < 0.5 → suggest "warm the cache prefix before this dispatch (see ADR-001)"
 - Otherwise: "Routing OK."

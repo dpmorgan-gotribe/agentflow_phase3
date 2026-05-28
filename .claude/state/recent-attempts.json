@@ -1,40 +1,5 @@
 [
   {
-    "hash": "ab99200018eb",
-    "timestamp": 1779927793418,
-    "tool": "Bash"
-  },
-  {
-    "hash": "077e7edab708",
-    "timestamp": 1779927800224,
-    "tool": "Bash"
-  },
-  {
-    "hash": "6b53478f154d",
-    "timestamp": 1779927802099,
-    "tool": "Bash"
-  },
-  {
-    "hash": "17567d0e93db",
-    "timestamp": 1779927802770,
-    "tool": "Bash"
-  },
-  {
-    "hash": "f97821ea79a6",
-    "timestamp": 1779927809234,
-    "tool": "Bash"
-  },
-  {
-    "hash": "8810006d615c",
-    "timestamp": 1779927810794,
-    "tool": "Bash"
-  },
-  {
-    "hash": "be854c27eb2e",
-    "timestamp": 1779927812300,
-    "tool": "Bash"
-  },
-  {
     "hash": "1cc9fa59bbf8",
     "timestamp": 1779927823890,
     "tool": "Bash"
@@ -248,5 +213,40 @@
     "hash": "fb8c0e7bafa7",
     "timestamp": 1779927999170,
     "tool": "Bash"
+  },
+  {
+    "hash": "313d8ea1bff0",
+    "timestamp": 1779928127765,
+    "tool": "Bash"
+  },
+  {
+    "hash": "7990b85c4255",
+    "timestamp": 1779928131537,
+    "tool": "Bash"
+  },
+  {
+    "hash": "0891839cee04",
+    "timestamp": 1779928208295,
+    "tool": "Write"
+  },
+  {
+    "hash": "286c76895485",
+    "timestamp": 1779928292754,
+    "tool": "Read"
+  },
+  {
+    "hash": "35d9484002e1",
+    "timestamp": 1779928297787,
+    "tool": "Bash"
+  },
+  {
+    "hash": "32f5612f6baa",
+    "timestamp": 1779928302623,
+    "tool": "Read"
+  },
+  {
+    "hash": "1d2cc9e26885",
+    "timestamp": 1779928312423,
+    "tool": "Edit"
   }
 ]

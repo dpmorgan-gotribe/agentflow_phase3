@@ -49,3 +49,11 @@
 - **Outstanding (2 of 61):**
   - **phase0-step-016 (HUMAN harness baseline smoke)** — pending operator (5 sub-checks; can run any time).
   - **phase0-step-048 (HUMAN Phase 0 closure)** — **CURRENT STOP GATE.** Operator runs `/phase-gate 0` → reads `reports/phase-0-gate-<date>.md` → spot-checks 5 random rows → tags `phase-0-done` + `phase-1-start`.
+
+## 2026-05-28 — phase 0 gate report generated
+
+- Report: `reports/phase-0-gate-2026-05-28.md`
+- Inputs: 61 phase0 rows, 59 passes:true (96.7%), 2 passes:false (both human-inspection: step-016, step-048).
+- Retro verdict: READY FOR OPERATOR REVIEW with **one hard blocker** — Section 4b plan-parity drift = **0/5 (0%)**. Every Phase 0 scope section (§0a–§0i) in `phase-plan.md` is still `[to be filled]`; `/sync-phase-plan` was never invoked during Phase 0. Per CLAUDE.md "Rebuild guarantee", drift >20% blocks phase close.
+- Required before closure: (1) run `/sync-phase-plan` across all 9 Phase 0 sections; (2) close phase0-step-016 (5 sub-check operator walk); (3) re-run `/phase-gate 0` to confirm drift <20%; (4) operator signs off phase0-step-048 and applies `phase-0-done` + `phase-1-start` tags.
+- Awaiting human approval before phase 1 starts.

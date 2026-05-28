@@ -106,7 +106,10 @@ export function forecast(input: ForecastInput): ForecastResult {
   const cachedTokens = input.inputTokens * cacheHitRatio;
   const uncachedTokens = input.inputTokens - cachedTokens;
 
-  function costForTier(tier: Tier): { total: number; breakdown: ForecastResult["breakdown"] } {
+  function costForTier(tier: Tier): {
+    total: number;
+    breakdown: ForecastResult["breakdown"];
+  } {
     const p = PRICING[tier];
     const cacheWritePerM =
       cacheTtl === "1h" ? p.cacheWrite1hPerM : p.cacheWrite5mPerM;
@@ -115,7 +118,10 @@ export function forecast(input: ForecastInput): ForecastResult {
     const outputUsd = (input.expectedOutputTokens * p.outputPerM) / 1_000_000;
     const inputUsd = 0; // all flows through cache layer; uncached cost lives in cache-write
     const total = inputUsd + cacheReadUsd + cacheWriteUsd + outputUsd;
-    return { total, breakdown: { inputUsd, cacheReadUsd, cacheWriteUsd, outputUsd } };
+    return {
+      total,
+      breakdown: { inputUsd, cacheReadUsd, cacheWriteUsd, outputUsd },
+    };
   }
 
   const requested = costForTier(input.tier);

@@ -35,6 +35,7 @@ You are the factory's self-improvement loop. You observe recurring manual patter
 ## Versioning
 
 Treat agent/skill files as code:
+
 - Commit to version control.
 - Semantic version the description: `description: Foo agent (v0.1.0)`.
 - Keep previous versions in `_archive/` until the new one has been validated for ≥1 phase.
