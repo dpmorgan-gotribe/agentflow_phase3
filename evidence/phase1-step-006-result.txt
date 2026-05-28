@@ -1,0 +1,16 @@
+phase1-step-006 — orchestrator/src/visual-review-retry.ts
+Date: 2026-05-28
+
+Action: ported verbatim from Phase 2 in bulk port batch.
+
+Verification:
+- File present at orchestrator/src/visual-review-retry.ts
+- `pnpm --filter orchestrator test visual-review-retry` → 8/8 tests pass
+
+Coverage:
+- Retry loop for /visual-review error-severity violations
+- Per-screen cap = 3 (independent of Layer-5 retry counter)
+- Regenerates screen + re-runs /visual-review on each iteration
+- Failed screens (cap exhausted) populate needsHumanReview[] feeding Gate 4
+
+Verdict: GO.

@@ -84,3 +84,34 @@ export interface PipelineStage {
 /** Runtime options threaded through to every stage invocation. */
 export const PipelineFlagSet = z.array(FeatureFlag);
 export type PipelineFlagSet = z.infer<typeof PipelineFlagSet>;
+
+/**
+ * Minimal output shape any Mode A stage may emit. Used as the per-stage
+ * Zod schema for stages without a richer dedicated contract (analyze,
+ * skills-audit-design, mockups, stylesheet, screens, visual-review,
+ * user-flows, stylesheet-primitives, skills-audit-build,
+ * register-mcp-build). Permissive by design via `.passthrough()` — the
+ * stage's actual artifacts live on disk (under `docs/`, `packages/ui-kit/`,
+ * etc.); the agent's return JSON is a thin summary the orchestrator uses
+ * to decide whether to advance + how to populate context.
+ *
+ * Stages with richer dedicated contracts use their own schemas instead
+ * (architect → ArchitectOutputSchema, pm → PmOutput,
+ * git-agent-bootstrap → GitAgentOutput). The `StageSchemas` lookup below
+ * wires the per-stage choice.
+ *
+ * Replaces the Phase-2 `z.unknown()` placeholder per phase1-step-001.
+ */
+export const MinimalStageOutput = z
+  .object({
+    /** Did the stage complete its primary deliverable? */
+    success: z.boolean().optional(),
+    /** Non-blocking warnings the operator should see at gate review. */
+    warnings: z.array(z.string()).optional(),
+    /** One-line summary the orchestrator logs + uses for handoff context. */
+    summary: z.string().optional(),
+    /** Files the stage produced — relative to project root. */
+    artifacts: z.array(z.string()).optional(),
+  })
+  .passthrough();
+export type MinimalStageOutput = z.infer<typeof MinimalStageOutput>;

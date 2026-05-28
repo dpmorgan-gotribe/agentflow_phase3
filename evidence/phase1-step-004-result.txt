@@ -1,0 +1,16 @@
+phase1-step-004 — orchestrator/src/project-state.ts
+Date: 2026-05-28
+
+Action: ported verbatim from Phase 2 in bulk port batch.
+
+Verification:
+- File present at orchestrator/src/project-state.ts
+- Tests for project-state behaviors embedded in pipeline.test.ts + cli-runner.test.ts (suite passes 1197/1197)
+
+Coverage:
+- detectStageCompletions() returns per-stage completion bitmap
+- detectOne(stageSlug) checks canonical output file existence per stage
+- Conservative detection (file-exists; schema validation deferred to stage-runner on re-execute)
+- Used by --resume-from-stage flag
+
+Verdict: GO.

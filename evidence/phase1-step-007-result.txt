@@ -1,0 +1,16 @@
+phase1-step-007 — orchestrator/src/gate-server-lifecycle.ts
+Date: 2026-05-28
+
+Action: ported verbatim from Phase 2 in bulk port batch.
+
+Verification:
+- File present at orchestrator/src/gate-server-lifecycle.ts
+- `pnpm --filter orchestrator test gate-server-lifecycle` → passes in full suite
+
+Coverage:
+- File-drop gate machinery: waitForGateDecision polls FS for gate-{n}-approved.txt or gate-{n}-approved-{featureId}.txt
+- 5-directive parser: 'proceed' | 'revise: <reason>' | 'reject: <reason>' | 'abort' | 'defer'
+- MVP no-op HTTP server (file-drop only for now; HTTP variant deferred)
+- Survives operator restarts (file-based state)
+
+Verdict: GO.

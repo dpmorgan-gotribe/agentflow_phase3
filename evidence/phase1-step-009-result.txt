@@ -1,0 +1,17 @@
+phase1-step-009 — /analyze stage wired into Mode A pipeline
+Date: 2026-05-28
+
+Action: stage wiring exists end-to-end.
+
+Components verified:
+1. **Skill file:** `.claude/skills/analyze/SKILL.md` — ported in phase0-step-046; operator entry with --style-count N / --platforms / --skip-research flags; dispatches analyst agent
+2. **Subscope skills:** 7 analyze subscope files in `.claude/skills/analyze/` (research, styles, assets, inspirations, flows, screens, integrations) — ported phase0-step-046
+3. **Agent file:** `.claude/agents/analyst.md` — ported phase0-step-035; 5-worker parallel fan-out via Task tool; sub-worker prompts INLINE in agent body
+4. **Stage entry:** `orchestrator/src/stages-array.ts` first entry `{ name: "analyze", slashCommand: "/analyze", outputSchema: MinimalStageOutput, gateEnabled: true, gateType: "requirements", budgetUsd: 5, agent: "analyst" }` — wired in phase1-step-001
+5. **Per-stage cost cap:** $5 USD enforced by stage-runner via budget-tracker.assertWithinPipelineBudget
+6. **Gate wiring:** Gate 1 ("requirements") fires after this stage completes; operator drops `.claude/state/{runId}/gate-1-approved.txt` to advance to /mockups
+7. **Resume support:** project-state.detectOne("analyze") checks `docs/analysis/shared/research_brief.yaml` presence
+
+End-to-end smoke (full /analyze invocation against test-app) deferred to phase1-step-010 (HUMAN Gate 1) — that gate's operator action IS the smoke.
+
+Verdict: GO. Stage wired; HUMAN smoke at next gate.

@@ -1,0 +1,17 @@
+phase1-step-003 — orchestrator/src/pipeline.ts
+Date: 2026-05-28
+
+Action: ported verbatim from Phase 2 in bulk port batch.
+
+Verification:
+- File present at orchestrator/src/pipeline.ts
+- `pnpm --filter orchestrator test pipeline` → 9/9 tests pass
+
+Coverage:
+- Mode A orchestrator walks STAGES array respecting dependsOn
+- File-drop gate watcher via fileDropWaitForGate factory
+- State persistence integration (via state-persistence.ts)
+- SaveContextFn MVP (log-only — operator runs /save-context manually for now)
+- Brief-coverage gate wiring post-/pm stage
+
+Verdict: GO.

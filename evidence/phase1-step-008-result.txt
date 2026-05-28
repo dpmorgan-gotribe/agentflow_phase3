@@ -1,0 +1,16 @@
+phase1-step-008 — orchestrator/src/brief-coverage-gate.ts
+Date: 2026-05-28
+
+Action: ported verbatim from Phase 2 in bulk port batch.
+
+Verification:
+- File present at orchestrator/src/brief-coverage-gate.ts
+- `pnpm --filter orchestrator test brief-coverage-gate` → 6/6 tests pass
+
+Coverage:
+- Post-/pm gate spawns scripts/audit-brief-coverage.mjs
+- Parses exit code + BriefCoverageOutput JSON (schema from @repo/orchestrator-contracts/brief-coverage.ts)
+- No-op + warn when brief.capabilities catalog DNE (legacy projects)
+- Catches PM-generated tasks.yaml that drops brief features
+
+Verdict: GO.

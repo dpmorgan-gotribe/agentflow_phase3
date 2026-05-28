@@ -1,21 +1,22 @@
 import type { PipelineStage } from "@repo/orchestrator-contracts";
-import { z } from "zod";
+import { MinimalStageOutput } from "@repo/orchestrator-contracts";
 
 /**
- * Placeholder output schema — fully permissive. Real per-stage schemas
- * are authored by task 034b (`StageSchemas[stageName]`); until those
- * land, this stub MUST accept anything the skill emits (including null,
- * empty string, missing structured_output) so `runPipeline` walks the
- * array end-to-end without false-negative aborts. Each stage swaps in
- * its concrete schema once 034b ships; false positives are caught at
- * that layer.
+ * Per-stage output schemas. phase1-step-001 replaced the Phase-2
+ * `z.unknown()` placeholder with `MinimalStageOutput` — documented
+ * permissive (object-passthrough with optional success/warnings/summary/
+ * artifacts fields). This is the v1 contract: documented + parseable +
+ * lets the pipeline walk end-to-end without false-negative aborts on
+ * stages that emit minimal JSON envelopes.
  *
- * Earlier this schema was `z.object({success,warnings}).passthrough()`
- * which tripped `layer5-exhausted` on skills that completed successfully
- * but didn't emit a trailing `{...}` JSON object. The placeholder's job
- * is to let the pipeline walk; real validation is per-stage work.
+ * Tightening per-stage to richer dedicated contracts (ArchitectOutputSchema,
+ * PmOutput, GitAgentOutput already exist in @repo/orchestrator-contracts;
+ * mockups/stylesheet/screens/visual-review/user-flows need authoring) is
+ * follow-up work for the rows that consume the corresponding stage
+ * outputs — paired with test-fixture updates so the stricter schema is
+ * exercised against realistic stage payloads, not the `{success:true}`
+ * minimal stub used by cli-runner.test.ts:326.
  */
-const PlaceholderStageOutput = z.unknown();
 
 /**
  * Mode A stage array — refactor-003 + refactor-004 canonical order.
@@ -31,7 +32,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "analyze",
     slashCommand: "/analyze",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: true,
     gateType: "requirements",
     budgetUsd: 5,
@@ -40,7 +41,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "skills-audit-design",
     slashCommand: "/skills-audit --scope=design",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: false,
     budgetUsd: 1,
     agent: "skills-agent",
@@ -50,7 +51,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "mockups",
     slashCommand: "/mockups",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: true,
     gateType: "mockups",
     budgetUsd: 10,
@@ -60,7 +61,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "stylesheet",
     slashCommand: "/stylesheet",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: true,
     gateType: "design-system",
     budgetUsd: 2,
@@ -70,7 +71,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "screens",
     slashCommand: "/screens",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: false,
     budgetUsd: 25,
     agent: "ui-designer",
@@ -79,7 +80,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "visual-review",
     slashCommand: "/visual-review",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: false,
     budgetUsd: 2,
     agent: "ui-designer",
@@ -88,7 +89,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "user-flows",
     slashCommand: "/user-flows-generator",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: true,
     gateType: "signoff",
     budgetUsd: 1,
@@ -99,7 +100,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "architect",
     slashCommand: "/architect",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: true,
     gateType: "credentials",
     budgetUsd: 3,
@@ -122,7 +123,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "stylesheet-primitives",
     slashCommand: "/stylesheet-primitives",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: false,
     budgetUsd: 5,
     agent: "ui-designer",
@@ -131,7 +132,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "pm",
     slashCommand: "/pm --mode=tasks",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: false,
     budgetUsd: 2,
     agent: "project-manager",
@@ -140,7 +141,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "skills-audit-build",
     slashCommand: "/skills-audit --scope=build",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: false,
     budgetUsd: 1,
     agent: "skills-agent",
@@ -149,7 +150,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "register-mcp-build",
     slashCommand: "/register-mcp-servers --scope=build",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: false,
     budgetUsd: 0.5,
     agent: "skills-agent",
@@ -159,7 +160,7 @@ export const STAGES: readonly PipelineStage[] = [
   {
     name: "git-agent-bootstrap",
     slashCommand: "/git-agent bootstrap",
-    outputSchema: PlaceholderStageOutput,
+    outputSchema: MinimalStageOutput,
     gateEnabled: false,
     budgetUsd: 0.5,
     agent: "git-agent",

@@ -1,0 +1,17 @@
+phase1-step-002 — orchestrator/src/stage-runner.ts
+Date: 2026-05-28
+
+Action: ported verbatim from Phase 2 in the bulk port (phase0-step-060 batch).
+
+Verification:
+- File present at orchestrator/src/stage-runner.ts
+- `pnpm --filter orchestrator test stage-runner` → 15/15 tests pass
+
+Coverage:
+- Runs one slash-command stage through SDK
+- Validates output schema (now MinimalStageOutput per phase1-step-001)
+- Layer-5 retry cap = 3 on schema-validation fail
+- Enforces budget pre-query via budget-tracker.assertWithinPipelineBudget
+- Records spend post-return into budget-tracker
+
+Verdict: GO. Phase 2 implementation preserved; schema layer upgraded by row 001.

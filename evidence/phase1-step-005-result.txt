@@ -1,0 +1,16 @@
+phase1-step-005 — orchestrator/src/kit-change-request-detour.ts
+Date: 2026-05-28
+
+Action: ported verbatim from Phase 2 in bulk port batch.
+
+Verification:
+- File present at orchestrator/src/kit-change-request-detour.ts
+- `pnpm --filter orchestrator test kit-change-request-detour` → 8/8 tests pass
+
+Coverage:
+- Design-phase detour invoked when ui-designer requests new kit component
+- Retry-counters cap = 2 kit-change-requests per pipeline run
+- Invokes PM `--mode=kit-change-request`, reruns /stylesheet, optionally reruns /architect
+- Escalates on cap exhaust (3rd attempt throws + suggests human escalation)
+
+Verdict: GO.
