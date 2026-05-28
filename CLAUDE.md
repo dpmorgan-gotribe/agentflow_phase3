@@ -20,6 +20,12 @@ This is the **factory** that generates agentic apps. Phase 3 is a rebuild of `ag
 
 ## Hard rules (NON-NEGOTIABLE)
 
+### RESEARCH adopts
+
+- When a RESEARCH.md (or similar research-doc) recommendation would CHANGE an operator-facing default — auth provider, billing tier, deployment target, model selection, env vars consumed at runtime — DO NOT silently apply via a factory project-level override.
+- Instead: document the tradeoff in the relevant docs/ file (e.g. `docs/agent-sdk-auth-providers.md` for auth choices) AND require explicit operator opt-in. Factory project-level overrides are reserved for choices the project genuinely requires (per-agent tier pin for unusual workloads, per-feature budget overrides) — not for defaults that apply broadly.
+- See LESSONS.md "RESEARCH adopts must be validated against operator setup" (phase0-step-049) + DECISIONS.md ADR-003 (auth-default supersession) for the empirical motivator.
+
 ### Plan/Archive system
 
 - Before any non-trivial work: `/check-existing-work` → `/plan-feature`|`/plan-bug`|`/plan-refactor`|`/plan-investigation`

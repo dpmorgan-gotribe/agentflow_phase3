@@ -68,3 +68,21 @@
 - DECISIONS.md: ADR-001 carries an inline 2026-05-28 revision (factory does NOT pin auth provider). Open question (blocker 3): operator decides whether to leave the inline revision or author ADR-003 as a formal supersession.
 - Gate status: **READY FOR HUMAN SIGN-OFF.** 6 open items in Section 6 are operator-decision items, not gate blockers.
 - Next: operator reads the report, optionally closes step-016, signs off step-048, then `git tag phase-0-done && git tag phase-1-start`.
+
+## 2026-05-28 — Phase 0 closure prep: 6-item batch resolving gate-report Section 6
+
+Following the green Phase 0 gate report, ran a single-batch resolution of the 6 operator-decision items + the optional CLAUDE.md amendment (per operator "go with [the amendment]" instruction). All items resolved mechanically; ready for the operator to tag.
+
+- **ADR-003 authored** (DECISIONS.md): formal supersession of ADR-001's auth-default clause. Factory does NOT pin a `provider:` default; auth selection delegated to `~/.claude/models.yaml`. Cross-refs ADR-001 + LESSONS phase0-step-049 + commits 5324311/cebd726.
+- **ADR-004 authored** (DECISIONS.md): introduces `polished: "waived"` third-state for factory-build perf rows with intrinsically fast implementations. Scope guardrail: Mode A stages + builder/tester dispatch + verifier tiers still require mandatory `/polish-pass`.
+- **Polish-pass waived on 2 rows**: phase0-step-050 (hook-regression, 24/24 PASS <2s) + phase0-step-055 (cost-projection, <1ms/forecast pure-function). Each row has `polished: "waived"` + `polished_waiver_reason` field per ADR-004. Helper at `scripts/_waive-polished.mjs`.
+- **2 retroactive lessons captured** in LESSONS.md: (a) phase0-step-027 — /new-project surfaces factory gaps the planning pass missed (technique: walk every SKILL.md body for `Write|Create|mkdir` to enumerate class-2 generated artifacts); (b) phase0-step-042 — scaffolding docs are SPECS, not implementations; check spec→implementation gap before marking ports complete.
+- **Phase 3 typecheck-debt note** added to phase-plan.md Phase 3 section: 144 errors are inherited Phase 2 debt in vision-LLM test fixtures; do NOT file as Phase 3 regressions; in scope for rows phase3-step-006 + phase3-step-007 to fix as part of their wiring work.
+- **Phase 1 §-skeleton seeded** in phase-plan.md (5 subsections: §A pipeline machinery, §B stage wiring, §C HITL gates, §D supplementary skills, §E Phase 1 closure). Each subsection has a `[to be filled]` placeholder with a one-line scope hint so `/sync-phase-plan` has slots to fill incrementally during Phase 1 rather than requiring another bulk retroactive fill at the Phase 1 gate.
+- **CLAUDE.md amendment** under §Hard rules: new "RESEARCH adopts" section codifies the lesson from phase0-step-049 — don't silently apply operator-facing default changes via factory project-level overrides; document tradeoff + require explicit operator opt-in.
+
+**Outstanding for the operator** (each is non-blocking):
+- phase0-step-016 HUMAN smoke (5 sub-checks) — judge ship-ready OR run sub-checks. Harness is empirically working (used to flip 59 rows + run /phase-gate twice).
+- Tag `phase-0-done` + `phase-1-start` when ready.
+
+After tagging, I fill §0h with operator name + date + final row count + git tag applied, commit, and we're into Phase 1.

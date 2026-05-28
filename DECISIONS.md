@@ -64,3 +64,36 @@ Lesson captured in `LESSONS.md` (will be added next /capture-lesson run): "Do no
   - Tester-only (no builder tests) — rejected: tester has no implementation context; produces vacuous tests
   - Builder-only (no tester) — rejected: builder cannot self-skeptic; misses edge cases
 - **References:** `.claude/rules/testing-policy.md` (phase0-step-025), rows phase2-step-008 + phase3-step-009
+
+## ADR-003 — Auth-provider default is operator-chosen (supersedes ADR-001 auth-default clause)
+
+- **Status:** accepted
+- **Date:** 2026-05-28
+- **Context:** ADR-001 (original) included a "Default `auth-provider.ts` to API-key mode" clause citing RESEARCH.md claims about Max OAuth being ToS-violating for headless SDK use. That default was implemented (commit 5324311 — added `provider: anthropic-api` to factory `.claude/models.yaml`) and immediately reverted (commit cebd726) after the operator flagged that they run on Claude Max 20x with no `ANTHROPIC_API_KEY`. ADR-001 was revised inline rather than formally superseded; the Phase 0 retro flagged the inline-revision approach as in tension with the "ADRs are immutable once accepted" log convention.
+- **Decision:** Formalize the reversion via this ADR. **The factory does NOT pin a `provider:` default.** `auth-provider.ts` continues to support all 4 providers (`claude-max-subscription`, `anthropic-api`, `bedrock`, `vertex`); selection is delegated entirely to `~/.claude/models.yaml` (user-home, operator-managed). Factory `.claude/models.yaml` MUST NOT set a top-level `provider:` key.
+- **Consequences:**
+  - Operator's existing user-home auth setup wins; no factory-level surprise overrides.
+  - Cache-prefix-reuse via `excludeDynamicSections: true` (the load-bearing performance change from ADR-001) remains active and is auth-mode-independent.
+  - `ENABLE_PROMPT_CACHING_1H=1` is recommended in CLAUDE.md for `anthropic-api` users on long runs; no-op for Max subscribers.
+  - ADR-001's "Decision (auth)" clause is superseded by this ADR. ADR-001's "Decision (cache prefix reuse)" clause remains in force. Downstream rows referencing ADR-001 should cross-check ADR-003 for the current auth posture.
+  - Establishes a precedent: factory project-level overrides of `~/.claude/models.yaml` are reserved for choices the project genuinely requires (per-agent tier pin for unusual workloads, per-feature budget overrides). Operator-facing defaults like auth provider are not factory's call.
+- **Alternatives considered:**
+  - Leave ADR-001 inline revision as-is — rejected: tension with immutable-ADR convention; cleaner downstream pointer if formalized.
+  - Re-pin `provider: anthropic-api` with operator approval — rejected: operator does not have an API key; the user-home config is the right authority for auth.
+- **References:** ADR-001 (revised, DECISIONS.md lines 33-54), LESSONS.md "RESEARCH adopts must be validated against operator setup" (phase0-step-049), `.claude/models.yaml`, `docs/agent-sdk-auth-providers.md`, commits 5324311 (introduce) + cebd726 (revert), Phase 0 Gate Report 2026-05-28 Section 6 blocker #3.
+
+## ADR-004 — Polished waiver for factory-build perf rows with intrinsically fast implementations
+
+- **Status:** accepted
+- **Date:** 2026-05-28
+- **Context:** Phase 0 includes 2 rows with `category: "perf"` (phase0-step-050 hook-regression, phase0-step-055 cost-projection). Both pass functionally. Both have intrinsically fast implementations (24-fixture hook-regression runs in <2s; cost-projection is pure-function math at sub-millisecond per call). The `/polish-pass` skill expects a perf/cost budget declared in `phase-plan.md` and produces `evidence/{row-id}-bench.json` with `passes_budget: true`. For these rows there is no meaningful budget to verify — the implementation is already at floor performance.
+- **Decision:** Introduce a third state for the `polished` field: `"waived"` (string) in addition to the existing boolean `true | false`. A waived row signals "polish ceremony intentionally skipped — perf is not a meaningful concern at this row's implementation profile." Must be paired with a `polished_waiver_reason` field containing a one-line justification. The phase-gate retro should treat `"waived"` as semantically equivalent to `true` for Section 2 (Optimizations) reporting.
+- **Consequences:**
+  - phase0-step-050 + phase0-step-055 flip `polished: "waived"` with reason captured.
+  - Future factory-build infra rows can claim the waiver where it applies (sub-second execution, pure-function complexity, no I/O). Operator-facing or pipeline-runtime rows should still go through `/polish-pass` normally.
+  - The waiver is NOT a license to skip polish-pass on rows where perf actually matters. Mode A stages, builder/tester dispatch, verifier tiers — all retain mandatory polish ceremony.
+  - `feature_list.json` schema deviates slightly (polished becomes `boolean | "waived"`); document in any schema validator for feature_list as a known-good value.
+- **Alternatives considered:**
+  - Run /polish-pass anyway with a trivial budget — rejected: ceremony without signal pollutes the bench evidence corpus and gives retros false confidence in the polish-pass discipline.
+  - Add a separate `polish_required: false` field — rejected: two fields for one concept; the string-literal "waived" state is denser.
+- **References:** Phase 0 Gate Report 2026-05-28 Section 2 + Section 6 blocker #4, `feature_list.json` rows phase0-step-050 + phase0-step-055.

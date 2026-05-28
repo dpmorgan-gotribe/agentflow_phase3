@@ -302,7 +302,27 @@ all 16+ subagents through Mode A and Mode B pipelines.
 - `phase1-step-026` HUMAN closure signed off
 - `git tag phase-1-done`
 
-[Scope sections filled by /sync-phase-plan]
+## Scope sections (filled by /sync-phase-plan as rows close)
+
+### §A Pipeline machinery (rows 001-008)
+
+[to be filled by /sync-phase-plan after rows land — covers stages-array w/ real Zod schemas (replacing Phase 2 z.unknown placeholders), stage-runner, pipeline orchestrator, project-state resume detector, kit-change-request-detour (cap=2/pipeline), visual-review-retry (cap=3/screen), gate-server-lifecycle (file-drop directives: proceed/revise/reject/abort/defer), brief-coverage-gate]
+
+### §B Stage wiring — 13 Mode A stages (rows 009-023)
+
+[to be filled by /sync-phase-plan after rows land — covers /analyze (5-worker fan-out) → /skills-audit --scope=design → /mockups (N styles × M apps) → /stylesheet + /stylesheet-primitives → /screens (data-kit-* attrs) → /visual-review (Playwright rubric) → /user-flows-generator (Mermaid/SVG) → /architect (hash-detect re-run) → /pm --mode=tasks → /skills-audit --scope=build → /register-mcp-servers → /git-agent bootstrap]
+
+### §C HITL gates 1-5 (rows 010, 013, 018, 020, 026)
+
+[to be filled by /sync-phase-plan after rows land — Gate 1 analyze sign-off, Gate 2 pick-style commit, Gate 3+4 design signoff combined, Gate 5 credentials, Phase 1 closure smoke]
+
+### §D Supplementary skills (rows 024-025)
+
+[to be filled by /sync-phase-plan after rows land — /idea + /idea-list + /idea-promote (brainstorm detour), /plan-refactor + /plan-archive + /plan-search + /plan-status (operator power tools)]
+
+### §E Phase 1 closure (row 026)
+
+[to be filled when row 026 HUMAN gate clears]
 
 ---
 
@@ -338,7 +358,13 @@ rounds-orchestrator wrapping 1→4 + final-gate round 5, runtime-signoff Gate 7.
 - `git tag phase-3-done`
 - Factory ready for first real client project
 
-[Scope sections filled by /sync-phase-plan]
+## Phase 3 inherited debt — typecheck errors in vision-LLM test fixtures
+
+`pnpm --filter orchestrator typecheck` emits **144 errors** inherited verbatim from Phase 2. All errors are localized to test fixtures in `orchestrator/tests/perceptual-review.test.ts` and `orchestrator/tests/walkthrough-review.test.ts` (mismatched discriminated-union literals in test mocks, implicit-any in callback args). They do NOT block test execution — `pnpm --filter orchestrator test` passes 1182/1182 because vitest uses tsx (type-erasing). The errors are documented at this layer rather than filed as a Phase 3 bug because the rows that own the erring modules (phase3-step-006 perceptual-review, phase3-step-007 walkthrough-review) are the natural place to fix them as part of their wiring work. Future evaluators should NOT file these as Phase 3 regressions — they are pre-existing Phase 2 debt knowingly inherited at the bulk port (phase0-step-060). Fixing them is in scope for rows phase3-step-006 and phase3-step-007 but does not block Phase 3 closure if other test fixtures pass.
+
+## Scope sections (filled by /sync-phase-plan as rows close)
+
+[to be filled — Phase 3 §-skeleton will be seeded at Phase 2 closure / Phase 3 kickoff per the same pattern as Phase 1 §A-§E above]
 
 ---
 
