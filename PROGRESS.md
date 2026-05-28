@@ -36,3 +36,16 @@
   - 048 (HUMAN Phase 0 closure) — needs operator + retro after rows 042, 049, 050, 055 land
   - 049, 050, 055 (RESEARCH adopts + POST-MVP cost-projection) — deferred until orchestrator runs prove the baseline
 - **STOP GATE phase0-step-027 (HUMAN — /new-project smoke test):** operator exercises `/new-project test-app --proposal-file proposals/hatch-proposal.md` (or similar) and signs off in `evidence/phase0-step-027-result.txt`.
+
+## 2026-05-28 — /new-project gate cleared + Phase 0 finishers (rows 027, 042, 049, 050, 055)
+
+- **Done:** +5 rows. Phase 0 now **59/61 passing (97%)**.
+- **/new-project test-app gate (phase0-step-027):** operator ran `/new-project test-app --proposal-file proposals/hatch-proposal.md --agentic-visibility=private` cleanly. 18 agents + 50 skills + 7 hooks + 2 rules + 18 templates + 16 schemas + 5 validators cloned. Hatch brief drafted with 7 AI-filled + 10 inferred + 3 TODO sections. 3 warnings surfaced as factory gaps — all addressed (see below).
+- **Factory gaps closed:** improved `assets/README.md`; added 3 canonical templates (`.claude/templates/project-{turbo.json,tsconfig.json,package.json}.template`); MCP per-agent sync skip confirmed as expected.
+- **Row 042 (3 net-new agents):** html-verifier (Haiku) + lessons-agent (Sonnet) + agent-expert (Opus). Resolves Phase 2's [UNFINISHED] flag.
+- **Row 049 (RESEARCH adopt):** confirmed `excludeDynamicSections: true` wired in Phase 2 invoke-agent.ts:2626; switched factory `.claude/models.yaml` to `provider: anthropic-api`; documented `ENABLE_PROMPT_CACHING_1H=1`; cache-hit metric confirmed in budget-tracker.
+- **Row 050 (RESEARCH adopt):** `scripts/hook-regression.mjs` with 24 fixtures, **24/24 PASS in <2s**.
+- **Row 055 (POST-MVP adopt):** `orchestrator/src/cost-projection.ts` + 15-test suite (all pass) + `/preview-cost` operator skill.
+- **Outstanding (2 of 61):**
+  - **phase0-step-016 (HUMAN harness baseline smoke)** — pending operator (5 sub-checks; can run any time).
+  - **phase0-step-048 (HUMAN Phase 0 closure)** — **CURRENT STOP GATE.** Operator runs `/phase-gate 0` → reads `reports/phase-0-gate-<date>.md` → spot-checks 5 random rows → tags `phase-0-done` + `phase-1-start`.
