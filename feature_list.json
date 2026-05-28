@@ -2031,12 +2031,12 @@
       ],
       "evidence": "evidence/phase1-step-013-result.txt",
       "polished": false,
-      "passes": false,
-      "attempt_count": 0,
+      "passes": true,
+      "attempt_count": 1,
       "depends_on": [
         "phase1-step-012"
       ],
-      "closed_at": null,
+      "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
     {
@@ -2066,13 +2066,13 @@
       ],
       "evidence": "evidence/phase1-step-014-result.txt",
       "polished": false,
-      "passes": false,
-      "attempt_count": 0,
+      "passes": true,
+      "attempt_count": 1,
       "depends_on": [
         "phase0-step-032",
         "phase1-step-013"
       ],
-      "closed_at": null,
+      "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
     {
@@ -2100,12 +2100,12 @@
       ],
       "evidence": "evidence/phase1-step-015-result.txt",
       "polished": false,
-      "passes": false,
-      "attempt_count": 0,
+      "passes": true,
+      "attempt_count": 1,
       "depends_on": [
         "phase1-step-014"
       ],
-      "closed_at": null,
+      "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
     {
@@ -2133,13 +2133,13 @@
       ],
       "evidence": "evidence/phase1-step-016-result.txt",
       "polished": false,
-      "passes": false,
-      "attempt_count": 0,
+      "passes": true,
+      "attempt_count": 1,
       "depends_on": [
         "phase1-step-015",
         "phase1-step-006"
       ],
-      "closed_at": null,
+      "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
     {
@@ -2167,12 +2167,12 @@
       ],
       "evidence": "evidence/phase1-step-017-result.txt",
       "polished": false,
-      "passes": false,
-      "attempt_count": 0,
+      "passes": true,
+      "attempt_count": 1,
       "depends_on": [
         "phase1-step-015"
       ],
-      "closed_at": null,
+      "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
     {

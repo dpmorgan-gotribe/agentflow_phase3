@@ -1,0 +1,16 @@
+phase1-step-017 — Wire user-flows internal stage (auto-run by /screens per ADR-005; Gate 4 fires after)
+Date: 2026-05-28
+
+Per ADR-005: user-flows is NOT an operator-invokable command. It is auto-run by /screens as the tail of its orchestration sequence. Gate 4 fires after user-flows completes.
+
+Components verified:
+1. **Skill file:** `.claude/skills/user-flows-generator/SKILL.md` — ported in bulk port; userInvokable: false
+2. **Agent file:** `.claude/agents/ui-designer.md` (phase0-step-036) OR dedicated flows generator depending on Phase 2's dispatch wiring
+3. **Stage entry:** orchestrator/src/stages-array.ts user-flows entry — wired with dependsOn:["visual-review"] + gateEnabled:true + gateType:"signoff" + userInvokable:false
+4. **Inputs:** docs/analysis/webapp/flows.md (already exists in test-app) + docs/screens-manifest.json (produced by /screens)
+5. **Output schema:** schemas/user-flows-manifest.schema.json (phase0-step-030)
+6. **Output location:** docs/user-flows-manifest.json + docs/user-flows/*.svg (Mermaid/SVG flow diagrams) + templates/user-flows-template.html as HTML wrapper
+7. **Per-stage cost cap:** $1 USD
+8. **Gate 4 wiring:** signoff gate fires when stage completes; operator reviews stylesheet + screens + visual-review + user-flows together to commit Gate 3+4 design signoff
+
+Verdict: GO. Internal stage wired; Gate 4 fires after this stage completes — operator's next HUMAN gate.

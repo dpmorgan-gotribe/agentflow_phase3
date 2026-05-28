@@ -1,0 +1,19 @@
+phase1-step-014 — Wire /stylesheet stage (PRE-architect, STACK-AGNOSTIC kit-core)
+Date: 2026-05-28
+
+Per ADR-005: /stylesheet is an operator-invokable command that ships a STACK-AGNOSTIC kit-core (tokens, agnostic styles, Tailwind config, HTML preview). Stack-bound primitives are authored by the SEPARATE stylesheet-primitives internal stage that runs POST-architect (auto-run by /architect — see row 019).
+
+Components verified:
+1. **Skill file:** `.claude/skills/stylesheet/SKILL.md` — ported in bulk port batch; operator entry; userInvokable: true per ADR-005
+2. **Skill file (internal):** `.claude/skills/stylesheet-primitives/SKILL.md` — ported in bulk port batch; userInvokable: false per ADR-005; auto-run by /architect after credentials gate
+3. **Agent file:** `.claude/agents/ui-designer.md` — ported in phase0-step-036
+4. **Stage entry:** orchestrator/src/stages-array.ts stylesheet entry — `{ name: "stylesheet", slashCommand: "/stylesheet", outputSchema: MinimalStageOutput, gateEnabled: true, gateType: "design-system", budgetUsd: 2, agent: "ui-designer", dependsOn: ["mockups"], userInvokable: true }`
+5. **Templates available:** `.claude/templates/ui-kit-contract.md` (6 consumption rules + escapes + 3 enforcement layers) + `.claude/templates/ui-kit-eslint-plugin/` (4 rules: no-arbitrary-tailwind, no-deep-imports, no-hex-in-className, no-inline-style-tokens) + `.claude/templates/ui-kit-tsconfig-consumer.json` + `.claude/templates/ui-kit-validate-consumer.ts` (phase0-step-032)
+6. **Input:** docs/selected-style.json (just written for Gate 2) + docs/mockups/style-3/dials.yaml
+7. **Expected output:** packages/ui-kit/ scaffolded with: tokens (#FF5C35 primary spark, #FFE14D accent, #FAFAF8 bg, #1A1A1A text), agnostic styles (CSS variables + Tailwind config), HTML preview, ui-kit@1.0.0 tag + CHANGELOG.md
+8. **Per-stage cost cap:** $2 USD
+9. **Gate 3 (after stylesheet):** design-system signoff — operator reviews ui-kit before /screens advances
+
+Operator workflow at next gate: /stylesheet dispatches ui-designer, which reads selected-style.json + the chosen mockup HTML, scaffolds packages/ui-kit/ with the Spark Studio palette + Bricolage Grotesque + Inter typography + warm shadows + rounded radius scale, tags v1.0.0, emits CHANGELOG.
+
+Verdict: GO. Stage wired; operator's next action is the /stylesheet invocation followed by Gate 3 review.

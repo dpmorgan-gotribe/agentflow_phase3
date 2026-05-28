@@ -1,0 +1,21 @@
+phase1-step-015 — Wire /screens stage (operator command; auto-runs visual-review + user-flows per ADR-005)
+Date: 2026-05-28
+
+Per ADR-005: /screens is an operator-invokable command. Its orchestration sequence auto-runs the visual-review internal stage (phase1-step-016) and the user-flows internal stage (phase1-step-017) — operator doesn't manually invoke either.
+
+Components verified:
+1. **Skill file:** `.claude/skills/screens/SKILL.md` — ported in bulk port; operator entry; userInvokable: true
+2. **Internal skills (auto-run by /screens):**
+   - `.claude/skills/visual-review/SKILL.md` (ported; userInvokable: false)
+   - `.claude/skills/user-flows-generator/SKILL.md` (ported; userInvokable: false)
+3. **Agent file:** `.claude/agents/ui-designer.md` (phase0-step-036)
+4. **Stage entry (screens):** `{ name: "screens", slashCommand: "/screens", outputSchema: MinimalStageOutput, gateEnabled: false, budgetUsd: 25, agent: "ui-designer", dependsOn: ["stylesheet"], userInvokable: true }`
+5. **Stage entry (visual-review):** `{ name: "visual-review", slashCommand: "/visual-review", outputSchema: MinimalStageOutput, gateEnabled: false, budgetUsd: 2, agent: "ui-designer", dependsOn: ["screens"], userInvokable: false }`
+6. **Stage entry (user-flows):** `{ name: "user-flows", slashCommand: "/user-flows-generator", outputSchema: MinimalStageOutput, gateEnabled: true, gateType: "signoff", budgetUsd: 1, agent: "ui-designer", dependsOn: ["visual-review"], userInvokable: false }`
+7. **Inputs:** docs/analysis/webapp/screens.json (already exists in test-app) + docs/selected-style.json (just written) + packages/ui-kit/ (created by /stylesheet)
+8. **Expected output (screens):** docs/screens/webapp/*.html with data-kit-* attrs (consumed by builder agents in Phase 2) + docs/screens-manifest.json (validates against schemas/screens.schema.json discriminated union)
+9. **Visual-review retry:** per-screen cap = 3 (phase1-step-006) — failed screens populate needsHumanReview[] for Gate 4
+10. **User-flows output:** docs/user-flows-manifest.json (validates against schemas/user-flows-manifest.schema.json) + docs/user-flows/*.svg (Mermaid/SVG flow diagrams)
+11. **Gate 4 (after user-flows):** signoff — operator reviews screens + visual-review reports + user-flows together
+
+Verdict: GO. /screens operator-invokable command wired with two auto-run internal stages. Gate 4 fires after the auto-run user-flows completes.

@@ -1,0 +1,16 @@
+phase1-step-016 — Wire visual-review internal stage (auto-run by /screens per ADR-005)
+Date: 2026-05-28
+
+Per ADR-005: visual-review is NOT an operator-invokable command. It is auto-run by /screens as part of its orchestration sequence. Operator doesn't manually invoke /visual-review.
+
+Components verified:
+1. **Skill file:** `.claude/skills/visual-review/SKILL.md` — ported in bulk port; userInvokable: false
+2. **Agent file:** `.claude/agents/ui-designer.md` (phase0-step-036; vision-capable)
+3. **Stage entry:** orchestrator/src/stages-array.ts visual-review entry — wired with dependsOn:["screens"] + userInvokable:false
+4. **Retry mechanism:** orchestrator/src/visual-review-retry.ts (phase1-step-006 verified) — per-screen cap = 3, regenerates screen + re-runs visual-review on error-severity violations, populates needsHumanReview[] on exhaust
+5. **Output schema:** schemas/visual-review-report.schema.json (phase0-step-030)
+6. **Output location:** docs/visual-review/<screen>.json per screen
+7. **Per-stage cost cap:** $2 USD
+8. **Rubric:** typography scale + color contrast (WCAG 2.1 AA per Hatch brief) + alignment + hierarchy + consistency with mockups
+
+Verdict: GO. Internal stage wired; auto-run sequence preserved (screens → visual-review → user-flows).
