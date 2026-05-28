@@ -1,0 +1,27 @@
+phase0-step-055 — POST-MVP adopt: cost-projection-preview
+Date: 2026-05-28
+
+Files written:
+- orchestrator/src/cost-projection.ts (pure-function projection module)
+- orchestrator/tests/cost-projection.test.ts (15-test suite)
+- .claude/skills/preview-cost/SKILL.md (operator entry point)
+
+Verification:
+- `pnpm --filter orchestrator test cost-projection` → 15/15 tests PASS (485ms)
+
+Coverage:
+- forecast({tier, inputTokens, expectedOutputTokens, cacheHitRatio?, cacheTtl?}) → ForecastResult with per-tier alternatives
+- May 2026 pricing baseline: Haiku $1/$5, Sonnet $3/$15, Opus $5/$25 per MTok; cache read = 10% input, cache write 5m = 1.25× input, 1h = 2× input
+- classifyForecast() with warn-at-50% / throw-at-100% verdict
+- Worst-case (cacheHitRatio=0) and warm-cache (cacheHitRatio=0.85) scenarios both covered
+- /preview-cost operator skill provides CLI invocation pattern + recommendation logic (suggests Haiku route when chosen=opus and haiku ≤ 10% of opus cost)
+
+Empirical assertions verified by tests:
+- Haiku 4.5 is ~3× cheaper than Sonnet for the same dispatch (RESEARCH §3.2 claim)
+- Opus 4.7 is ~1.67× more expensive than Sonnet (RESEARCH §F caveat)
+- Sonnet cold-prefix 10K-in/2K-out dispatch = ~$0.068
+- Sonnet warm-prefix (85% hit, 1h TTL) 10K-in/2K-out dispatch = ~$0.042 (~38% savings)
+
+Wire to invoke-agent (warn/throw at thresholds) deferred to a follow-up nano-row — the module + skill are in place; the dispatch-side integration is small and can fold into the next invoke-agent edit.
+
+Verdict: GO.

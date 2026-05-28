@@ -1,0 +1,22 @@
+phase0-step-050 — Hook regression suite (RESEARCH adopt)
+Date: 2026-05-28
+
+Action: authored scripts/hook-regression.mjs — single runner with 24 embedded adversarial + benign fixtures covering all 5 PreToolUse hooks.
+
+Coverage:
+- block-dangerous: 9 adversarial (rm -rf /, rm -rf ~, force-push main, force-push -f master, SQL drop, npm publish, prisma reset, S3 sync --delete, fork bomb) + 5 benign (force-with-lease, publish --dry-run, git status, rm /tmp/foo, force-push to feat/x)
+- enforce-boundaries: 5 adversarial (.env, .env.local, *.pem, *.keystore, credentials.json) + 3 benign (.env.example, src/foo.ts, google-services.json)
+- detect-loop: 2 benign single-call probes (3-identical loop-detection test is interactive; covered by hook self-test)
+- validate-brief, verify-gate: not exercised in v1 fixtures (interactive; covered by their built-in selftests)
+
+Run result: 24/24 PASS in <2 seconds.
+
+Output format: human-readable (default) or --json for CI consumption. --hook=<name> subsets to one hook for fast iteration.
+
+Future extension surface (not blocking v1):
+- Add detect-loop sequence fixtures (set state file with 2 priors, assert 3rd denies)
+- Add validate-brief fixtures (good brief + bad brief simulations)
+- Add verify-gate fixtures (passes:false→true flip with/without evidence)
+- Externalize fixtures to YAML files for non-coder operator editing
+
+Verdict: GO. Adversarial regression baseline established; load-bearing hooks now have automated coverage.

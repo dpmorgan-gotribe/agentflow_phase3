@@ -1,15 +1,5 @@
 [
   {
-    "hash": "34f806da1b67",
-    "timestamp": 1779925026110,
-    "tool": "Write"
-  },
-  {
-    "hash": "91c8db2866f3",
-    "timestamp": 1779925112904,
-    "tool": "Bash"
-  },
-  {
     "hash": "065197c2727b",
     "timestamp": 1779925118946,
     "tool": "Write"
@@ -248,5 +238,15 @@
     "hash": "5ab0bcfadf59",
     "timestamp": 1779926986900,
     "tool": "TaskUpdate"
+  },
+  {
+    "hash": "cddf59694e5e",
+    "timestamp": 1779927429609,
+    "tool": "Read"
+  },
+  {
+    "hash": "f29344066096",
+    "timestamp": 1779927429661,
+    "tool": "Write"
   }
 ]

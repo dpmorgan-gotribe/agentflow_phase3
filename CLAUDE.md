@@ -87,7 +87,9 @@ Litmus test: `git checkout phase-N-start && rebuild from phase-plan.md` should p
 - Project overrides: `.claude/models.yaml`
 - Resolution order: `ANTHROPIC_MODEL` env > project yaml > user yaml
 - Budget caps enforced by orchestrator (`budget-tracker.ts`); exceeding `perPipelineMaxUsd` aborts the run
-- Auth provider config in `models.yaml` under `provider:` (see `docs/agent-sdk-auth-providers.md`); factory default = `claude-max-subscription`
+- Auth provider config in `models.yaml` under `provider:` (see `docs/agent-sdk-auth-providers.md`). **Factory default in Phase 3 = `anthropic-api`** (RESEARCH adopt, phase0-step-049). Max OAuth is a ToS violation for headless SDK use as of Feb 2026 and returns HTTP 400 on `cache_control` as of Mar 2026 — keep `anthropic-api` for orchestrator runs.
+- **Required env for orchestrator runs:** `ANTHROPIC_API_KEY` set + `ENABLE_PROMPT_CACHING_1H=1` exported. The 1h cache TTL is the highest-ROI cache lever for long fix-loop / multi-worktree runs. Without it, cache writes are 1.25× input price for 5 min only; with it, 2× input price for 1h. The break-even is ~25 min of continuous prefix reuse — every Mode B run clears that easily.
+- See DECISIONS.md ADR-001 for the full rationale (auth + caching + worktree-cache-reuse).
 
 ## Context preservation
 

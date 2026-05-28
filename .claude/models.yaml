@@ -15,6 +15,17 @@
 
 extends: ~/.claude/models.yaml
 
+# phase0-step-049 (2026-05-28) — RESEARCH adopt. Anthropic OAuth-via-Max
+# is a ToS violation for headless SDK use as of Feb 2026; cache_control
+# returns HTTP 400 on the Max OAuth path as of Mar 2026. Pin provider at
+# the factory project level to anthropic-api so the orchestrator gets
+# proper cache-control behavior. Operator opts back into Max at their
+# own risk by overriding here. See DECISIONS.md ADR-001 + RESEARCH.md
+# §F "Advanced Prompt Caching & Context Engineering".
+provider:
+  provider: anthropic-api
+  apiKeyEnvVar: ANTHROPIC_API_KEY
+
 # Per-agent overrides go here. Example:
 #   agents:
 #     backend-builder: { tier: planning, effort: max }

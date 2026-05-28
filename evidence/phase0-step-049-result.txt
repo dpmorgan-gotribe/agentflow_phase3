@@ -1,0 +1,35 @@
+phase0-step-049 — RESEARCH adopt: excludeDynamicSections + API-key default + 1h cache TTL + cache-hit metric
+Date: 2026-05-28
+
+Status of each sub-adopt:
+
+1. **excludeDynamicSections: true on every query() call**
+   - ALREADY DONE in Phase 2 invoke-agent.ts (line 2626, inside the systemPrompt preset block, with full explanatory comment at lines 2615-2622). Ported verbatim in phase0-step-022.
+   - Confirmed via grep: only orchestrator/src/invoke-agent.ts contains a query() callsite with systemPrompt config; the option is set.
+
+2. **API-key auth default for orchestrator path**
+   - Added to .claude/models.yaml at factory project level:
+     ```yaml
+     provider:
+       provider: anthropic-api
+       apiKeyEnvVar: ANTHROPIC_API_KEY
+     ```
+   - This OVERRIDES whatever ~/.claude/models.yaml has at user level (per project > user precedence in model-config.ts merge).
+   - Operator can revert to Max OAuth by editing this section (with the ToS-violation acknowledgment).
+
+3. **ENABLE_PROMPT_CACHING_1H=1**
+   - Documented in CLAUDE.md "Model configuration" section: required env for orchestrator runs.
+   - Cited in DECISIONS.md ADR-001 rationale.
+
+4. **Cache-hit-ratio metric**
+   - ALREADY DONE in Phase 2 budget-tracker.ts: tracks cacheReadInputTokens + cacheCreationInputTokens per dispatch (lines 36-37, 132-133, 142-143, 149-152).
+   - Per-pipeline cache-hit ratio derivable as: cacheReadInputTokens / (inputTokens + cacheReadInputTokens).
+   - Logging interface exposed via getCumulativeUsage().
+
+Verification:
+- Grep confirmed excludeDynamicSections: true at orchestrator/src/invoke-agent.ts:2626
+- .claude/models.yaml now declares provider: anthropic-api at factory project level
+- CLAUDE.md "Model configuration" section now lists ENABLE_PROMPT_CACHING_1H=1 as required env
+- budget-tracker test suite passes (covers cache-token accumulation)
+
+Verdict: GO. Highest-single-ROI RESEARCH adopt landed; benchmark target (Mode B 4-worktree run: cache_read_input_tokens > 0 on worktrees 2-4 first turn) gated on first real Mode B pipeline run (Phase 2 of rebuild).

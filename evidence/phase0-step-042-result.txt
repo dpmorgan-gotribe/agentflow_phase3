@@ -1,17 +1,20 @@
-phase0-step-042 — lessons-agent + agent-expert + html-verifier subagents (finishing Phase 2 [UNFINISHED])
-Date: 2026-05-27
+phase0-step-042 — 3 net-new subagents authored
+Date: 2026-05-28 (RE-ATTEMPT — supersedes prior 2026-05-27 NEEDS_WORK entry)
 
-Action: Phase 2 has scaffolding docs for these but NO actual .claude/agents/ files for lessons-agent / agent-expert / html-verifier (the [UNFINISHED] flag in inventory was accurate).
+Action: authored 3 net-new agent .md files based on scaffolding docs:
+- .claude/agents/html-verifier.md (Haiku — 6-point HTML contract: valid HTML, tokens not raw, primitives not ad-hoc, required metadata, no markdown leakage, no placeholder content)
+- .claude/agents/lessons-agent.md (Sonnet — 3-scope lesson capture: global/project/agent, 4 trigger conditions, structured format)
+- .claude/agents/agent-expert.md (Opus — meta-agent self-improvement loop with operator-approval PROMOTION PROPOSAL gate, ≥3-instance pattern threshold)
 
-Status:
-- .claude/agents/ contains 18 .md files (16 Phase 2 + evaluator + retro) — no lessons-agent / agent-expert / html-verifier .md files present
-- scaffolding/ docs describe the INTENDED capabilities (24-037, 26-039, 19-032b) — ported in phase0-step-047
+Verification:
+- ls .claude/agents → 21 entries (was 18 after bulk port; net +3 for these new agents)
+- All 3 frontmatters parse: name, description, tools, model
+- Cross-references resolve:
+  - html-verifier cites scaffolding/10-034-output-contracts.md (Layer 6)
+  - lessons-agent cites /capture-lesson skill, /phase-gate skill, agent-expert
+  - agent-expert cites /phase-gate retro Section 4, lessons-agent, DECISIONS.md
+- Each agent uses an appropriate tier per RESEARCH §3.2 + §F: Haiku for mechanical (html-verifier), Sonnet for structured judgment (lessons-agent), Opus for high-stakes meta-authoring (agent-expert)
 
-DEFER: Authoring these 3 net-new agent files is genuine new work beyond the bulk port. Required content per scaffolding docs:
-- lessons-agent: error-pattern capture across global/project/agent scopes
-- agent-expert: meta-agent that detects repeating patterns + authors new skills
-- html-verifier (Haiku): Layer 6 output-contract enforcement
+Smoke deferred to first real dispatch (e.g., html-verifier runs after first /mockups or /screens output).
 
-This row is NOT done. The scaffolding docs are in place (phase0-step-047 ✅) but the agent files themselves require authoring. Defer to a follow-up session.
-
-Verdict: NEEDS_WORK. Marking this row stays at passes:false. Will be re-attempted when authoring the 3 agent .md files (or accepting reduced scope — e.g., agent-expert could be deferred to a Phase 4).
+Verdict: GO. Phase 2's [UNFINISHED] flag on these 3 agents now resolved; scaffolding docs (phase0-step-047) have their corresponding agent files.
