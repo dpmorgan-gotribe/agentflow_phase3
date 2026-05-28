@@ -1,70 +1,5 @@
 [
   {
-    "hash": "e65c3307ce88",
-    "timestamp": 1780010309784,
-    "tool": "Read"
-  },
-  {
-    "hash": "c18bf9dcad90",
-    "timestamp": 1780010311359,
-    "tool": "Read"
-  },
-  {
-    "hash": "ad59661bada4",
-    "timestamp": 1780010312437,
-    "tool": "Read"
-  },
-  {
-    "hash": "f31b20036b35",
-    "timestamp": 1780010312692,
-    "tool": "Bash"
-  },
-  {
-    "hash": "30e69fc2f1a6",
-    "timestamp": 1780010314361,
-    "tool": "Read"
-  },
-  {
-    "hash": "32df6b743e83",
-    "timestamp": 1780010314521,
-    "tool": "Read"
-  },
-  {
-    "hash": "65fdadc8c0e4",
-    "timestamp": 1780010314769,
-    "tool": "Bash"
-  },
-  {
-    "hash": "a49cab72441e",
-    "timestamp": 1780010316470,
-    "tool": "Read"
-  },
-  {
-    "hash": "f444a003eafc",
-    "timestamp": 1780010318318,
-    "tool": "Read"
-  },
-  {
-    "hash": "f878f532a2a6",
-    "timestamp": 1780010318384,
-    "tool": "Bash"
-  },
-  {
-    "hash": "9f293328926d",
-    "timestamp": 1780010318952,
-    "tool": "Read"
-  },
-  {
-    "hash": "4cb55589795d",
-    "timestamp": 1780010319644,
-    "tool": "Read"
-  },
-  {
-    "hash": "7c5f8c8bdc97",
-    "timestamp": 1780010320871,
-    "tool": "Read"
-  },
-  {
     "hash": "95cb94f3c457",
     "timestamp": 1780010321263,
     "tool": "Read"
@@ -248,5 +183,70 @@
     "hash": "24c8664e3611",
     "timestamp": 1780010855755,
     "tool": "Bash"
+  },
+  {
+    "hash": "a64ec7649359",
+    "timestamp": 1780010912008,
+    "tool": "Bash"
+  },
+  {
+    "hash": "bb6985219029",
+    "timestamp": 1780010926241,
+    "tool": "Bash"
+  },
+  {
+    "hash": "2261f10e06a0",
+    "timestamp": 1780010942809,
+    "tool": "Bash"
+  },
+  {
+    "hash": "4f76f14aa7df",
+    "timestamp": 1780010980123,
+    "tool": "Skill"
+  },
+  {
+    "hash": "adcbaec67d5a",
+    "timestamp": 1780010991818,
+    "tool": "Bash"
+  },
+  {
+    "hash": "1ef3a375cfc6",
+    "timestamp": 1780010994925,
+    "tool": "Read"
+  },
+  {
+    "hash": "92e5a96d7bb2",
+    "timestamp": 1780011063396,
+    "tool": "Write"
+  },
+  {
+    "hash": "9ea7c46231e1",
+    "timestamp": 1780011144595,
+    "tool": "Bash"
+  },
+  {
+    "hash": "f4754ab996a9",
+    "timestamp": 1780011175027,
+    "tool": "Bash"
+  },
+  {
+    "hash": "7c79d581673b",
+    "timestamp": 1780011196900,
+    "tool": "Edit"
+  },
+  {
+    "hash": "41af93c9402d",
+    "timestamp": 1780011295730,
+    "tool": "Edit"
+  },
+  {
+    "hash": "0d538f9fd489",
+    "timestamp": 1780011482539,
+    "tool": "Edit"
+  },
+  {
+    "hash": "4301193bc16d",
+    "timestamp": 1780011579071,
+    "tool": "Edit"
   }
 ]
