@@ -238,7 +238,15 @@ all 16+ subagents through Mode A and Mode B pipelines.
 
 ### §0h Phase 0 closure (row 048)
 
-[to be filled]
+- **Closed:** 2026-05-28 (added after phase0-step-048)
+- **Operator:** David Morgan (sign-off via /phase-gate 0 re-run; report at `reports/phase-0-gate-2026-05-28.md`)
+- **Git tags applied:** `phase-0-done` + `phase-1-start` at HEAD (added after phase0-step-048)
+- **Final row count:** 59/61 `passes:true` (96.7%). Outstanding rows: phase0-step-016 (HUMAN harness baseline smoke — deferred non-blocking; harness empirically validated through gate execution itself); phase0-step-048 (this row — closed via sign-off) (added after phase0-step-048)
+- **Polish state:** 0 `polished:true`; 2 `polished:"waived"` per ADR-004 (rows 050 + 055 — factory-build perf rows with intrinsically fast implementations); all other rows `polished:false` (no /polish-pass ceremony run during Phase 0; Phase 1 rows that introduce perf-meaningful behavior will go through normal polish-pass) (added after phase0-step-048)
+- **Plan-parity:** 5/5 (100%) on Section 4b retro sample after commit 22d22d2 retroactive bulk /sync-phase-plan; well above the 80% hard gate (added after phase0-step-048)
+- **Lessons captured for Phase 0:** 3 entries in LESSONS.md tagged phase0-step-* (049 RESEARCH-adopts-must-be-validated, 027 /new-project surfaces factory gaps, 042 scaffolding docs are specs not implementations) (added after phase0-step-048)
+- **ADRs accepted during Phase 0:** ADR-000 (adopt agentmark harness baseline), ADR-001 (cross-worktree cache via excludeDynamicSections; auth-default clause superseded by ADR-003), ADR-002 (hybrid TDD 60/80), ADR-003 (auth-provider is operator-chosen), ADR-004 (polished:"waived" third state for factory-build perf rows) (added after phase0-step-048)
+- **Deferred to Phase 3:** 144 typecheck errors in orchestrator/tests/{perceptual,walkthrough}-review.test.ts — inherited Phase 2 debt; fix scope assigned to rows phase3-step-006 + phase3-step-007 (see "Phase 3 inherited debt" note in this file) (added after phase0-step-048)
 
 ### §0i RESEARCH adopts + factory-root scaffolds + post-MVP adopts (rows 049-061)
 
