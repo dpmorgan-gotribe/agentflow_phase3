@@ -2042,7 +2042,7 @@
     {
       "id": "phase1-step-014",
       "category": "functional",
-      "description": "Wire /stylesheet stage + stylesheet-primitives substage. UI Designer scaffolds packages/ui-kit/ with tokens (color, spacing, typography), primitive components (Button, Card, Input, …), patterns, layouts, accessibility baseline. Versioned ui-kit@1.0.0 + CHANGELOG. Stylesheet-primitives substage authors the primitive component code.",
+      "description": "Wire /stylesheet stage (PRE-architect, STACK-AGNOSTIC kit-core). UI Designer scaffolds packages/ui-kit/ with tokens (color, spacing, typography), agnostic styles, Tailwind config, and HTML preview — NO stack-bound primitives at this stage. Versioned ui-kit@1.0.0 + CHANGELOG. Stack-bound primitives (Button.tsx for React / Button.vue for Vue / etc.) are authored by the SEPARATE stylesheet-primitives internal stage that runs POST-architect (auto-run by /architect — see phase1-step-019 + ADR-005); the architect picks the stack via architecture.yaml.tooling.stack.web_framework and stylesheet-primitives binds the kit-core to it. The two stages are deliberately separated — stylesheet ships shareable kit-core that future projects on different stacks can all consume; stylesheet-primitives is the per-stack binding.",
       "steps": [
         "Author .claude/skills/stylesheet/SKILL.md + .claude/skills/stylesheet-primitives/SKILL.md (resolve Phase 2's [UNFINISHED] subscope)",
         "/stylesheet dispatches ui-designer with selected-style + design dials",
@@ -2078,7 +2078,7 @@
     {
       "id": "phase1-step-015",
       "category": "functional",
-      "description": "Wire /screens stage. UI Designer composes screens from ui-kit primitives. Reads docs/analysis/{platform}/screens.json + ui-kit. For each screen, emits HTML with data-kit-* attrs. Emits docs/screens/{platform}/*.html + docs/screens-manifest.json.",
+      "description": "Wire /screens stage — operator-invokable command (per ADR-005). UI Designer composes screens from ui-kit primitives, reading docs/analysis/{platform}/screens.json + ui-kit. For each screen, emits HTML with data-kit-* attrs. Emits docs/screens/{platform}/*.html + docs/screens-manifest.json. /screens AUTO-RUNS the visual-review internal stage (phase1-step-016) and the user-flows internal stage (phase1-step-017) as part of its orchestration sequence — operator doesn't manually invoke /visual-review or /user-flows-generator. Pipeline mechanics (per-sub-stage retry / budget / Gate 4 signoff after user-flows) are unchanged; this is operator UX grouping.",
       "steps": [
         "Author .claude/skills/screens/SKILL.md",
         "Dispatches ui-designer in screen-composition mode (reads screen state metadata)",
@@ -2214,7 +2214,7 @@
     {
       "id": "phase1-step-019",
       "category": "functional",
-      "description": "Wire /architect stage. Reads brief.md + signoff.json + ui-kit version + analysis. Produces architecture.yaml + .env.example + credentials-checklist.md + deployment-checklist.md. Hash-detect: re-run emits credentials-diff vs prior.",
+      "description": "Wire /architect stage — operator-invokable command (per ADR-005). Reads brief.md + signoff.json + ui-kit version + analysis. Produces architecture.yaml + .env.example + credentials-checklist.md + deployment-checklist.md. Hash-detect: re-run emits credentials-diff vs prior. /architect AUTO-RUNS the stylesheet-primitives internal stage AFTER the Gate 5 credentials drop — at that point the chosen stack (architecture.yaml.tooling.stack.web_framework) is known, so ui-designer can bind the kit-core authored in /stylesheet to stack-bound primitives (Button.tsx for React / Button.vue for Vue / Button.svelte for Svelte / etc.), patterns, layouts, Storybook, and 022b artifacts. ui-designer dispatches to the matching skill in .claude/skills/agents/front-end/{slug}/. Operator doesn't manually invoke /stylesheet-primitives.",
       "steps": [
         "Author .claude/skills/architect/SKILL.md",
         "Dispatches architect agent (phase0-step-036) with architecture.yaml.template (phase0-step-034)",
@@ -2281,7 +2281,7 @@
     {
       "id": "phase1-step-021",
       "category": "functional",
-      "description": "Wire /pm --mode=tasks stage. Dispatches project-manager (phase0-step-036) to decompose requirements + architecture into tasks.yaml v2 (features[], agent_sequence[], task graph). Enforces feature-grouping heuristics (shared flow, catalogue entry, integration).",
+      "description": "Wire /pm --mode=tasks stage — operator-invokable command (per ADR-005). Dispatches project-manager (phase0-step-036) to decompose requirements + architecture into tasks.yaml v2 (features[], agent_sequence[], task graph). Enforces feature-grouping heuristics (shared flow, catalogue entry, integration). /pm AUTO-RUNS three internal stages after pm completes: skills-audit-build (phase1-step-022 — audits build-scope MCPs per architecture.yaml.tooling.mcp_servers[]), register-mcp-build (also phase1-step-022 — writes the live .mcp.json), and git-agent-bootstrap (phase1-step-023 — final Mode A stage: monorepo skeleton + initial commit + tag mode-a-complete). Operator doesn't manually invoke any of those three; pipeline mechanics retain per-sub-stage retry/budget machinery.",
       "steps": [
         "Author .claude/skills/pm/SKILL.md with --mode flag",
         "--mode=tasks dispatches project-manager with brief + architecture",

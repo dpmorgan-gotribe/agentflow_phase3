@@ -20,15 +20,37 @@ import { MinimalStageOutput } from "@repo/orchestrator-contracts";
 
 /**
  * Mode A stage array — refactor-003 + refactor-004 canonical order.
- * Every project walks these 12 stages in order (respecting dependsOn).
+ * Every project walks these 13 stages in order (respecting dependsOn).
  * Mode B (feature-graph) kicks off AFTER `git-agent-bootstrap` completes.
  *
  * Scaffolding reference: scaffolding/21-035-orchestrator-core.md §STAGES.
  * Refactor-003 rationale: Appendix C. Refactor-004 rationale:
  * §Feature-graph phase.
+ *
+ * ADR-005 (operator-facing command grouping): each stage carries
+ * `userInvokable: boolean`. Six stages (analyze, mockups, stylesheet,
+ * screens, architect, pm) are operator-facing slash commands. The other
+ * seven are internal sub-stages auto-run by their parent's orchestration
+ * sequence — they remain real stages (per-stage retry / budget / gate
+ * machinery applies), they just don't appear in operator UX as
+ * standalone commands:
+ *
+ *   /analyze     auto-runs: skills-audit-design
+ *   /mockups     (single stage)
+ *   /stylesheet  (single stage — STACK-AGNOSTIC kit-core: tokens, styles,
+ *                Tailwind, HTML preview)
+ *   /screens     auto-runs: visual-review, user-flows
+ *   /architect   auto-runs: stylesheet-primitives
+ *                (stack-bound primitives — chosen stack reads from
+ *                 architecture.yaml.tooling.stack.web_framework, so
+ *                 Angular/Vue/Svelte/React all flow through the same
+ *                 stage; ui-designer dispatches to the matching skill
+ *                 in .claude/skills/agents/front-end/{slug}/)
+ *   /pm          auto-runs: skills-audit-build, register-mcp-build,
+ *                            git-agent-bootstrap
  */
 export const STAGES: readonly PipelineStage[] = [
-  // ─── PLANNING PHASE ───
+  // ─── /analyze — operator command ───
   {
     name: "analyze",
     slashCommand: "/analyze",
@@ -37,6 +59,7 @@ export const STAGES: readonly PipelineStage[] = [
     gateType: "requirements",
     budgetUsd: 5,
     agent: "analyst",
+    userInvokable: true,
   },
   {
     name: "skills-audit-design",
@@ -46,8 +69,9 @@ export const STAGES: readonly PipelineStage[] = [
     budgetUsd: 1,
     agent: "skills-agent",
     dependsOn: ["analyze"],
+    userInvokable: false,
   },
-  // ─── DESIGN PHASE ───
+  // ─── /mockups — operator command ───
   {
     name: "mockups",
     slashCommand: "/mockups",
@@ -57,7 +81,13 @@ export const STAGES: readonly PipelineStage[] = [
     budgetUsd: 10,
     agent: "ui-designer",
     dependsOn: ["skills-audit-design"],
+    userInvokable: true,
   },
+  // ─── /stylesheet — operator command (STACK-AGNOSTIC kit-core) ───
+  // Authors the framework-agnostic design system layer: tokens (color,
+  // spacing, typography), styles, Tailwind config, HTML preview. Does
+  // NOT yet bind to a stack — that happens later in /stylesheet-primitives
+  // which runs post-architect once the chosen stack is known.
   {
     name: "stylesheet",
     slashCommand: "/stylesheet",
@@ -67,7 +97,9 @@ export const STAGES: readonly PipelineStage[] = [
     budgetUsd: 2,
     agent: "ui-designer",
     dependsOn: ["mockups"],
+    userInvokable: true,
   },
+  // ─── /screens — operator command (auto-runs visual-review + user-flows) ───
   {
     name: "screens",
     slashCommand: "/screens",
@@ -76,6 +108,7 @@ export const STAGES: readonly PipelineStage[] = [
     budgetUsd: 25,
     agent: "ui-designer",
     dependsOn: ["stylesheet"],
+    userInvokable: true,
   },
   {
     name: "visual-review",
@@ -85,6 +118,7 @@ export const STAGES: readonly PipelineStage[] = [
     budgetUsd: 2,
     agent: "ui-designer",
     dependsOn: ["screens"],
+    userInvokable: false,
   },
   {
     name: "user-flows",
@@ -95,8 +129,9 @@ export const STAGES: readonly PipelineStage[] = [
     budgetUsd: 1,
     agent: "ui-designer",
     dependsOn: ["visual-review"],
+    userInvokable: false,
   },
-  // ─── POST-DESIGN PLANNING (refactor-003) ───
+  // ─── /architect — operator command (auto-runs stylesheet-primitives) ───
   {
     name: "architect",
     slashCommand: "/architect",
@@ -106,14 +141,17 @@ export const STAGES: readonly PipelineStage[] = [
     budgetUsd: 3,
     agent: "architect",
     dependsOn: ["user-flows"],
+    userInvokable: true,
   },
   // ─── STYLESHEET → STACK TRANSLATION (feat-074) ───
   // Translates the framework-agnostic kit-core (tokens + styles + Tailwind +
-  // HTML preview) authored pre-architect by /stylesheet into the stack-aware
-  // React primitives + patterns + layouts + Storybook + 022b artifacts. Bound
-  // to architecture.yaml.tooling.stack.web_framework. Required by PM (which
-  // references the primitive set in tasks.yaml) + by builders (which import
-  // @repo/ui-kit's primitives at code-gen time).
+  // HTML preview) authored pre-architect by /stylesheet into stack-bound
+  // primitives + patterns + layouts + Storybook + 022b artifacts. Reads
+  // architecture.yaml.tooling.stack.web_framework to choose the stack
+  // (React / Vue / Svelte / Angular / etc.); ui-designer dispatches to the
+  // matching skill in .claude/skills/agents/front-end/{slug}/. Required by
+  // PM (which references the primitive set in tasks.yaml) + by builders
+  // (which import @repo/ui-kit's primitives at code-gen time).
   //
   // Runs SERIAL after architect (and after gate-5 credentials drop resolves).
   // Parallel-with-gate-5 optimization is feat-074-followup; narrow ship is
@@ -128,7 +166,10 @@ export const STAGES: readonly PipelineStage[] = [
     budgetUsd: 5,
     agent: "ui-designer",
     dependsOn: ["architect"],
+    userInvokable: false,
   },
+  // ─── /pm — operator command (auto-runs skills-audit-build +
+  //         register-mcp-build + git-agent-bootstrap) ───
   {
     name: "pm",
     slashCommand: "/pm --mode=tasks",
@@ -137,6 +178,7 @@ export const STAGES: readonly PipelineStage[] = [
     budgetUsd: 2,
     agent: "project-manager",
     dependsOn: ["stylesheet-primitives"],
+    userInvokable: true,
   },
   {
     name: "skills-audit-build",
@@ -146,6 +188,7 @@ export const STAGES: readonly PipelineStage[] = [
     budgetUsd: 1,
     agent: "skills-agent",
     dependsOn: ["pm"],
+    userInvokable: false,
   },
   {
     name: "register-mcp-build",
@@ -155,8 +198,8 @@ export const STAGES: readonly PipelineStage[] = [
     budgetUsd: 0.5,
     agent: "skills-agent",
     dependsOn: ["skills-audit-build"],
+    userInvokable: false,
   },
-  // ─── FEATURE-GRAPH BOOTSTRAP (refactor-004) ───
   {
     name: "git-agent-bootstrap",
     slashCommand: "/git-agent bootstrap",
@@ -165,6 +208,7 @@ export const STAGES: readonly PipelineStage[] = [
     budgetUsd: 0.5,
     agent: "git-agent",
     dependsOn: ["register-mcp-build"],
+    userInvokable: false,
   },
 ];
 
@@ -172,3 +216,8 @@ export const STAGES: readonly PipelineStage[] = [
 export function getStage(name: string): PipelineStage | undefined {
   return STAGES.find((s) => s.name === name);
 }
+
+/** All operator-invokable Mode A commands. Per ADR-005. */
+export const USER_INVOKABLE_STAGES: readonly PipelineStage[] = STAGES.filter(
+  (s) => s.userInvokable,
+);

@@ -81,7 +81,16 @@ Litmus test: `git checkout phase-N-start && rebuild from phase-plan.md` should p
 
 ## Pipeline overview (what we're building toward)
 
-**Mode A (design)** — sequential, HITL-gated: `/analyze` → `/mockups` → (Gate 2: `/pick-style`) → `/stylesheet` → `/screens` → `/visual-review` → `/user-flows-generator` → (Gates 3+4: design signoff) → `/architect` → (Gate 5: credentials) → `/pm --mode=tasks`
+**Mode A (design)** — sequential, HITL-gated. **6 operator-invokable commands** (per ADR-005):
+
+- `/analyze` (Gate 1: requirements review) — auto-runs `skills-audit-design`
+- `/mockups` (Gate 2: `/pick-style` after mockups)
+- `/stylesheet` (Gate 3: design-system signoff) — **stack-agnostic kit-core** (tokens, styles, Tailwind, HTML preview)
+- `/screens` (Gate 4: signoff after auto-runs) — auto-runs `visual-review` + `user-flows`
+- `/architect` (Gate 5: credentials drop) — auto-runs `stylesheet-primitives` (**stack-bound** — stack chosen by `architecture.yaml.tooling.stack.web_framework`; React / Vue / Svelte / Angular dispatched to the matching skill)
+- `/pm --mode=tasks` — auto-runs `skills-audit-build` + `register-mcp-build` + `git-agent-bootstrap`
+
+The other 7 stages are internal sequencing detail: pipeline mechanics (retry / budget / gate per stage) apply; they just don't appear in operator UX as standalone commands.
 
 **Mode B (build)** — autonomous parallel feature graph: `/start-build` opens worktrees per feature, runs each feature's agent_sequence (builder → security → tester → reviewer), merges to main on reviewer approval. Refuses to run until Mode A artifacts + Gate 5 are in place.
 

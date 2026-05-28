@@ -97,3 +97,27 @@ Lesson captured in `LESSONS.md` (will be added next /capture-lesson run): "Do no
   - Run /polish-pass anyway with a trivial budget — rejected: ceremony without signal pollutes the bench evidence corpus and gives retros false confidence in the polish-pass discipline.
   - Add a separate `polish_required: false` field — rejected: two fields for one concept; the string-literal "waived" state is denser.
 - **References:** Phase 0 Gate Report 2026-05-28 Section 2 + Section 6 blocker #4, `feature_list.json` rows phase0-step-050 + phase0-step-055.
+
+## ADR-005 — Operator-facing command grouping (Mode A pipeline UX)
+
+- **Status:** accepted
+- **Date:** 2026-05-28
+- **Context:** Mode A's stages-array has 13 stages, each wired to a slash command. Some are conceptually operator-facing (`/analyze`, `/mockups`, etc.); others are internal sequencing detail (`/skills-audit --scope=design`, `/stylesheet-primitives`, `/register-mcp-servers --scope=build`, etc.). All 13 appear in Claude Code autocomplete with equal prominence, which obscures the operator's mental model of "which commands do I actually invoke."
+- **Decision:** Add a `userInvokable: boolean` field to `PipelineStage`. **Six stages are operator-invokable; seven are internal sub-stages auto-run by their parent's orchestration sequence:**
+  - `/analyze` → auto-runs `skills-audit-design`
+  - `/mockups` → (single stage)
+  - `/stylesheet` → (single stage; **stack-agnostic kit-core**: tokens, styles, Tailwind, HTML preview)
+  - `/screens` → auto-runs `visual-review`, `user-flows`
+  - `/architect` → auto-runs `stylesheet-primitives` (**stack-bound** — the chosen stack is read from `architecture.yaml.tooling.stack.web_framework`; React / Vue / Svelte / Angular all flow through the same stage with `ui-designer` dispatching to the matching skill in `.claude/skills/agents/front-end/{slug}/`)
+  - `/pm` → auto-runs `skills-audit-build`, `register-mcp-build`, `git-agent-bootstrap`
+- **Consequences:**
+  - Pipeline mechanics unchanged: cli-runner still walks all 13 stages with per-stage retry / budget / gate machinery. The flag is metadata for operator UX + documentation.
+  - Operator-facing docs (CLAUDE.md, phase-plan, gate-by-gate walkthroughs) describe 6 commands, not 13.
+  - HITL gates remain at their natural boundaries: Gate 1 after `/analyze`, Gate 2 after `/mockups`, Gate 3+4 after the internal `user-flows` (tail of `/screens`), Gate 5 after `/architect` credentials drop (which precedes the auto-run `stylesheet-primitives`).
+  - The `stylesheet` → `architect` → `stylesheet-primitives` ordering is preserved and made explicit: pre-architect, stylesheet ships a stack-agnostic kit-core; post-architect (after stack pick), stylesheet-primitives binds the kit-core to the chosen stack.
+  - Future internal stages added to the pipeline default to `userInvokable: false` unless there's a strong reason to expose them.
+- **Alternatives considered:**
+  - Hide internal skills from autocomplete by renaming or moving to `.claude/skills/_internal/` — rejected: prevents debugging access; the skills are still real and may need manual invocation during development.
+  - Collapse internal stages into their parents (one mega-stage per command) — rejected: loses per-sub-stage retry/budget/gate granularity that Phase 2's feat-074 (stylesheet-primitives) and visual-review-retry depend on.
+  - Add a separate `parentCommand?: string` field for explicit child→parent linkage — rejected: redundant with `dependsOn` for parsing intent; the simpler boolean flag plus the auto-run mapping in stages-array's doc comment is sufficient.
+- **References:** `orchestrator/src/stages-array.ts` (USER_INVOKABLE_STAGES export + per-command auto-run mapping in the doc comment), `packages/orchestrator-contracts/src/stages.ts` (PipelineStage.userInvokable), `feature_list.json` rows phase1-step-014 + 015 + 019 + 021 (descriptions updated to reflect grouping), CLAUDE.md "Pipeline overview", phase-plan.md §A.
