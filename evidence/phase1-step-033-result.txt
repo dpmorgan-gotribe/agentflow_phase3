@@ -1,0 +1,79 @@
+phase1-step-033 — /draft-brief brief-class awareness — empirical validation
+============================================================================
+
+Run: 2026-05-28
+Project: projects/test-app/
+Input: proposals/hatch-proposal.md (56 lines, agency proposal)
+Command (logical): /draft-brief ../../proposals/hatch-proposal.md --overwrite
+
+Skill body classification (step 3a):
+  Brief class: site-as-portfolio
+  Visual-ambition default: embrace
+  Detection trigger: proposal contains "creative", "agency", "studio",
+    "showcase our work", "our team", "reels/shorts/tiktoks"
+
+Bug-001 fix validation:
+
+  Restraint trigger phrases (should be ABSENT for site-as-portfolio class):
+    'agency tropes':             0 occurrences  ✓
+    'parallax hijacking':        0 occurrences  ✓
+    'cursor-follow gimmicks':    0 occurrences  ✓
+    "we're disruptive":          0 occurrences  ✓
+    'restrained palette':        0 occurrences  ✓
+
+  Ambition-encouragement phrases (should be PRESENT for site-as-portfolio class):
+    'embrace visual ambition':   1 occurrence   ✓
+    'signature visual motif':    2 occurrences  ✓
+    'story-driven motion':       1 occurrence   ✓
+    'distinctive typography':    1 occurrence   ✓
+    'full-bleed imagery':        2 occurrences  ✓
+
+Brief size comparison:
+  Phase 2 brief (organic Hatch authoring):     214 lines
+  Phase 3 prev brief (pre-bug-001 /draft-brief): 430 lines
+  Phase 3 new brief (post-bug-001 /draft-brief): 243 lines
+
+  The new brief is closer in line count to the P2 baseline. The previous
+  P3 brief was 2× larger because /draft-brief filled every section with
+  restraint-defaulted prose. The new brief is tighter and more direct.
+
+Validation:
+  ✓ Frontmatter valid (no brief-class field added per Phase A — that's Phase B follow-up)
+  ✓ Code blocks present in §7, §10
+  ✓ All companion files present and valid
+  ✓ brief-capabilities.json validates (23 capabilities)
+  ✓ Structure (markdownlint) valid
+  ✓ Brief validation passed
+
+Backup of the pre-rerun P3 brief preserved at:
+  projects/test-app/.pre-rerun-backup-2026-05-28/brief.md
+
+Visual-ambition register comparison (§1 directional principles):
+
+  P3 prev brief (pre-bug-001 — flat / SaaS-grade):
+    "Prefer plain typographic confidence over agency tropes. No
+     parallax hijacking, no cursor-follow gimmicks, no 'we're
+     disruptive' copy."
+    "Prefer fast first paint over heavy interactivity."
+
+  P3 new brief (post-bug-001 — embrace register):
+    "Embrace visual ambition — the site IS the proof of work."
+    "Signature visual motif — invent a recurring mark the brand can own."
+    "Story-driven motion that supports narrative; scroll-cued reveals,
+     full-bleed photo crossfades."
+    "Distinctive typography — one display face paired with a clean
+     body sans."
+    "Full-bleed imagery; photography (and video) provides the color story."
+
+Conclusion: bug-001 (phase1-step-033) produces the intended register
+shift. The brief now actively encourages the agency-y decoration that
+makes a portfolio-class project look like the proof of work, instead of
+suppressing it with SaaS-grade restraint boilerplate.
+
+Pending: downstream chain validation (the brief feeds /mockups +
+/stylesheet + /screens — confirming the register shift actually
+produces richer downstream output is the feat-001 + chain-rerun work
+captured at phase1-step-032).
+
+Status: PASS — bug-001 empirically validated at the /draft-brief
+output layer. Row flips to passes:true on operator verify-gate read.

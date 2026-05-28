@@ -1,0 +1,57 @@
+phase1-step-032 (intermediate) — /mockups N=5 empirical artifact
+=================================================================
+
+Run: 2026-05-28
+Project: projects/test-app/
+Inputs: docs/brief-summary.json.styleCount=5, brief class=site-as-portfolio (embrace)
+Skill: /mockups (5 styles × 1 archetype × 1 app = 5 mockups)
+
+Generated mockups:
+  docs/mockups/style-0/webapp/home.html  Editorial Hatch     2626 lines / 94 KB
+  docs/mockups/style-1/webapp/home.html  Filmic Hatch        1862 lines / 72 KB
+  docs/mockups/style-2/webapp/home.html  Spark Studio        2304 lines / 74 KB
+  docs/mockups/style-3/webapp/home.html  Studio Portfolio    1275 lines / 43 KB
+  docs/mockups/style-4/webapp/home.html  Bold Modular        2068 lines / 74 KB
+
+Bootstrap presence check (per /mockups anti-slop):
+  All 5 mockups: tailwindcss-cdn ✓  tailwind.config ✓  data-theme attr ✓
+
+Spark Studio (style-2) feature signal:
+  rounded-full / pill-shape instances: 8 (target: kit Button shape will inherit pill)
+  logo-spark mark references:          4 (target: orange brand mark + wordmark)
+  floating stat tile compositions:     7 (target: hero overlay stat tiles)
+
+Bug-001 / brief-class register validation downstream:
+  ALL five mockups are agency-ambition register (no restrained / "boring on purpose"
+  directions). The brief's site-as-portfolio class drove the analyst to propose
+  ambition-defaulting styles only — consistent with the new step 3a / 6a guidance.
+  Pre-bug-001, the brief would have included "no agency tropes / no parallax
+  hijacking / restrained palette" boilerplate that would have pushed the analyst
+  toward saas-grade restraint directions. None of the five styles here are
+  restraint-defaulting — empirical confirmation that the register propagated.
+
+Review viewer:
+  docs/mockups/index.html — 5 mockups embedded as iframes; per-mockup
+  "Pick this" button + "Open full-size" link. Operator opens in browser
+  and picks one.
+
+Manifest files written:
+  docs/mockups/manifest.json (top-level rollup, styles[] array of 5)
+  docs/mockups/style-{0..4}/dials.yaml
+  docs/mockups/style-{0..4}/manifest.json (per-style provenance ledger)
+
+Next: operator picks one (/pick-style style-N), then /stylesheet runs against
+the picked style's mockup. feat-001's 3-pass extraction (steps 8.6 + 8.7) gets
+empirically validated at that step.
+
+Phase 1 cost recap (this rerun session):
+  /draft-brief manual auth        ~$0  (I authored myself, no LLM dispatch)
+  /analyze (authored)              ~$0  (I authored the analysis files myself)
+  /mockups (5 parallel ui-designer dispatches): ~$5-8 estimated
+  /stylesheet + /screens to come
+
+Status: PASS — /mockups produces 5 well-differentiated agency-ambition
+directions. None of the five is a SaaS/utility/restraint direction.
+Spark Studio (style-2) is the most polished + canonical Hatch direction
+(pill-shape + spark-mark + floating stat tiles all present per feat-001's
+expectations for /stylesheet's extraction passes).
