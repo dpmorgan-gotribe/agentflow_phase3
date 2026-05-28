@@ -82,6 +82,7 @@ Following the green Phase 0 gate report, ran a single-batch resolution of the 6 
 - **CLAUDE.md amendment** under §Hard rules: new "RESEARCH adopts" section codifies the lesson from phase0-step-049 — don't silently apply operator-facing default changes via factory project-level overrides; document tradeoff + require explicit operator opt-in.
 
 **Outstanding for the operator** (each is non-blocking):
+
 - phase0-step-016 HUMAN smoke (5 sub-checks) — judge ship-ready OR run sub-checks. Harness is empirically working (used to flip 59 rows + run /phase-gate twice).
 - Tag `phase-0-done` + `phase-1-start` when ready.
 

@@ -59,9 +59,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-001"
-      ],
+      "depends_on": ["phase0-step-001"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -93,9 +91,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-002"
-      ],
+      "depends_on": ["phase0-step-002"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -125,9 +121,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-002"
-      ],
+      "depends_on": ["phase0-step-002"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -157,9 +151,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-004"
-      ],
+      "depends_on": ["phase0-step-004"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -190,9 +182,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-004"
-      ],
+      "depends_on": ["phase0-step-004"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -224,9 +214,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-004"
-      ],
+      "depends_on": ["phase0-step-004"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -256,9 +244,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-004"
-      ],
+      "depends_on": ["phase0-step-004"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -288,9 +274,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-008"
-      ],
+      "depends_on": ["phase0-step-008"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -321,9 +305,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-004"
-      ],
+      "depends_on": ["phase0-step-004"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -358,9 +340,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-003"
-      ],
+      "depends_on": ["phase0-step-003"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -391,9 +371,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-003"
-      ],
+      "depends_on": ["phase0-step-003"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -423,9 +401,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-002"
-      ],
+      "depends_on": ["phase0-step-002"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -454,9 +430,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-003"
-      ],
+      "depends_on": ["phase0-step-003"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -488,10 +462,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-012",
-        "phase0-step-013"
-      ],
+      "depends_on": ["phase0-step-012", "phase0-step-013"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -563,9 +534,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-002"
-      ],
+      "depends_on": ["phase0-step-002"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -596,9 +565,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-017"
-      ],
+      "depends_on": ["phase0-step-017"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -628,9 +595,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-018"
-      ],
+      "depends_on": ["phase0-step-018"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -661,9 +626,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-002"
-      ],
+      "depends_on": ["phase0-step-002"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -694,9 +657,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-020"
-      ],
+      "depends_on": ["phase0-step-020"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -731,10 +692,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-019",
-        "phase0-step-021"
-      ],
+      "depends_on": ["phase0-step-019", "phase0-step-021"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -764,9 +722,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-022"
-      ],
+      "depends_on": ["phase0-step-022"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -796,9 +752,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-022"
-      ],
+      "depends_on": ["phase0-step-022"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -828,9 +782,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-024"
-      ],
+      "depends_on": ["phase0-step-024"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -862,9 +814,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-013"
-      ],
+      "depends_on": ["phase0-step-013"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -894,9 +844,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-026"
-      ],
+      "depends_on": ["phase0-step-026"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -929,9 +877,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-026"
-      ],
+      "depends_on": ["phase0-step-026"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -962,9 +908,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-028"
-      ],
+      "depends_on": ["phase0-step-028"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -994,9 +938,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-002"
-      ],
+      "depends_on": ["phase0-step-002"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1028,9 +970,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-030"
-      ],
+      "depends_on": ["phase0-step-030"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1060,9 +1000,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-002"
-      ],
+      "depends_on": ["phase0-step-002"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1094,9 +1032,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-032"
-      ],
+      "depends_on": ["phase0-step-032"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1126,9 +1062,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-031"
-      ],
+      "depends_on": ["phase0-step-031"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1151,17 +1085,12 @@
           "reason": "Coordination overhead; inline sub-workers share the analyst's context window and let the synthesis worker reason across siblings."
         }
       ],
-      "expected_outcomes": [
-        "Agent file parses",
-        "Smoke fans out 5 workers"
-      ],
+      "expected_outcomes": ["Agent file parses", "Smoke fans out 5 workers"],
       "evidence": "evidence/phase0-step-035-result.txt",
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-031"
-      ],
+      "depends_on": ["phase0-step-031"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1191,10 +1120,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-031",
-        "phase0-step-021"
-      ],
+      "depends_on": ["phase0-step-031", "phase0-step-021"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1224,9 +1150,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-031"
-      ],
+      "depends_on": ["phase0-step-031"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1257,9 +1181,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-037"
-      ],
+      "depends_on": ["phase0-step-037"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1290,9 +1212,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-024"
-      ],
+      "depends_on": ["phase0-step-024"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1328,9 +1248,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-030"
-      ],
+      "depends_on": ["phase0-step-030"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1352,17 +1270,12 @@
           "reason": "Phase 2 saw builders commit half-built features; centralized commits gate on close-feature verification."
         }
       ],
-      "expected_outcomes": [
-        "Agent file parses",
-        "All 5 ops defined in schema"
-      ],
+      "expected_outcomes": ["Agent file parses", "All 5 ops defined in schema"],
       "evidence": "evidence/phase0-step-041-result.txt",
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-031"
-      ],
+      "depends_on": ["phase0-step-031"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1393,9 +1306,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-031"
-      ],
+      "depends_on": ["phase0-step-031"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -1426,9 +1337,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-037"
-      ],
+      "depends_on": ["phase0-step-037"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1458,9 +1367,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-037"
-      ],
+      "depends_on": ["phase0-step-037"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1494,9 +1401,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-037"
-      ],
+      "depends_on": ["phase0-step-037"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1526,9 +1431,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-035"
-      ],
+      "depends_on": ["phase0-step-035"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1559,10 +1462,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-042",
-        "phase0-step-045"
-      ],
+      "depends_on": ["phase0-step-042", "phase0-step-045"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -1634,9 +1534,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-031"
-      ],
+      "depends_on": ["phase0-step-031"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -1667,11 +1565,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase1-step-001",
-        "phase0-step-019",
-        "phase0-step-020"
-      ],
+      "depends_on": ["phase1-step-001", "phase0-step-019", "phase0-step-020"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -1703,9 +1597,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase1-step-002"
-      ],
+      "depends_on": ["phase1-step-002"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -1736,9 +1628,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase1-step-001"
-      ],
+      "depends_on": ["phase1-step-001"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -1768,9 +1658,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase1-step-003"
-      ],
+      "depends_on": ["phase1-step-003"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -1800,9 +1688,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase1-step-003"
-      ],
+      "depends_on": ["phase1-step-003"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -1832,9 +1718,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-002"
-      ],
+      "depends_on": ["phase0-step-002"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -1863,9 +1747,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase1-step-003"
-      ],
+      "depends_on": ["phase1-step-003"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -1896,11 +1778,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-035",
-        "phase0-step-046",
-        "phase1-step-003"
-      ],
+      "depends_on": ["phase0-step-035", "phase0-step-046", "phase1-step-003"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -1931,9 +1809,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase1-step-009"
-      ],
+      "depends_on": ["phase1-step-009"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -1964,10 +1840,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-036",
-        "phase1-step-009"
-      ],
+      "depends_on": ["phase0-step-036", "phase1-step-009"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -1998,11 +1871,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-036",
-        "phase0-step-030",
-        "phase1-step-010"
-      ],
+      "depends_on": ["phase0-step-036", "phase0-step-030", "phase1-step-010"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -2033,9 +1902,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase1-step-012"
-      ],
+      "depends_on": ["phase1-step-012"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -2068,10 +1935,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-032",
-        "phase1-step-013"
-      ],
+      "depends_on": ["phase0-step-032", "phase1-step-013"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -2102,9 +1966,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase1-step-014"
-      ],
+      "depends_on": ["phase1-step-014"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -2135,10 +1997,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase1-step-015",
-        "phase1-step-006"
-      ],
+      "depends_on": ["phase1-step-015", "phase1-step-006"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -2161,17 +2020,12 @@
           "reason": "Screen list doesn't show transitions; flows catch missing nav (e.g. no path back to home) that screen list hides."
         }
       ],
-      "expected_outcomes": [
-        "Manifest validates",
-        "SVG renders in browser"
-      ],
+      "expected_outcomes": ["Manifest validates", "SVG renders in browser"],
       "evidence": "evidence/phase1-step-017-result.txt",
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase1-step-015"
-      ],
+      "depends_on": ["phase1-step-015"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -2195,19 +2049,12 @@
           "reason": "Operator is already in design-review mode; combining is workflow-aligned."
         }
       ],
-      "expected_outcomes": [
-        "signoff.json valid",
-        "Both gate files dropped"
-      ],
+      "expected_outcomes": ["signoff.json valid", "Both gate files dropped"],
       "evidence": "evidence/phase1-step-018-result.txt",
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase1-step-014",
-        "phase1-step-016",
-        "phase1-step-017"
-      ],
+      "depends_on": ["phase1-step-014", "phase1-step-016", "phase1-step-017"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2238,11 +2085,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-036",
-        "phase0-step-034",
-        "phase1-step-018"
-      ],
+      "depends_on": ["phase0-step-036", "phase0-step-034", "phase1-step-018"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2264,17 +2107,12 @@
           "reason": "Builders need env at install/test time; failing late wastes a Mode B run."
         }
       ],
-      "expected_outcomes": [
-        "All credentials populated",
-        "Gate-5 file dropped"
-      ],
+      "expected_outcomes": ["All credentials populated", "Gate-5 file dropped"],
       "evidence": "evidence/phase1-step-020-result.txt",
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase1-step-019"
-      ],
+      "depends_on": ["phase1-step-019"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2307,11 +2145,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-036",
-        "phase1-step-020",
-        "phase1-step-008"
-      ],
+      "depends_on": ["phase0-step-036", "phase1-step-020", "phase1-step-008"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2342,10 +2176,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-036",
-        "phase1-step-021"
-      ],
+      "depends_on": ["phase0-step-036", "phase1-step-021"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2376,10 +2207,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-041",
-        "phase1-step-022"
-      ],
+      "depends_on": ["phase0-step-041", "phase1-step-022"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2410,9 +2238,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase1-step-021"
-      ],
+      "depends_on": ["phase1-step-021"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2443,9 +2269,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-013"
-      ],
+      "depends_on": ["phase0-step-013"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2477,11 +2301,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase1-step-023",
-        "phase1-step-024",
-        "phase1-step-025"
-      ],
+      "depends_on": ["phase1-step-023", "phase1-step-024", "phase1-step-025"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2512,11 +2332,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-030",
-        "phase0-step-031",
-        "phase1-step-021"
-      ],
+      "depends_on": ["phase0-step-030", "phase0-step-031", "phase1-step-021"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2549,11 +2365,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-001",
-        "phase0-step-022",
-        "phase1-step-007"
-      ],
+      "depends_on": ["phase2-step-001", "phase0-step-022", "phase1-step-007"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2585,9 +2397,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-022"
-      ],
+      "depends_on": ["phase0-step-022"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2619,10 +2429,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-002",
-        "phase0-step-041"
-      ],
+      "depends_on": ["phase2-step-002", "phase0-step-041"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2654,10 +2461,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-024",
-        "phase2-step-002"
-      ],
+      "depends_on": ["phase0-step-024", "phase2-step-002"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2688,10 +2492,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-003",
-        "phase0-step-037"
-      ],
+      "depends_on": ["phase2-step-003", "phase0-step-037"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2723,10 +2524,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-006",
-        "phase0-step-038"
-      ],
+      "depends_on": ["phase2-step-006", "phase0-step-038"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2758,10 +2556,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-006",
-        "phase0-step-038"
-      ],
+      "depends_on": ["phase2-step-006", "phase0-step-038"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2792,10 +2587,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-008",
-        "phase0-step-038"
-      ],
+      "depends_on": ["phase2-step-008", "phase0-step-038"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2827,10 +2619,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-009",
-        "phase2-step-004"
-      ],
+      "depends_on": ["phase2-step-009", "phase2-step-004"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2862,9 +2651,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-010"
-      ],
+      "depends_on": ["phase2-step-010"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2894,9 +2681,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-011"
-      ],
+      "depends_on": ["phase2-step-011"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2927,9 +2712,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-011"
-      ],
+      "depends_on": ["phase2-step-011"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2960,9 +2743,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-004"
-      ],
+      "depends_on": ["phase2-step-004"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -2993,10 +2774,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-002",
-        "phase0-step-021"
-      ],
+      "depends_on": ["phase2-step-002", "phase0-step-021"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3027,10 +2805,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-010",
-        "phase2-step-015"
-      ],
+      "depends_on": ["phase2-step-010", "phase2-step-015"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3060,10 +2835,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-010",
-        "phase1-step-007"
-      ],
+      "depends_on": ["phase2-step-010", "phase1-step-007"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3094,9 +2866,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-010"
-      ],
+      "depends_on": ["phase2-step-010"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3126,9 +2896,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-010"
-      ],
+      "depends_on": ["phase2-step-010"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3200,10 +2968,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-022",
-        "phase0-step-030"
-      ],
+      "depends_on": ["phase0-step-022", "phase0-step-030"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3234,9 +2999,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-022"
-      ],
+      "depends_on": ["phase0-step-022"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3266,9 +3029,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-022"
-      ],
+      "depends_on": ["phase0-step-022"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3299,10 +3060,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-002",
-        "phase0-step-030"
-      ],
+      "depends_on": ["phase3-step-002", "phase0-step-030"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3333,9 +3091,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-004"
-      ],
+      "depends_on": ["phase3-step-004"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3366,10 +3122,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-005",
-        "phase0-step-040"
-      ],
+      "depends_on": ["phase3-step-005", "phase0-step-040"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3400,9 +3153,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-006"
-      ],
+      "depends_on": ["phase3-step-006"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3433,9 +3184,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-022"
-      ],
+      "depends_on": ["phase0-step-022"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3467,9 +3216,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-022"
-      ],
+      "depends_on": ["phase0-step-022"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3500,9 +3247,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-030"
-      ],
+      "depends_on": ["phase0-step-030"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3533,9 +3278,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-041"
-      ],
+      "depends_on": ["phase0-step-041"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3596,18 +3339,12 @@
           "reason": "Verify + fix often run independently from build; separate skills match operator workflow."
         }
       ],
-      "expected_outcomes": [
-        "Both skills smoke",
-        "Dry-run short-circuits"
-      ],
+      "expected_outcomes": ["Both skills smoke", "Dry-run short-circuits"],
       "evidence": "evidence/phase3-step-013-result.txt",
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-001",
-        "phase3-step-012"
-      ],
+      "depends_on": ["phase3-step-001", "phase3-step-012"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3639,9 +3376,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-012"
-      ],
+      "depends_on": ["phase3-step-012"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3663,19 +3398,12 @@
           "reason": "Forgotten step; auto-invocation eliminates the operator gap."
         }
       ],
-      "expected_outcomes": [
-        "End-to-end completes",
-        "Resume mid-rounds works"
-      ],
+      "expected_outcomes": ["End-to-end completes", "Resume mid-rounds works"],
       "evidence": "evidence/phase3-step-015-result.txt",
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-014",
-        "phase0-step-023",
-        "phase2-step-015"
-      ],
+      "depends_on": ["phase3-step-014", "phase0-step-023", "phase2-step-015"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3705,9 +3433,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-001"
-      ],
+      "depends_on": ["phase3-step-001"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3737,9 +3463,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-004"
-      ],
+      "depends_on": ["phase3-step-004"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3769,9 +3493,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-005"
-      ],
+      "depends_on": ["phase3-step-005"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3793,18 +3515,12 @@
           "reason": "Wastes ~$3 per false-positive bug-fix dispatch; filter is high-leverage."
         }
       ],
-      "expected_outcomes": [
-        "False positives filtered",
-        "Filed bugs accurate"
-      ],
+      "expected_outcomes": ["False positives filtered", "Filed bugs accurate"],
       "evidence": "evidence/phase3-step-019-result.txt",
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-006",
-        "phase3-step-007"
-      ],
+      "depends_on": ["phase3-step-006", "phase3-step-007"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3826,10 +3542,7 @@
           "reason": "Underspecified bugs cause bug-fixer to make wrong fixes that pass narrow assertions but break neighbors."
         }
       ],
-      "expected_outcomes": [
-        "bugs.yaml triaged",
-        "Fix-loop start approved"
-      ],
+      "expected_outcomes": ["bugs.yaml triaged", "Fix-loop start approved"],
       "evidence": "evidence/phase3-step-020-result.txt",
       "polished": false,
       "passes": false,
@@ -3871,10 +3584,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-015",
-        "phase3-step-020"
-      ],
+      "depends_on": ["phase3-step-015", "phase3-step-020"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -3912,11 +3622,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-017",
-        "phase0-step-019",
-        "phase0-step-022"
-      ],
+      "depends_on": ["phase0-step-017", "phase0-step-019", "phase0-step-022"],
       "closed_at": "2026-05-28",
       "outcome_summary": ""
     },
@@ -3994,9 +3700,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-006"
-      ],
+      "depends_on": ["phase3-step-006"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -4033,11 +3737,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase0-step-018",
-        "phase3-step-010",
-        "phase3-step-022"
-      ],
+      "depends_on": ["phase0-step-018", "phase3-step-010", "phase3-step-022"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -4072,10 +3772,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-002",
-        "phase0-step-026"
-      ],
+      "depends_on": ["phase0-step-002", "phase0-step-026"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -4108,9 +3805,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-004"
-      ],
+      "depends_on": ["phase0-step-004"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -4144,9 +3839,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-030"
-      ],
+      "depends_on": ["phase0-step-030"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -4182,9 +3875,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-002"
-      ],
+      "depends_on": ["phase0-step-002"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -4216,9 +3907,7 @@
       "polished": "waived",
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-019"
-      ],
+      "depends_on": ["phase0-step-019"],
       "closed_at": "2026-05-28",
       "outcome_summary": "",
       "polished_waiver_reason": "Pure-function cost-projection: <1ms per forecast. No meaningful budget to verify."
@@ -4252,10 +3941,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-013",
-        "phase2-step-015"
-      ],
+      "depends_on": ["phase2-step-013", "phase2-step-015"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -4290,9 +3976,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase2-step-002"
-      ],
+      "depends_on": ["phase2-step-002"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -4326,11 +4010,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-005",
-        "phase3-step-009",
-        "phase1-step-016"
-      ],
+      "depends_on": ["phase3-step-005", "phase3-step-009", "phase1-step-016"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -4363,10 +4043,7 @@
       "polished": false,
       "passes": false,
       "attempt_count": 0,
-      "depends_on": [
-        "phase3-step-015",
-        "phase3-step-002"
-      ],
+      "depends_on": ["phase3-step-015", "phase3-step-002"],
       "closed_at": null,
       "outcome_summary": ""
     },
@@ -4399,10 +4076,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-051",
-        "phase0-step-053"
-      ],
+      "depends_on": ["phase0-step-051", "phase0-step-053"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -4433,10 +4107,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-051",
-        "phase1-step-022"
-      ],
+      "depends_on": ["phase0-step-051", "phase1-step-022"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },
@@ -4557,9 +4228,7 @@
       "polished": false,
       "passes": true,
       "attempt_count": 1,
-      "depends_on": [
-        "phase0-step-051"
-      ],
+      "depends_on": ["phase0-step-051"],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
     },

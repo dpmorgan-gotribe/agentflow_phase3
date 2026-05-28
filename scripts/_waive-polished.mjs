@@ -19,7 +19,7 @@ const FL = path.join(ROOT, "feature_list.json");
 
 const [, , id, reason] = process.argv;
 if (!id || !reason) {
-  console.error("usage: _waive-polished.mjs <row-id> \"<one-line reason>\"");
+  console.error('usage: _waive-polished.mjs <row-id> "<one-line reason>"');
   process.exit(2);
 }
 
