@@ -4273,6 +4273,104 @@
       ],
       "closed_at": "2026-05-27",
       "outcome_summary": ""
+    },
+    {
+      "id": "phase1-step-032",
+      "category": "mode-a-design-pipeline",
+      "description": "Ship feat-001 — /stylesheet extracts component default-shapes + named patterns from the selected mockup, not just tokens. Three-pass extraction model: tokens (existing, unchanged) → component default-shapes (NEW; per-primitive default rounded-*/padding/weight/hover read from mockup instances) → named patterns (NEW; multi-element compositions like Wordmark/Eyebrow/StatTile/TrustBar/HeroBadge/ServicePillarCard captured as files in packages/ui-kit/src/patterns/). Closes the empirical regression surfaced by investigate-001 (P3 Button defaults to rounded-md despite mockup using pill 999px; no Nav/Header/Logo primitive existed in design-system-preview.html at all). Parent plan: plans/active/feat-001-stylesheet-component-shapes.md.",
+      "steps": [
+        "Read .claude/skills/stylesheet/SKILL.md to map insertion points after step 8.5 (components catalog)",
+        "Add new step 8.6 'Component default-shape extraction' — per kit primitive (Button, Card, Badge, Input, Link, Nav, Logo, …) read mockup instances and capture default rounded-*/padding/weight/hover into packages/ui-kit/src/patterns/components/{primitive}.html",
+        "Add new step 8.7 'Named-pattern extraction' — for distinctive multi-element compositions emit packages/ui-kit/src/patterns/{slug}.html (Wordmark, Eyebrow, StatTile, TrustBar, HeroBadge, ServicePillarCard, CaseStudyCard, FloatingStat)",
+        "Update step 17 (design-system-preview.html) to REQUIRE a Header/Nav/Logo section + a Patterns section + assertion that every primitive's preview matches the mockup at component-default-shape level",
+        "Update §Acceptance criteria with the parity-with-mockup checkbox",
+        "Update §Output contract summary + §Return JSON to add componentsExtracted[] + patternsExtracted[] fields",
+        "Edit packages/orchestrator-contracts/src/stylesheet.ts (if exists) to add the new return JSON fields to StylesheetOutput schema",
+        "Update .claude/skills/screens/SKILL.md with a small 'consult kit patterns/ before inventing' rule (consumer-side change)",
+        "Commit on feat/stylesheet-component-shapes branch",
+        "Merge fast-forward to master",
+        "Empirical validation: re-run /stylesheet on projects/test-app (existing operator-injected gulia-captured Spark Studio mockup); confirm design-system-preview.html now contains Header/Nav/Logo section AND Button preview is pill-shaped (matching mockup's .btn-primary { border-radius: var(--radius-pill); })",
+        "Write evidence/phase1-step-032-result.txt with re-run output structural diff vs current baseline (line count, sections present, Button rounded-* class, files emitted under packages/ui-kit/src/patterns/)",
+        "Flip passes:true ONLY after evidence file is read (verify-gate.mjs gate)"
+      ],
+      "approach": "feat-001 reframes /stylesheet as a three-pass extraction (tokens / components / patterns) instead of token-only. The kit becomes the source of truth for component shapes; /screens reaches for the kit's Button and gets the right shape automatically. Single high-leverage edit point: skills/stylesheet/SKILL.md. Pairs with phase1-step-033 (bug-001 brief-class fix) — together they restore the P2-grade output quality investigate-001 documented.",
+      "rejected_alternatives": [
+        {
+          "approach": "Fix only /screens (read mockup as layout blueprint at screens-time)",
+          "reason": "Kit-not-mockup is the right source-of-truth for component shapes; per-screen re-extraction wastes budget across 12+ screens. Also: Mode-B builders consume the kit, not the mockup — kit must be correct upstream for code-gen consumers."
+        },
+        {
+          "approach": "Add /screens passthrough for operator-direct mockup style blocks",
+          "reason": "Symptom-level papering. Breaks kit-only consumption contract that Mode-B builders depend on."
+        },
+        {
+          "approach": "ADR-006 only (document the gap, no code fix)",
+          "reason": "Operator empirically scored P3 output 1/10 vs P2; the gap blocks new-project quality TODAY. ADR without code is permission to keep shipping mediocre output."
+        }
+      ],
+      "expected_outcomes": [
+        "skills/stylesheet/SKILL.md contains the two new extraction passes documented as steps 8.6 + 8.7",
+        "design-system-preview.html includes a Header/Nav/Logo section (currently absent in test-app)",
+        "Button primitive default-shape matches the selected mockup (pill when mockup is pill; flat-cornered when mockup is flat-cornered)",
+        "packages/ui-kit/src/patterns/ contains components/*.html + at least 5 named patterns when the mockup carries them",
+        "StylesheetOutput JSON includes componentsExtracted[] + patternsExtracted[] arrays"
+      ],
+      "evidence": "evidence/phase1-step-032-result.txt",
+      "polished": false,
+      "passes": false,
+      "attempt_count": 0,
+      "depends_on": [],
+      "closed_at": null,
+      "outcome_summary": ""
+    },
+    {
+      "id": "phase1-step-033",
+      "category": "mode-a-design-pipeline",
+      "description": "Ship bug-001 — /draft-brief gains brief-class awareness so portfolio/agency/studio/creative-service briefs are no longer flattened by SaaS-grade restraint boilerplate. New step 3a classifies the proposal into one of a closed brief-class taxonomy (site-as-portfolio / b2b-saas / consumer-utility / internal-tool / marketplace / content-publication / learning-platform / e-commerce / community-social / fintech / health). Step 6 (write sections) branches §1 + §2 templates by class. For site-as-portfolio class, restraint clauses ('no agency tropes', 'no parallax hijacking', 'restrained palette') are replaced with ambition-encouragement ('embrace visual ambition', 'signature visual motif', 'story-driven motion'). For SaaS/utility class, restraint defaults are preserved. Parent plan: plans/active/bug-001-draft-brief-over-restrains-portfolio-briefs.md.",
+      "steps": [
+        "Read .claude/skills/draft-brief/SKILL.md to confirm insertion points (between current step 3 and step 4; inside step 6)",
+        "Insert step 3a 'Classify brief class' with closed taxonomy of 8-12 classes + per-class visual-ambition default (embrace / balanced / restrained)",
+        "Modify step 6 'Write the sections' to add per-class guidance for §1 Vision & Principles + §2 Visual Design Requirements",
+        "Add explicit ambition-encouragement vocabulary for site-as-portfolio class ('embrace visual ambition', 'signature motif', 'story-driven motion', 'distinctive typography', 'full-bleed imagery')",
+        "Add a §Brief-class examples list showing canonical proposals → class mapping",
+        "Add a §Edge case for multi-class proposals (e.g. agency that also sells SaaS — dominant class for the site being built wins; secondary class noted in frontmatter)",
+        "(Optional Phase B) Add brief-class field to schemas/brief-frontmatter.schema.json + brief-template.md frontmatter",
+        "Commit on fix/draft-brief-over-restrains-portfolio-briefs branch",
+        "Merge fast-forward to master",
+        "Empirical validation: re-run /draft-brief on proposals/hatch-proposal.md; confirm output brief.md does NOT contain 'no agency tropes' / 'parallax hijacking' / 'we're disruptive' phrases AND DOES contain ambition-encouragement language",
+        "Negative-regression test: re-run /draft-brief on a SaaS-class proposal (proposals/kanban-webapp-proposal.md as a proxy); confirm restraint defaults preserved",
+        "Write evidence/phase1-step-033-result.txt with the side-by-side comparison",
+        "Flip passes:true ONLY after evidence file is read (verify-gate.mjs gate)"
+      ],
+      "approach": "Skill-body prompt-engineering edit. /draft-brief currently has no brief-class concept — every brief defaults to SaaS-grade restraint regardless of project genre. The fix adds a classification pass + class-aware §1 + §2 guidance. Single edit point: skills/draft-brief/SKILL.md. Pairs with phase1-step-032 (feat-001 kit-shape extraction) — together they restore P2-grade output quality investigate-001 documented.",
+      "rejected_alternatives": [
+        {
+          "approach": "Strip all restraint language unconditionally from /draft-brief",
+          "reason": "Restraint is correct for SaaS/utility/dashboard briefs. Unconditional strip pushes the regression in the opposite direction. The bug is one-size-fits-all, not the existence of restraint."
+        },
+        {
+          "approach": "Have ui-designer ignore restraint clauses in the brief",
+          "reason": "Violates the canonical-brief contract (CLAUDE.md hard rule). If brief says 'no agency tropes', agent MUST honor it. Fix lives in brief authoring, not in agent disobedience."
+        },
+        {
+          "approach": "Operator manually edits brief after /draft-brief to remove unwanted restraint",
+          "reason": "Same rationale as phase1-step-032 — factory value prop is 'spec → working app without operator hand-holding'. Manual brief-fixing doesn't scale."
+        }
+      ],
+      "expected_outcomes": [
+        "skills/draft-brief/SKILL.md contains a step 3a 'Classify brief class' with a closed taxonomy of ≥8 classes",
+        "Step 6 has per-class guidance for §1 + §2",
+        "Re-running /draft-brief on the Hatch proposal produces a brief.md WITHOUT the restraint trigger phrases identified in investigate-001",
+        "Re-running /draft-brief on a SaaS-class proposal produces a brief.md WITH restraint defaults preserved (negative regression test)",
+        "Brief-class is at minimum logged in the /draft-brief report output (Phase B: added to frontmatter)"
+      ],
+      "evidence": "evidence/phase1-step-033-result.txt",
+      "polished": false,
+      "passes": false,
+      "attempt_count": 0,
+      "depends_on": [],
+      "closed_at": null,
+      "outcome_summary": ""
     }
   ]
 }
