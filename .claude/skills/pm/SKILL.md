@@ -518,6 +518,37 @@ Body sections:
 - **Builders (028/029/030)** read their assigned tasks; resolve `integration_ref` to fetch vendor specifics from architecture.yaml.
 - **Tester (031) + Reviewer (032)** placed last in `agent_sequence[]` by convention.
 
+## Auto-run chain (ADR-005)
+
+`/pm --mode=tasks` is an operator-invokable parent command. Per ADR-005, after this skill's primary work completes (`docs/tasks.yaml` v2 with features[] / agent_sequence[] / task graph), it **MUST automatically invoke 3 internal child skills in order via the Skill tool** (no internal gates between them; the chain runs end-to-end):
+
+**Children to auto-run (in this order):**
+
+1. **`skills-audit --scope=build`** — via `Skill(skill: "skills-audit", args: "--scope=build")`
+   - Reads `.claude/architecture.yaml.tooling.mcp_servers[]` + current `.mcp.json`
+   - Audits build-stage MCP availability; flags missing
+   - On missing MCPs that the operator should review (e.g. OAuth-required servers), surface in return JSON but proceed to step 2
+
+2. **`register-mcp-servers --scope=build`** — via `Skill(skill: "register-mcp-servers", args: "--scope=build")`
+   - Registers missing build-stage MCPs into `.mcp.json` from `mcp-defaults-design.json`-equivalent + `architecture.yaml.tooling.mcp_servers[]`
+   - Idempotent
+   - On failures (e.g. OAuth needed), surface in return JSON + halt chain so operator can complete the OAuth flow then re-run `/pm` to resume
+
+3. **`git-agent bootstrap`** — via `Skill(skill: "git-agent", args: "--op=bootstrap")`
+   - Creates monorepo skeleton: apps/{web,mobile,api,admin}/ stubs + packages/{types,ui-kit,api-client,utils}/ + turbo.json + pnpm-workspace.yaml + `pnpm.onlyBuiltDependencies` gate (bug-153 workaround)
+   - Initial commit + tag `mode-a-complete`
+   - This is the final Mode A stage; on success, Mode A is complete and `/start-build` (Mode B) can begin
+
+**Idempotency for each child:**
+
+- `skills-audit --scope=build`: re-emits `docs/skills-audit/build.md` if architecture.yaml has changed; otherwise skip
+- `register-mcp-servers --scope=build`: no-op if `.mcp.json` already contains every server in architecture.yaml.tooling.mcp_servers[]
+- `git-agent bootstrap`: no-op if `apps/web/` already exists AND `git tag mode-a-complete` is set
+
+Pipeline-mode double-invocation safe via the idempotency contracts above.
+
+**Mode B handoff.** After git-agent-bootstrap completes, the entire Mode A pipeline is done. The operator advances to Mode B by invoking `/start-build`. The pm skill's auto-run chain does NOT include `/start-build` — that's a separate operator decision (Mode A → Mode B transition is a hard human boundary per the rebuild design).
+
 ## Acceptance criteria
 
 - [ ] `.claude/skills/pm/SKILL.md` exists with frontmatter above

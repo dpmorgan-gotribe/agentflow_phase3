@@ -588,6 +588,29 @@ HTML, JSON go to files. Response text contains ONLY status + paths + return-JSON
 - `scaffolding/09-034b-output-contract-zod-schemas.md` — `ScreensOutput` + `SignoffOutput` schemas
 - `scaffolding/19-032b-html-verifier-agent.md` — Layer 6 post-stage verifier
 
+## Auto-run chain (ADR-005)
+
+`/screens` is an operator-invokable parent command. Per ADR-005, after this skill's primary work completes (HTML emission + manifest write), it **MUST automatically invoke the internal child skills in order via the Skill tool** so the operator doesn't have to manually chain stages.
+
+**Children to auto-run (in this order):**
+
+1. **`visual-review`** — via `Skill(skill: "visual-review", args: "")`
+   - Wait for it to complete + capture return JSON
+   - On `success:true` → proceed to step 2
+   - On `success:false` with retry budget remaining → the child skill handles its own per-screen retry loop (cap=3); when that exhausts, populates `needsHumanReview[]` and returns; proceed to step 2
+   - On `success:false` with no recoverable signal → halt the chain, surface the failure JSON to the operator
+
+2. **`user-flows-generator`** — via `Skill(skill: "user-flows-generator", args: "")`
+   - Wait for completion
+   - On `success:true` → chain complete; the user-flows stage's Gate 4 (`signoff`) gate-server-lifecycle awaits the operator's `gate-4-approved.txt` drop
+   - On `success:false` → halt + surface
+
+**Idempotency contract.** Each child checks "do my primary outputs already exist with current input fingerprint?" If yes, it returns `{success:true, skipped:true}` immediately. This makes pipeline-mode double-invocation safe (the orchestrator may also run them after this skill returns) — children see existing outputs and no-op.
+
+**Why not a pipeline-vs-manual mode detection?** Detection adds branching to skills that are otherwise stateless. The idempotency invariant lets us auto-run unconditionally without needing to know the caller.
+
+**Gate 4 behavior unchanged.** Gates fire from stage entries in `orchestrator/src/stages-array.ts`, not from skill bodies. After user-flows-generator completes, the operator reviews the combined output (screens HTML + visual-review reports + user-flows manifest + SVG diagrams) and drops `gate-4-approved.txt`. The auto-run chain ends with the gate awaiting; chain does not block on the gate.
+
 ## Acceptance criteria
 
 - [ ] `.claude/skills/screens/SKILL.md` exists with the frontmatter above
@@ -606,7 +629,7 @@ HTML, JSON go to files. Response text contains ONLY status + paths + return-JSON
 - [ ] Manifest hash algorithm documented for BOTH screens AND visual-review report
 - [ ] `docs/screens-manifest.json` written at end of batch run
 - [ ] Archive rule documented: every batch preserves prior `docs/user-flows.html` → `docs/user-flows-archive/{prev-ts}.html`; single-screen does NOT archive
-- [ ] Skill does NOT auto-invoke `/user-flows-generator`; orchestrator owns the `screens → visual-review → user-flows-generator` sequence
+- [x] Per ADR-005 (2026-05-28), this skill auto-invokes `/visual-review` then `/user-flows-generator` via the Skill tool at the end of its run (see § Auto-run chain below). Idempotency in each child means a pipeline-mode double-invocation is a no-op. Supersedes the Phase-2 "orchestrator owns the sequence" rule for manual operator mode.
 - [ ] Kit-change-request detour flagged as cross-task dep on PM (021, `--mode=kit-change-request`) + orchestrator (035)
 - [ ] Return JSON matches `ScreensOutput` in 034b (batch + single-screen variants)
 - [ ] 022b `validate-consumer` + ESLint explicitly scoped to `.ts(x)/.js(x)` — NOT HTML; enforcement for HTML is anti-slop + 032b + 025b

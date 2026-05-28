@@ -603,6 +603,22 @@ reference shape.)
 - `scripts/validate-screens.mjs` — schema validation runner
 - `.claude/agents/analyst.md` — agent definition (inherited by subagents)
 
+## Auto-run chain (ADR-005)
+
+`/analyze` is an operator-invokable parent command. Per ADR-005, after this skill's primary work completes (research + voice + assets + inspirations + per-platform flows + screens.json + brief-summary), it **MUST automatically invoke the internal child skill via the Skill tool**:
+
+**Child to auto-run:**
+
+1. **`skills-audit --scope=design`** — via `Skill(skill: "skills-audit", args: "--scope=design")`
+   - Audits design-stage MCPs (playwright, icons8, unsplash, chrome-devtools, image-generator) against `mcp-defaults-design.json`
+   - Emits `docs/skills-audit/design.md` with present/missing matrix
+   - Missing MCPs are flagged but do NOT fail the stage; operator decides whether to `/register-mcp-servers --scope=design` (this is also operator-invokable; not auto-run here because OAuth flows may be involved)
+   - Idempotent: re-run with same state produces same output
+
+**Gate 1 fires BEFORE the auto-run.** Per `orchestrator/src/stages-array.ts`, `analyze` has `gateEnabled:true, gateType:"requirements"`; `skills-audit-design` has `gateEnabled:false`. The natural flow is: analyze's work → Gate 1 (operator reviews requirements + signs off) → auto-run skills-audit-design. In manual operator mode, this skill emits Gate 1 instructions (see below) and then proceeds to invoke skills-audit at the END of its run regardless of gate state — the gate file is what the orchestrator uses; the skill's auto-run is operator-mode helper logic that the operator can override by re-invoking with `--skip-skills-audit` (TBD if needed; for v1, unconditional).
+
+**Idempotency:** `skills-audit` returns `{success:true, skipped:true}` if `docs/skills-audit/design.md` already exists for the current MCP fingerprint. Pipeline-mode double-invocation safe.
+
 ## Gate 1 Handoff (post-stage HITL pause)
 
 When `/analyze` completes, the orchestrator pauses for human review of `docs/requirements.md`, `docs/brief-summary.json`, and each platform's `flows.md` / `screens.json` / `coverage.md`. To resume, write ONE of the following directives to **`docs/gate-1-approved.txt`**:

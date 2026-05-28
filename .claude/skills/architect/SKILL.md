@@ -666,6 +666,24 @@ Write the ArchitectOutput JSON to stdout as a single line or final block. The or
 - **Builders (028/029/030)** read `architecture.yaml.tooling.stack` for stack dispatch; read `architecture.yaml.apps.*.integrations.*` for vendor SDK pinning + import scoping.
 - **Reviewer (032)** reads architecture.yaml for "no secrets in code" enforcement.
 
+## Auto-run chain (ADR-005)
+
+`/architect` is an operator-invokable parent command. Per ADR-005, after this skill's primary work completes (architecture.yaml + .env.example + credentials-checklist + deployment-checklist + per-self-hosted config templates + docker-compose.yml + CI workflow), it **MUST automatically invoke the internal child skill via the Skill tool**:
+
+**Child to auto-run (after Gate 5 credentials drop):**
+
+1. **`stylesheet-primitives`** — via `Skill(skill: "stylesheet-primitives", args: "")`
+   - Reads `architecture.yaml.tooling.stack.web_framework` (chosen stack: react-next / svelte-kit / vue-nuxt / etc.)
+   - Dispatches `ui-designer` to the matching skill in `.claude/skills/agents/front-end/{slug}/` to author the stack-bound primitives (Button.tsx for React, Button.vue for Vue, Button.svelte for Svelte, etc.) + patterns + layouts + Storybook + 022b artifacts
+   - Binds the kit-core authored pre-architect by `/stylesheet` to the chosen stack
+   - Updates `packages/ui-kit/package.json` with React (or stack-equivalent) peerDeps; emits CONTRACT.md update; emits 022b validate-consumer.ts + eslint-plugin scoped to .ts(x)/.js(x)
+
+**Gate-5 timing.** Per `orchestrator/src/stages-array.ts`, `architect` has `gateEnabled:true, gateType:"credentials"`; `stylesheet-primitives` has `gateEnabled:false`. The natural flow is: architect's work → Gate 5 (operator drops `gate-5-credentials-approved.txt` after filling .env + setting up vendor accounts) → auto-run stylesheet-primitives.
+
+**Manual-mode polling for Gate 5.** When this skill runs in manual operator mode, after architect's primary work it polls for `docs/gate-5-credentials-approved.txt` (or `.claude/state/{runId}/gate-5-approved.txt`) every 5 seconds for up to 60 seconds. If the file appears, auto-invoke stylesheet-primitives. If timeout, return to the operator with message: "Architect complete. Drop the Gate 5 credentials file to auto-advance to /stylesheet-primitives, or re-run /architect after the drop to resume." Pipeline-mode unaffected (cli-runner owns its own gate-wait via gate-server-lifecycle).
+
+**Idempotency:** `stylesheet-primitives` returns `{success:true, skipped:true}` if `packages/ui-kit/src/primitives/` already populated with the current stack's fingerprint. Pipeline-mode double-invocation safe.
+
 ## Acceptance criteria
 
 - [ ] `.claude/skills/architect/SKILL.md` exists with the frontmatter above
