@@ -58,7 +58,7 @@ all 16+ subagents through Mode A and Mode B pipelines.
 - `enforce-boundaries.sh` denies basename match: .env, .env.local, \*.pem, \*.key, id_rsa/ed25519/ecdsa/dsa, credentials.json, firebase-adminsdk-\*.json, \*.p12, \*.pfx, \*.keystore, \*.jks (intentional exceptions: .env.example, google-services.json, GoogleService-Info.plist) (added after phase0-step-006)
 - `detect-loop.mjs` blocks 3rd identical action; signature = sha256(tool + file/command + content[:200] + extra[:200]); rolling state at `.claude/state/recent-attempts.json` capped at 50 (added after phase0-step-007)
 - `detect-loop.mjs` extra-discriminator fields: offset, limit, old_string, pattern, subagent_type, description, taskId, status, subject, query, url, width, height, filename, time, text, textGone, skill, args (added after phase0-step-007)
-- `detect-loop.mjs` carve-out: mcp__playwright__browser_{resize,navigate,wait_for,take_screenshot,close} bypass (capture loops are inherently iterative) (added after phase0-step-007)
+- `detect-loop.mjs` carve-out: mcp**playwright**browser\_{resize,navigate,wait_for,take_screenshot,close} bypass (capture loops are inherently iterative) (added after phase0-step-007)
 - `detect-loop.mjs` fail-open on unparseable input; atomic state write via temp + rename (added after phase0-step-007)
 - `validate-brief.mjs` activates only on Write|Edit|MultiEdit targeting brief.md (path-normalized); simulates operation in-memory; validates frontmatter via Ajv 2020 + gray-matter Date→string normalization + §7/§10 code-block presence; fail-open when deps not installed OR schema absent (added after phase0-step-029)
 
@@ -273,14 +273,14 @@ all 16+ subagents through Mode A and Mode B pipelines.
 
 **Fixture + template libraries**
 
-- gotribe-briefs/ (INDEX + _authoring-spec + tier-1-atomic + tier-2-combining + tier-3-essence) — example brief library + authoring guidance; fixture for /draft-brief smoke (added after phase0-step-059)
+- gotribe-briefs/ (INDEX + \_authoring-spec + tier-1-atomic + tier-2-combining + tier-3-essence) — example brief library + authoring guidance; fixture for /draft-brief smoke (added after phase0-step-059)
 - proposals/ (hatch-proposal, kanban-webapp-proposal) — example proposals as test fixtures for /new-project --proposal-file (added after phase0-step-059)
-- plans/templates/ (bug-plan, feature-plan, investigation-plan, kit-change-request-plan, refactor-plan) — instantiation templates for plan-* skills (added after phase0-step-059)
+- plans/templates/ (bug-plan, feature-plan, investigation-plan, kit-change-request-plan, refactor-plan) — instantiation templates for plan-\* skills (added after phase0-step-059)
 
 **Dev-experience config (factory root)**
 
 - .markdownlint.jsonc + .markdownlint-cli2.jsonc — MD043 locks brief 20-section heading list + MD041 first-line H1 + MD025 only-one-H1; editor + pre-commit + CI integration (added after phase0-step-056)
-- .gitignore + .prettierignore — node_modules, .claude/state runtime, .tmp-* artifacts, build outputs (added after phase0-step-056)
+- .gitignore + .prettierignore — node_modules, .claude/state runtime, .tmp-\* artifacts, build outputs (added after phase0-step-056)
 - .github/workflows/validate-brief.yml — CI gate on PR brief edits; runs scripts/validate-brief.mjs + markdownlint-cli2 (added after phase0-step-056)
 
 **Orchestrator workspace + test suite**

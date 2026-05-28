@@ -57,3 +57,14 @@
 - Retro verdict: READY FOR OPERATOR REVIEW with **one hard blocker** — Section 4b plan-parity drift = **0/5 (0%)**. Every Phase 0 scope section (§0a–§0i) in `phase-plan.md` is still `[to be filled]`; `/sync-phase-plan` was never invoked during Phase 0. Per CLAUDE.md "Rebuild guarantee", drift >20% blocks phase close.
 - Required before closure: (1) run `/sync-phase-plan` across all 9 Phase 0 sections; (2) close phase0-step-016 (5 sub-check operator walk); (3) re-run `/phase-gate 0` to confirm drift <20%; (4) operator signs off phase0-step-048 and applies `phase-0-done` + `phase-1-start` tags.
 - Awaiting human approval before phase 1 starts.
+
+## 2026-05-28 — phase 0 gate report re-run after /sync-phase-plan
+
+- Report: `reports/phase-0-gate-2026-05-28.md` (overwritten — same-date path; supersedes the earlier run).
+- Trigger: commit `22d22d2` bulk-filled §0a–§0g + §0i (238 insertions) and `cebd726` reverted the forced anthropic-api default per the lesson from step-049.
+- Row counts unchanged: 59/61 passes:true (96.7%); same 2 human-inspection rows open (step-016, step-048).
+- Section 4b plan-parity audit: **5/5 OK = 100%** (was 0/5 in the prior run). Hard blocker cleared.
+- §0h "Phase 0 closure (row 048)" intentionally remains `[to be filled]` — it records the outcome of this gate and is filled after operator sign-off.
+- DECISIONS.md: ADR-001 carries an inline 2026-05-28 revision (factory does NOT pin auth provider). Open question (blocker 3): operator decides whether to leave the inline revision or author ADR-003 as a formal supersession.
+- Gate status: **READY FOR HUMAN SIGN-OFF.** 6 open items in Section 6 are operator-decision items, not gate blockers.
+- Next: operator reads the report, optionally closes step-016, signs off step-048, then `git tag phase-0-done && git tag phase-1-start`.
