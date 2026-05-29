@@ -1,55 +1,5 @@
 [
   {
-    "hash": "21efa24f5721",
-    "timestamp": 1780080178644,
-    "tool": "Edit"
-  },
-  {
-    "hash": "369d6e52e699",
-    "timestamp": 1780080259025,
-    "tool": "Bash"
-  },
-  {
-    "hash": "ad062a221b62",
-    "timestamp": 1780080285814,
-    "tool": "Edit"
-  },
-  {
-    "hash": "2bad639939e2",
-    "timestamp": 1780080361112,
-    "tool": "Edit"
-  },
-  {
-    "hash": "ae6cb53bc9cd",
-    "timestamp": 1780080436276,
-    "tool": "Bash"
-  },
-  {
-    "hash": "8b1177bdcc0c",
-    "timestamp": 1780080444508,
-    "tool": "Bash"
-  },
-  {
-    "hash": "a1456521f0c3",
-    "timestamp": 1780080459367,
-    "tool": "TaskUpdate"
-  },
-  {
-    "hash": "f0c292e9f61c",
-    "timestamp": 1780080725228,
-    "tool": "Bash"
-  },
-  {
-    "hash": "25f6a2a1bc21",
-    "timestamp": 1780080731488,
-    "tool": "Read"
-  },
-  {
-    "hash": "320921395b70",
-    "timestamp": 1780080814554,
-    "tool": "Edit"
-  },
-  {
     "hash": "80e8a953a3b3",
     "timestamp": 1780080902767,
     "tool": "Bash"
@@ -247,6 +197,56 @@
   {
     "hash": "d1d0f30d1504",
     "timestamp": 1780082470281,
+    "tool": "TaskUpdate"
+  },
+  {
+    "hash": "28e3eb15a642",
+    "timestamp": 1780082979599,
+    "tool": "TaskCreate"
+  },
+  {
+    "hash": "892ae4a8272c",
+    "timestamp": 1780082980033,
+    "tool": "TaskUpdate"
+  },
+  {
+    "hash": "77c442808bd9",
+    "timestamp": 1780083019945,
+    "tool": "Bash"
+  },
+  {
+    "hash": "7d7240fe567c",
+    "timestamp": 1780083028163,
+    "tool": "Bash"
+  },
+  {
+    "hash": "1da05deb10f2",
+    "timestamp": 1780083047899,
+    "tool": "Bash"
+  },
+  {
+    "hash": "6ea07cfa164c",
+    "timestamp": 1780083063101,
+    "tool": "Bash"
+  },
+  {
+    "hash": "37b3d6546dc7",
+    "timestamp": 1780083112424,
+    "tool": "Write"
+  },
+  {
+    "hash": "b1e79d0b5739",
+    "timestamp": 1780083187634,
+    "tool": "Bash"
+  },
+  {
+    "hash": "8797e204d0ac",
+    "timestamp": 1780083201487,
+    "tool": "Bash"
+  },
+  {
+    "hash": "ec321c92a0e7",
+    "timestamp": 1780083202865,
     "tool": "TaskUpdate"
   }
 ]
