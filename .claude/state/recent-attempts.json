@@ -1,65 +1,5 @@
 [
   {
-    "hash": "83f1c13f25bc",
-    "timestamp": 1780084870538,
-    "tool": "Bash"
-  },
-  {
-    "hash": "5901eb904523",
-    "timestamp": 1780084913892,
-    "tool": "Edit"
-  },
-  {
-    "hash": "597f01f6f356",
-    "timestamp": 1780084999278,
-    "tool": "Bash"
-  },
-  {
-    "hash": "47033c6ffa58",
-    "timestamp": 1780085034291,
-    "tool": "Edit"
-  },
-  {
-    "hash": "6d480fb3511a",
-    "timestamp": 1780085175571,
-    "tool": "Write"
-  },
-  {
-    "hash": "c45b80ff652e",
-    "timestamp": 1780085256409,
-    "tool": "Bash"
-  },
-  {
-    "hash": "39e9f69fdc14",
-    "timestamp": 1780085279883,
-    "tool": "Bash"
-  },
-  {
-    "hash": "9c96af9c7979",
-    "timestamp": 1780085281437,
-    "tool": "TaskUpdate"
-  },
-  {
-    "hash": "a8d2ebf7d181",
-    "timestamp": 1780086544467,
-    "tool": "Bash"
-  },
-  {
-    "hash": "76aadcdffa46",
-    "timestamp": 1780086552929,
-    "tool": "Bash"
-  },
-  {
-    "hash": "9feb2a99d27c",
-    "timestamp": 1780086558628,
-    "tool": "Skill"
-  },
-  {
-    "hash": "5bf2d4cefa8a",
-    "timestamp": 1780086577376,
-    "tool": "Bash"
-  },
-  {
     "hash": "c56de8f1ed15",
     "timestamp": 1780086577914,
     "tool": "Bash"
@@ -247,6 +187,66 @@
   {
     "hash": "1101e2ed3f88",
     "timestamp": 1780089960368,
+    "tool": "Bash"
+  },
+  {
+    "hash": "a198447dca07",
+    "timestamp": 1780091777384,
+    "tool": "Bash"
+  },
+  {
+    "hash": "57b85d1ef96b",
+    "timestamp": 1780091793947,
+    "tool": "Bash"
+  },
+  {
+    "hash": "dd95c3b03cba",
+    "timestamp": 1780091808685,
+    "tool": "Bash"
+  },
+  {
+    "hash": "bb42f37f4b67",
+    "timestamp": 1780091810354,
+    "tool": "Bash"
+  },
+  {
+    "hash": "bd2eb1cd0bba",
+    "timestamp": 1780091818302,
+    "tool": "Bash"
+  },
+  {
+    "hash": "6814448099fc",
+    "timestamp": 1780091845802,
+    "tool": "Bash"
+  },
+  {
+    "hash": "56ac0d78e724",
+    "timestamp": 1780091860124,
+    "tool": "Bash"
+  },
+  {
+    "hash": "cbca9b1fc22e",
+    "timestamp": 1780091873541,
+    "tool": "AskUserQuestion"
+  },
+  {
+    "hash": "77a29c6a6177",
+    "timestamp": 1780091901312,
+    "tool": "Bash"
+  },
+  {
+    "hash": "5e983d1274c1",
+    "timestamp": 1780091913193,
+    "tool": "Bash"
+  },
+  {
+    "hash": "0aacc7390ef7",
+    "timestamp": 1780091919430,
+    "tool": "Bash"
+  },
+  {
+    "hash": "a4502718df6e",
+    "timestamp": 1780091929670,
     "tool": "Bash"
   }
 ]
