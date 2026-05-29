@@ -1,0 +1,185 @@
+phase1-step-036 — /screens chrome consistency (bug-004) — empirical validation
+================================================================================
+
+Run: 2026-05-29
+Parent plans:
+  - plans/active/bug-004-screens-chrome-consistency.md
+  - plans/active/investigate-002-screens-reinvents-kit-patterns.md (closed by 003/004)
+Predecessors:
+  - phase1-step-032 (feat-001 extraction passes — produced _extracted/*.html
+    referenced by bug-003)
+  - phase1-step-034 (bug-002 /stylesheet preview-coverage audit — first
+    instance of prose-only-consumer-rule fix shape)
+  - phase1-step-035 (bug-003 /screens kit-content-bypass audit — second
+    instance; sibling chrome dimensions D1+D4+D6+D8+D9)
+
+Drift class meta-context — fourth instance same session:
+
+  | Bug     | Drift surface                 | Drift rate (n=12) | Fix shape           |
+  |---------|-------------------------------|-------------------|---------------------|
+  | bug-002 | /stylesheet preview coverage  | 100%              | audit + skill body  |
+  | bug-003 | /screens kit-content-bypass   | 75-86%            | audit + skill body  |
+  | bug-004 | /screens footer-bg drift      | 50% (6/12)        | audit + skill body  |
+  | bug-004 | /screens dark-band text vocab | 42% (5/12)        | (same audit+skill)  |
+
+  All four = "consumer-side rule with no mechanical audit" → drift compounds
+  across parallel agents at empirically reliable rates.
+
+Three-part fix shipped at factory level (project-agnostic):
+
+  Part A — scripts/audit-screen-pattern-consumption.mjs (extended with D10+D11)
+    - D10 footer-bg consistency: parses docs/design-system-preview.html to
+      find the page-level <footer>'s bg-* utility class; asserts every
+      screen's page-level <footer> carries the same class. Skips inline
+      <footer> inside <blockquote> (HTML5-valid citation attribution).
+    - D11 dark-band text-vocabulary consistency: parses dark-bg blocks in
+      the preview (bg-surface-inverted / bg-neutral-{800,900,950} /
+      bg-secondary-{500-900} / bg-primary-{800,900} / bg-accent-{800,900} /
+      bg-black); collects the set of text-* utility classes used as
+      descendants; asserts every screen's dark-band block uses only
+      text-color classes from that set.
+    - Both project-agnostic: contract derived from each project's own
+      preview, not hardcoded. A project committing a black footer +
+      low-contrast typography passes if every screen mirrors it.
+    - Reporter, console output, showDetails wired for D10 + D11 (mirrors
+      D1-D9 shape).
+
+  Part B — .claude/skills/screens/SKILL.md extension
+    - New §3.5.2 subsection "Canonical chrome reference —
+      docs/design-system-preview.html (phase1-step-036 / bug-004)"
+    - Preamble assembly step (3.5.1) extended: now parses preview to
+      extract canonical footer bg class + canonical dark-band text
+      vocabulary, inlines both into the shared preamble under named
+      subheadings.
+    - Step 8a audit-dimension table extended from 5 → 7 dims (D10 + D11
+      rows added).
+    - Empirical motivator paragraph (phase1-step-036 specifics:
+      6/12 footer-bg drift + 5/12 dark-band text-vocab drift on test-app).
+    - Acceptance criteria + 2 new invariants tied to phase1-step-036.
+
+  Part C — phase-plan.md §F Row 036 paragraph + feature_list.json row
+    + plans/active/bug-004-screens-chrome-consistency.md
+
+Empirical validation on projects/test-app (Spark Studio, 2026-05-29):
+
+  Phase 1 — shipped factory parts + extended shared preamble with
+            canonical footer bg (bg-surface-base) + canonical dark-band
+            text vocabulary (text-white + /N opacity variants +
+            text-text-inverted + /N opacity variants).
+
+  Phase 2 — dispatched 6 ui-designer agents in parallel (only the
+            D10-affected screens, not all 12 — efficient per-operator
+            instruction "lets only re disatch on affected screens"):
+            case-study-detail, contact, inquiry-confirmation, not-found,
+            privacy, work-index.
+
+  Empirical drift comparison (n=12 screens × 7 dimensions):
+
+                                  pre-bug-004    post-bug-004    delta
+    D1 named-pattern consumption:  0 (passing)    0 (passing)     0
+    D4 SVG hex literal leakage:    0 (passing)    0 (passing)     0
+    D6 cross-screen avatars:       0 (passing)    0 (passing)     0
+    D8 layout shell:               0 (passing)    0 (passing)     0
+    D9 non-canonical keyframes:    0 (passing)    0 (passing)     0
+    D10 footer-bg consistency:     6/12 mismatch  0/12 mismatch  -6 (-50pp)
+    D11 dark-band text vocab:      ~5/12 drift    0/12 drift     -5
+
+    Total drift findings post-fix:  0
+    Bug-003 dimensions (D1+D4+D6+D8+D9) regression check: 0 — clean.
+
+  Audit script verdict on test-app post-fix:
+
+    audit-screen-pattern-consumption — ✓ PASS
+      screens audited: 12
+      patterns loaded: 9
+      canonical avatars: 4
+      canonical case-study seeds: 6
+      canonical keyframes: 4
+      dimension scope: all
+      ✓ All scoped dimensions pass.
+
+  Concrete chrome consistency (operator's original framing):
+
+    Pre-bug-004:
+      - 6/12 screens with bg-surface-inverted page-footer (near-black)
+        — case-study-detail, contact, inquiry-confirmation, not-found,
+        privacy, work-index
+      - 6/12 screens with bg-surface-base page-footer (warm-paper grey)
+        — home, services-index, services-detail-*, about
+      - Visually: footers visibly drift between black and grey screen-by-screen
+      - ~5/12 with text-text-secondary inside dark-bg CTA bands — fails
+        WCAG AA contrast on the inverted surface even though class name
+        semantically suggests "secondary text"
+
+    Post-bug-004:
+      - 12/12 page-footers carry bg-surface-base (matches design-system-preview)
+      - 12/12 dark-band blocks use only canonical dark-band text vocabulary
+        (text-white / text-white/N / text-text-inverted / text-text-inverted/N)
+      - Visually: footers visually identical across all 12 screens
+      - Dark CTA bands have readable high-contrast text (WCAG AA-compliant)
+
+  Recovery note — surgical-dispatch destruction class:
+
+    The case-study-detail single-screen retry destroyed its target file
+    via a botched PowerShell `(Get-Content -Raw) -replace ... |
+    Set-Content -NoNewline` invocation through the Bash tool wrapper.
+    The compound was misparsed and only the literal "-NoNewline" was
+    written to the file. The 1498-line case-study-detail.html was lost.
+    Recovery: full-screen regeneration dispatched (file is gitignored
+    per agenticVisibility=private; no git-history recovery available).
+    Recovered file is 1430 lines, all 7 audit dimensions pass.
+
+    Operator-facing lesson candidate for LESSONS.md:
+      "Single-screen surgical chrome retries should use the Edit tool
+       for class-name substitutions, NOT PowerShell Get-Content |
+       Set-Content pipelines. PowerShell quoting failures destroy files
+       silently. Future single-screen retry prompts should explicitly
+       direct the agent to use Read + Edit, not shell-based search/replace."
+
+  Cross-project agnosticism (the point):
+
+    The audit script reads each project's own design-system-preview.html
+    + screens/*.html. The chrome contract is COMPUTED PER-PROJECT. A
+    project whose preview committed bg-secondary-700 footer + low-contrast
+    typography passes the audit when every screen mirrors that. Same
+    script works on test-app (light-paper preview), future SaaS dashboards
+    (dark preview), boutique-hotel sites (sepia preview), etc. — no
+    project-specific config.
+
+  Meta-lesson captured (LESSONS.md candidate when bug-004 closes):
+
+    Title: "Consumer-side rules in skill bodies need mechanical audits
+            when shipped, not retroactively."
+
+    Now FOUR confirmed instances of the drift class — bug-002 (100%),
+    bug-003 (75-86%), bug-004-D10 (50%), bug-004-D11 (42%). Different
+    surfaces, same shape, empirically reliable rates.
+
+    Forward-looking rule: any skill extension that adds a CONSUMER-SIDE
+    rule (one the downstream model is expected to follow) ships with
+    the mechanical audit script in the same PR — never as a follow-up.
+
+Phase 1 cumulative recap (this session):
+
+    Code shipment: 5 commits on master
+      - phase1-step-033 (/draft-brief brief-class awareness)
+      - phase1-step-032 (/stylesheet 3-pass extraction)
+      - phase1-step-034 (/stylesheet preview-coverage audit)
+      - phase1-step-035 (/screens kit-content-bypass audit)
+      - phase1-step-036 (/screens chrome-consistency audit + SKILL.md
+                         §3.5.2 chrome contract — D10 + D11)
+
+    LLM dispatches: 5 mockups + 12 screens (initial) + 12 screens (bug-003
+                    re-dispatch) + 6 chrome-fix retries + 1 full
+                    case-study-detail regeneration = 36 ui-designer agents
+                    over the row-032→row-036 chain. Total approx cost:
+                    ~$18-30 LLM spend.
+
+    Investigation work: 3 plans authored (investigate-001, investigate-002,
+                        and the row-036 bug filing), 3 full pipeline reruns,
+                        2 surveyor scripts (audit-preview-coverage,
+                        audit-screen-pattern-consumption), 4 mechanical fix
+                        shipments (bug-001, bug-002, bug-003, bug-004).
+
+Status: PASS — bug-004 (phase1-step-036) empirically validated.
+Row flips to passes:true on operator verify-gate read.
