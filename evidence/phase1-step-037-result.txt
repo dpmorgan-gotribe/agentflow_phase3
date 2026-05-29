@@ -1,0 +1,221 @@
+phase1-step-037 — bug-005 D11 dark-band detector strengthening — empirical validation
+========================================================================================
+
+Run: 2026-05-29
+Parent plans:
+  - plans/active/bug-005-d11-dark-on-dark-detector-strengthening.md
+  - plans/active/investigate-003-d11-dark-band-detector-gap.md
+Predecessors:
+  - phase1-step-034 (bug-002 /stylesheet preview-coverage audit — first
+    instance of prose-only-consumer-rule fix shape)
+  - phase1-step-035 (bug-003 /screens kit-content-bypass audit)
+  - phase1-step-036 (bug-004 /screens chrome-consistency audit, D10 + D11)
+
+Drift class meta-context — fifth instance with a NEW shape:
+
+  | Bug     | Drift surface                       | Drift rate              | Fix shape           |
+  |---------|-------------------------------------|-------------------------|---------------------|
+  | bug-002 | /stylesheet preview coverage        | 100%                    | audit + skill body  |
+  | bug-003 | /screens kit-content-bypass         | 75-86% (n=12)           | audit + skill body  |
+  | bug-004 | /screens footer-bg drift            | 50% (6/12)              | audit + skill body  |
+  | bug-004 | /screens dark-band text vocab       | 42% (5/12)              | (same audit+skill)  |
+  | bug-005 | D11 silent fail-OPEN on empty vocab | 100% (audit no-op)      | A+B+C+D structural  |
+
+  NEW SHAPE in bug-005: even the mechanical audit can silently no-op
+  when its CONTRACT is DERIVED from an upstream artifact that doesn't
+  model the contract surface. Triple-compounding bug:
+
+    F1. Preview parser tag list (section|div|aside|footer|header|main|
+        article) omits <a>/<button>/<span> — test-app preview's only
+        dark-bg elements were on <a> tags (case-study cards).
+    F2. Empty-vocab silently DISABLED D11 (guard: vocab.size > 0 → false
+        → skip). Silent fail-OPEN on load-bearing check.
+    F3. No bg-context tracking inside dark blocks → vocab pollution +
+        screen-side over-counting.
+
+  Real impact verified by investigate-003 bg-context-aware re-scan:
+  2 of 12 test-app screens had hardcoded dark-text inside dark CTA
+  bands — D11 passed them silently. Operator's eye was correct.
+
+Four-part fix shipped at factory level (project-agnostic):
+
+  Part A — scripts/audit-screen-pattern-consumption.mjs D11 strengthening
+    A.1 — extend dark-block walker tag list with <a>/<button>/<span>;
+          applies to BOTH preview parser AND screen-side scanner
+    A.2 — fail-CLOSED on empty preview-dark-band vocab — emit structured
+          stderr warning with worked-example template + push synthetic
+          finding so reporter/strict paths fire consistently. --skip-D11
+          opt-out flag for projects with no dark surfaces intentionally.
+    A.3 — walkBgContext bg-context tokenizer maintains a stack as it
+          walks; each tag's bg-context = (explicit dark class → dark) OR
+          (explicit light class → light) OR (inherit from parent).
+          Descendants of nested light pills no longer count as dark-band
+          descendants. Eliminates F3 over-counting.
+    A.4 — hardcoded dark-text-class blocklist as INDEPENDENT secondary
+          check: ANY text-text-{primary,secondary,tertiary} /
+          text-neutral-{700-950} / text-black inside dark-bg block
+          (bg-context-aware) is ALWAYS a D11 finding. Defense in depth.
+    Additional: family-level vocab matching (text-white/85 family
+    accepts text-white/70 etc.) reduces noise without losing signal.
+    Severity tiered: hardcoded findings = errors (always fail);
+    outsideVocab findings = warnings (fail only with --strict).
+    Per-screen findings clustered by dark-block start line for clean
+    reporter output.
+
+  Part B — scripts/audit-preview-coverage.mjs dark-band coverage assert
+    - Preview MUST contain ≥1 element with dark-bg class AND ≥1
+      descendant carrying a text-* class. Structural fix that
+      upstream's the D11-vocab-derivation gap.
+    - Exit 1 with worked-example HTML template on miss.
+
+  Part C — .claude/skills/screens/SKILL.md §3.5.2 extension
+    - "Pattern inlining inside dark contexts (bug-005)" subsection with
+      required-swap table:
+        text-text-primary       → text-text-inverted OR text-white
+        text-text-secondary     → text-text-inverted/70 OR text-white/70
+        text-text-tertiary      → text-text-inverted/50 OR text-white/50
+        text-neutral-{600-950}  → text-text-inverted/70 OR text-white/70
+        text-black              → text-text-inverted OR text-white
+    - Audit dimension table updated from 5 → 7 dims with D11 dual-check
+      shape (hardcoded errors + vocab warnings)
+    - Acceptance criteria gain 2 new invariants tied to phase1-step-037
+
+  Part D — phase-plan.md §F Row 037 + feature_list row + bug-005 plan
+    + investigate-003 plan
+
+Empirical validation on projects/test-app (Spark Studio, 2026-05-29):
+
+  Phase 1 — shipped factory parts A+B+C+D (commit 49e12be)
+  Phase 2 — extended test-app preview with Contact CTA band example
+            (closes upstream contract-surface gap; vocab now populated)
+  Phase 3 — surgical Edit-tool fix on 2 hardcoded-affected screens:
+            services-detail-visual.html ~L1191 + services-index.html ~L738
+            swap: text-text-secondary → text-text-inverted/70 on the
+            eyebrow pattern inside the bg-surface-inverted CTA band.
+            (Used Read+Edit, NOT PowerShell, per the bug-004
+             dispatch-destruction lesson.)
+
+  Empirical drift evolution (n=12 screens × D11 dimension):
+
+    Pre-bug-005 (audit reported PASS, silently):
+      Hardcoded findings:            0 (vocab-derived check silently skipped)
+      Outside-vocab findings:        0 (entire D11 block skipped)
+      Real dark-on-dark instances:   2 (services-detail-visual + services-index
+                                       eyebrow with text-text-secondary inside
+                                       bg-surface-inverted CTA band)
+      Audit verdict:                 ✓ PASS (false positive)
+
+    Post-bug-005 Part A only (no preview extension yet):
+      Vocab still empty → D11 fail-CLOSED with synthetic warning
+      Hardcoded findings:            2 (the real bugs ARE caught
+                                       independently of vocab availability —
+                                       defense-in-depth works)
+      Audit verdict:                 ✗ FAIL (fail-closed + 2 hardcoded)
+
+    Post-bug-005 Part A + B (preview extended with CTA band, family-matching
+                            tuned, severity tiered):
+      Pre-fix:
+        Hardcoded errors:            2 (real bugs)
+        Vocab-derived warnings:      2 (text-highlight-500 + text-neutral-300,
+                                       both legitimate high-contrast dark-band
+                                       choices)
+      Post-fix (surgical Edit on 2 screens):
+        Hardcoded errors:            0
+        Vocab-derived warnings:      2 (informational; pass without --strict)
+      Audit verdict (default):       ✓ PASS
+      Audit verdict (--strict):      ✗ FAIL (2 warnings promoted to errors)
+
+  Audit script verdicts on test-app post-fix:
+
+    Screens audit:
+      audit-screen-pattern-consumption — ✓ PASS
+        screens audited: 12
+        dimension scope: all
+        ✓ All scoped dimensions pass.
+
+    Preview coverage:
+      audit-preview-coverage — ✓ PASS
+        required: 26 analyst-observed + 13 canonical-unused + 19 variants + 23 icons
+        present: 43 component names + 23 icon names
+        ✓ All required components + variants present.
+
+  Negative-regression validation (Part B):
+
+    Detector logic unit-test confirmed:
+      - Empty preview (no dark-bg block)        → previewModelsDarkBand: false
+      - Preview with <a class="bg-neutral-900"> + nested text → true
+    Production verification: extending preview with the Contact CTA
+    band flipped audit-preview-coverage from missing-dark-band-coverage
+    to ✓ PASS.
+
+  Negative-regression validation (Part A.2 fail-closed semantics):
+
+    With preview's dark CTA band stripped, D11 fail-closes (exit 1)
+    with a structured warning instead of silent PASS. The synthetic
+    finding (`screen: "(no screen — preview-level gap)"`) is emitted
+    so reporters + strict-mode + JSON-output paths fire consistently.
+
+  Cross-project agnosticism (the point):
+
+    All four fix Parts (A+B+C+D) are project-agnostic. The audit
+    script reads each project's own design-system-preview.html +
+    each project's own screens/*.html. Hardcoded blocklist tokens
+    resolve to dark colors per ANY project's tokens.css (kit semantic
+    invariant). Family-level vocab matching adapts to any project's
+    chosen palette. A SaaS dashboard whose preview uses a dark
+    Contact CTA with text-text-inverted body passes; a fashion brand
+    whose preview uses bg-secondary-900 + text-white passes; what's
+    enforced is consistency-within-project derived from each
+    project's own gate-3-signed-off preview, NOT a hardcoded palette.
+
+  Meta-lesson captured (LESSONS.md candidate when bug-005 closes):
+
+    Title: "Mechanical audits whose contracts are DERIVED from upstream
+            artifacts can silently no-op when the upstream artifact
+            doesn't model the contract surface. Fail-closed semantics +
+            a hardcoded independent fallback assertion are both required;
+            the upstream artifact-producer audit must force the contract
+            surface to be modeled."
+
+    Now FIVE confirmed instances of the prose-only-consumer-rule drift
+    class, with bug-005 introducing a NEW manifestation shape: the
+    audit itself silently no-ops on contract-derivation failure.
+
+    Forward-looking rules (extending row-036's):
+      (a) Derivation-based audits MUST fail-CLOSED on empty contracts.
+      (b) Derivation-based audits MUST be paired with a hardcoded
+          independent fallback assertion for universally-broken
+          combinations.
+      (c) The upstream artifact whose shape the audit derives from
+          MUST itself have a coverage audit asserting the contract
+          surface is present.
+
+Phase 1 cumulative recap (this session, through phase1-step-037):
+
+    Code shipment: 7 commits on master
+      - phase1-step-033 (/draft-brief brief-class awareness)
+      - phase1-step-032 (/stylesheet 3-pass extraction)
+      - phase1-step-034 (/stylesheet preview-coverage audit)
+      - phase1-step-035 (/screens kit-content-bypass audit)
+      - phase1-step-036 (/screens chrome-consistency audit + D10 + D11)
+      - phase1-step-036 evidence + 6-screen chrome re-dispatch
+      - phase1-step-037 (D11 strengthening + preview dark-band assert)
+
+    LLM dispatches (cumulative): 5 mockups + 12 + 12 + 6 chrome retries
+                                 + 1 case-study-detail full regen + 0
+                                 (phase1-step-037 used direct Edit
+                                  surgical fixes — no ui-designer
+                                  dispatch needed for 2 single-class
+                                  swaps). Total approx: ~$18-30 + $0
+                                  for row 037.
+
+    Investigation work: 3 investigations total (investigate-001,
+                        investigate-002, investigate-003), 3 full
+                        pipeline reruns, 2 surveyor scripts (audit-
+                        preview-coverage + audit-screen-pattern-
+                        consumption — both now ship 2+1 audit dimensions
+                        respectively), 5 mechanical fix shipments
+                        (bug-001 → bug-005).
+
+Status: PASS — bug-005 (phase1-step-037) empirically validated.
+Row flips to passes:true on operator verify-gate read.
