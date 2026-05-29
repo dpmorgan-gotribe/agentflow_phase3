@@ -1,45 +1,5 @@
 [
   {
-    "hash": "e7258f817cde",
-    "timestamp": 1780093730557,
-    "tool": "Write"
-  },
-  {
-    "hash": "fd2ff4c84e01",
-    "timestamp": 1780093813116,
-    "tool": "Write"
-  },
-  {
-    "hash": "c704bb6dfbb0",
-    "timestamp": 1780093896638,
-    "tool": "Write"
-  },
-  {
-    "hash": "a018ba963c31",
-    "timestamp": 1780093979138,
-    "tool": "Bash"
-  },
-  {
-    "hash": "253c44c74e09",
-    "timestamp": 1780093980644,
-    "tool": "TaskUpdate"
-  },
-  {
-    "hash": "0ac4467d6c2a",
-    "timestamp": 1780093980658,
-    "tool": "TaskUpdate"
-  },
-  {
-    "hash": "285ff69615c5",
-    "timestamp": 1780093980659,
-    "tool": "TaskUpdate"
-  },
-  {
-    "hash": "747e5f957ceb",
-    "timestamp": 1780093980840,
-    "tool": "Bash"
-  },
-  {
     "hash": "84e8eeb11958",
     "timestamp": 1780094006066,
     "tool": "Bash"
@@ -248,5 +208,45 @@
     "hash": "6dbeb469ef05",
     "timestamp": 1780095321230,
     "tool": "Bash"
+  },
+  {
+    "hash": "f3bd8e88290f",
+    "timestamp": 1780095889308,
+    "tool": "Bash"
+  },
+  {
+    "hash": "695b8cb827e2",
+    "timestamp": 1780095899952,
+    "tool": "Bash"
+  },
+  {
+    "hash": "1e45b7d646d3",
+    "timestamp": 1780095901533,
+    "tool": "TaskCreate"
+  },
+  {
+    "hash": "d39051ce67d0",
+    "timestamp": 1780095901975,
+    "tool": "TaskUpdate"
+  },
+  {
+    "hash": "dbf70c055266",
+    "timestamp": 1780095903728,
+    "tool": "Bash"
+  },
+  {
+    "hash": "376730bed485",
+    "timestamp": 1780095912999,
+    "tool": "Bash"
+  },
+  {
+    "hash": "d19b1e4c2e39",
+    "timestamp": 1780095945000,
+    "tool": "ToolSearch"
+  },
+  {
+    "hash": "96803aec8a1f",
+    "timestamp": 1780095951644,
+    "tool": "Monitor"
   }
 ]
