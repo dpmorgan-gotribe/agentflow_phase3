@@ -141,17 +141,38 @@ The agnostic surface already wrote `src/lib/cn.ts` + `src/lib/cva.ts` + `src/lib
    }
    ```
 
-2. **`src/lib/cva.ts`** — verify exists:
+2. **`src/lib/cva.ts`** — verify exists with the CANONICAL passthrough shape (feat-002 fix-pattern 3 — DO NOT wrap cva with strict generics):
 
    ```ts
-   export { cva, cx, type VariantProps } from "class-variance-authority";
+   import { cva, cx, type VariantProps } from "class-variance-authority";
+   import type { ClassValue } from "clsx";
+   export { cva, cx, type VariantProps };
+   export type { ClassValue };
+   // kitCva is a passthrough alias kept for future-swap convenience.
+   // NEVER replace with a wrapper that adds generic constraints —
+   // CVA's native `compoundVariants` typing rejects wrapped generics
+   // (empirical case 2026-05-29 — see feat-002 fix-pattern 3).
+   export const kitCva = cva;
    ```
 
-3. **`package.json` runtime + dev deps** — step 6 below rewrites the stub form to include: `class-variance-authority ^0.7.1`, `clsx ^2.1.1`, `tailwind-merge ^2.5.5` (already in the stub); add devDeps `@testing-library/react ^16.1.0`, `@testing-library/jest-dom ^6.6.3`, `vitest ^2.1.8`, `jsdom ^25.0.1`, `@types/react ^19.0.2`; add peerDeps `react ^19`, `react-dom ^19`.
+3. **`package.json` runtime + dev deps** — step 6 below rewrites the stub form. Required dev/peer matrix (feat-002 fix-patterns 1 + 2):
+   - **dependencies**: `class-variance-authority ^0.7.1`, `clsx ^2.1.1`, `tailwind-merge ^2.5.5` (already in the stub)
+   - **peerDependencies**: `react >=18`, `react-dom >=18`
+   - **devDependencies (mandatory — Stage 5 typecheck blocks without these)**:
+     - `@testing-library/react ^16.1.0`, `@testing-library/jest-dom ^6.6.3`
+     - `vitest ^2.1.8`, `jsdom ^25.0.1`
+     - `@types/react ^19.0.2`, `@types/react-dom ^19.0.2`
+     - `@storybook/react ^8.4.7` (types + runtime — REQUIRED, distinct from the framework adapter)
+     - `@storybook/react-vite ^8.4.7` (framework adapter)
+     - `@storybook/addon-essentials ^8.4.7`, `storybook ^8.4.7`
+     - `tailwindcss ^3.4.0` (REQUIRED for the kit's own `tailwind.config.ts` typecheck; not just a consumer-side peer)
+     - `tsx ^4.19.2`, `typescript ^5.6.0`
 
-4. **`vitest.config.ts` + `vitest.setup.ts`** — write jsdom environment + import `@testing-library/jest-dom/vitest` in setup.
+   Omitting `@storybook/react` causes every `.stories.tsx` to fail typecheck with `Cannot find module '@storybook/react'`. Omitting `tailwindcss` causes `styles/tailwind.config.ts` to fail with same shape.
 
-5. **`tsconfig.json`** — extends the monorepo root with `"jsx": "react-jsx"` and `"moduleResolution": "bundler"`.
+4. **`vitest.config.ts` + `vitest.setup.ts`** — write jsdom environment + import `@testing-library/jest-dom/vitest` in setup. Set `esbuild.jsx: "automatic"` so React 19 + vitest JSX transforms work without `import React`.
+
+5. **`tsconfig.json`** — extends the monorepo root with `"jsx": "react-jsx"`, `"moduleResolution": "bundler"`, `"resolveJsonModule": true`, and `"types": ["vitest/globals", "@testing-library/jest-dom"]`.
 
 #### 1b. Per-primitive file layout (identical for every primitive)
 
@@ -256,6 +277,13 @@ Primitives outside both rosters (Toast, Accordion, Slider, Switch, Tooltip) are 
 #### 1e. Shared authoring rules (apply to every primitive)
 
 - **Class composition via `cn()`** — never concatenate className strings by hand; never ad-hoc-switch variants via inline conditionals. Variants go through `cva()` in the companion `.variants.ts` file.
+- **CVA boolean variants (feat-002 fix-pattern 4)** — when a primitive has a boolean-shaped variant (`iconOnly`, `interactive`, `loading`, etc.), use JS object keys `true` and `false` in the variants definition (which TS infers as string literals `"true"` / `"false"`), AND literal boolean values `true` / `false` (NOT strings) in `compoundVariants` array entries AND `defaultVariants`. This pairing works against the canonical `lib/cva.ts` passthrough (per §1a step 2). Example:
+  ```ts
+  variants: { iconOnly: { true: "aspect-square px-0", false: "" } },
+  compoundVariants: [{ iconOnly: true, size: "sm", class: "w-9" }],
+  defaultVariants: { iconOnly: false }
+  ```
+  Mixing strings with booleans causes 4-error type clusters that toggle between two shapes depending on the cva.ts wrapper — empirical case 2026-05-29 (Button + Card).
 - **No raw hex or inline styles** — all colors via `var(--color-*)` through Tailwind token classes. Exception: inline `style={{ backgroundImage: "url(data:image/svg+xml;...)" }}` is acceptable for data-URI icons (custom Select chevron, Checkbox mark). Record these as `inline-style-tokens-exempt` in the returned warnings so 022b's ESLint exempts the specific file.
 - **Accessibility minimums per primitive**: focus-visible ring (2px offset), ARIA role where semantic HTML doesn't provide it, keyboard navigation on composites (Tabs arrow keys; RadioGroup arrow keys), `aria-describedby` linkage between FormField and its error/hint, `aria-invalid` on error state, `aria-busy` on Button loading, `aria-current="page"` on Breadcrumbs terminal item.
 - **Default to server components** — only add `"use client"` when the primitive NEEDS interactivity. Button/Input/Card/Badge/Avatar are server-safe. Tabs, Checkbox with ref-set-indeterminate, and FormField with dynamic error linkage need client. Flag in the primitive's JSDoc header so consumers know.
@@ -313,6 +341,26 @@ If the TS/Node version rejects direct JSON import, create `src/tokens/index.ts` 
 - **React 19 + vitest** — ensure `esbuild.jsx: "automatic"` in `vitest.config.ts` or JSX transforms to the classic runtime and tests fail with `ReferenceError: React is not defined`.
 
 ### 2. Generate patterns (minimum 12 canonical + N custom)
+
+**Props-interface contract (feat-002 fix-pattern 5 — applies to every pattern AND every layout in §3):** when a pattern/layout declares a prop whose name collides with one of `React.HTMLAttributes<T>`'s native attributes — `title`, `color`, `placeholder`, `cite`, `data`, `defaultChecked`, `defaultValue`, `suppressContentEditableWarning`, `suppressHydrationWarning`, `dangerouslySetInnerHTML`, `key` — the props interface MUST `Omit` the colliding key from the extended `HTMLAttributes` type:
+
+```ts
+// ✓ correct — Hero accepts ReactNode for title
+export interface HeroProps extends Omit<
+  React.HTMLAttributes<HTMLElement>,
+  "title"
+> {
+  title: React.ReactNode;
+  // ...other props
+}
+
+// ✗ wrong — clashes with HTMLAttributes's title?: string
+export interface HeroProps extends React.HTMLAttributes<HTMLElement> {
+  title: React.ReactNode; // TS2430: Types of property 'title' are incompatible
+}
+```
+
+Empirical case 2026-05-29: `patterns/hero/hero.tsx` shipped without the `Omit`; Stage 5.2 typecheck blocked the kit. The fix is mechanical once the rule is named.
 
 **2a. Canonical patterns.** Each pattern composes primitives (never reinvents atomics). Required:
 
@@ -468,6 +516,60 @@ If Storybook build fails, capture the error, write `docs/design-system-gaps.md` 
   **History (what this gate prevents):** before refactor-006, this was a soft warning. Six projects (hatch, gotribe-v1, mindapp, mindapp-v2, runclub, test-app) shipped tokens-only — hatch-2 surfaced the gap at build time when builders fell back to plain HTML + Tailwind. Bug-001 Layer B (feat-013) retro-shipped hatch-2's kit; refactor-006 closes the systemic hole. Feat-074 keeps the gate in this skill (the React-authoring lane) — it is the only place authoring can fail to ship the roster.
 
 - Emit return JSON (include `primitivesShipped: string[]` — the kebab-names of every primitive directory under `src/primitives/`)
+
+### 9. Compile + test verification gate (feat-002 Stage 5 — LOAD-BEARING)
+
+Step 8 finalizes authoring + the primitives-count hard-gate. Step 9 is the **honest-complete gate**: a deterministic exit-0-required chain that catches the bug classes the audit cannot predict. Empirical motivator: the 2026-05-29 sequential run reported `success: true` and operator-manual `pnpm typecheck` immediately surfaced 5 compile-time bugs (see feat-002 `## Empirical fix patterns observed` for the catalogue). Without Step 9, the skill's "success" signal is a lie.
+
+Run from the project root (the kit's package directory is targeted via pnpm filter):
+
+```bash
+# Step 9.1 — install workspace dependencies
+# Required because Step 6 rewrote package.json with the full devDeps list
+# (including @storybook/react + tailwindcss per §1a step 3). The pre-Step-6
+# install pass did NOT see those entries.
+pnpm install
+# Exit 0 required. Non-zero → abort with structured error.
+
+# Step 9.2 — TypeScript compile gate
+pnpm --filter @repo/ui-kit typecheck
+# Exit 0 required. Non-zero:
+#   - Capture each `tsc` error line into the return JSON's errors[] field
+#   - Mark `success: false`
+#   - DO NOT retry the skill — TS errors are deterministic; retry would loop
+#     unless the upstream authoring-rule (§1a/§1c/§2/§3) is fixed in SKILL.md.
+#   - The most-common error classes are already named in §1a + §1c + §2:
+#     missing devDep (§1a step 3), cva wrapper shape (§1a step 2),
+#     CVA boolean variants (§1e), HTMLAttributes title clash (§2).
+#     Reviewer at PR time should grep failure transcripts for these patterns.
+
+# Step 9.3 — unit test gate
+pnpm --filter @repo/ui-kit test
+# Exit 0 required. Non-zero:
+#   - Capture failing test names + counts into errors[]
+#   - Mark `success: false`
+#   - Per-test retry is the tester's job inside the kit (vitest's own retry).
+#     Step 9.3 just enforces the all-pass gate.
+
+# Step 9.4 — Storybook build gate (moved from Step 7 — also exit-0-required)
+pnpm --filter @repo/ui-kit build-storybook
+# Exit 0 required. Non-zero:
+#   - Write docs/design-system-gaps.md with the build error
+#   - Mark `success: false` (per existing §Error handling)
+```
+
+**Why Step 9 is separate from Step 8 finalize.** Step 8 is the LLM-authored "did we finish the React surface" check (count files, codemod retrofit, append CHANGELOG). Step 9 is a deterministic verify chain with no LLM in the loop. Conflating them masks the signal — a Step-8-passes / Step-9-fails return is unambiguously a compile-time bug class the audit didn't predict, which triggers an authoring-rule extension (the meta-lesson loop from bug-005). The two failure modes need distinct return shapes.
+
+**Why no retry on TS errors.** The CVA boolean variant mismatch + the HTMLAttributes title clash + the missing devDep classes are all 100% deterministic — a retry without an upstream rule fix produces identical output. Per the retry policy (CLAUDE.md "Attempt 1-2: try different approaches"), `/stylesheet-primitives` returning `success: false` from Step 9 is an attempt-1 signal; the operator OR `/plan-investigation` decides whether the SKILL.md authoring rule needs extending OR whether the audit dimensions need a new D-X to catch the class at lower cost.
+
+**Skip 9.1 on noChange short-circuit.** If `.input-fingerprint-primitives.json` matches at the top of Step 1 (idempotent re-run), Step 9 also short-circuits — install + typecheck + test + storybook are all assumed to have passed on the prior successful run since outputs are byte-identical.
+
+**Cross-references for Step 9:**
+
+- feat-002 plan §"Stage 5 — Compile + test verification gate"
+- feat-002 plan §"Empirical fix patterns observed (2026-05-29 sequential run)" — the 5-bug catalogue Step 9 catches
+- bug-005 sibling lesson — _"Derivation-based audits must fail-closed on empty contracts AND pair with hardcoded independent fallback assertions"_. Step 9 is the hardcoded fallback to the audit's vocabulary-derived checks.
+- LESSONS.md candidate on close: _"`/stylesheet-primitives` reporting `success: true` is only as honest as its compile gate. `pnpm install + typecheck + test + build-storybook` as exit-0-required gates closes the 'authored but unverified' failure mode."_
 
 ## Re-run idempotency
 

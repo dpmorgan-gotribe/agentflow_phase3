@@ -1,7 +1,7 @@
 ---
 id: feat-002-parallelize-stylesheet-primitives
 type: feature
-status: draft
+status: approved
 author-agent: Claude (Phase 3 build)
 created: 2026-05-29
 updated: 2026-05-29

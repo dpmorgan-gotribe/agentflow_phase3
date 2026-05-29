@@ -4575,6 +4575,55 @@
       "depends_on": ["phase1-step-034", "phase1-step-035", "phase1-step-036"],
       "closed_at": null,
       "outcome_summary": ""
+    },
+    {
+      "id": "phase1-step-038",
+      "category": "mode-a-design-pipeline",
+      "description": "Ship feat-002 verify-gate slice — /stylesheet-primitives must run pnpm install + typecheck + test + build-storybook as exit-0-required gates so reported success means COMPILE-VERIFIED success. Empirical motivator (2026-05-29 run on test-app): skill reported success after authoring 12 primitives + 23 patterns + 5 layouts; operator pnpm typecheck surfaced 5 compile bugs (missing @storybook/react devDep, missing tailwindcss devDep, over-engineered lib/cva.ts wrapper, CVA boolean variant mismatch, Hero title prop clash). After fixes, 105 tests pass in 7.8s. 5-bug cluster was catchable by pnpm typecheck + pnpm test — skill returned success solely because step 8 mentioned typecheck without running it. Scope = VERIFY-GATE SLICE of feat-002 only; full parallelization ships separately. Parent: plans/active/feat-002-parallelize-stylesheet-primitives.md.",
+      "steps": [
+        "Add canonical lib/cva.ts passthrough shape to SKILL.md §1a step 2",
+        "Add mandatory devDeps list to SKILL.md §1a step 3",
+        "Add CVA boolean variants rule to SKILL.md §1e",
+        "Add HTMLAttributes Omit-title rule to SKILL.md §2",
+        "Add SKILL.md Step 9 with 9.1-9.4 exit-0-required gates",
+        "Update phase-plan §F with Row 038",
+        "Flip feat-002 plan status draft → approved",
+        "Commit on master",
+        "Flip passes:true after next /stylesheet-primitives run exits 0 on pnpm typecheck + pnpm test"
+      ],
+      "approach": "Verify-gate slice of feat-002 — smallest extraction that closes 'authored but unverified' failure mode. 5 fix-pattern catalogue + Step 9 gate are empirically-validated minimum.",
+      "rejected_alternatives": [
+        {
+          "approach": "Ship full feat-002 in one row",
+          "reason": "Scope creep. Verify-gate alone is load-bearing fix; parallelization can ship later."
+        },
+        {
+          "approach": "Add Step 9 typecheck without authoring-rule extensions",
+          "reason": "Step 9 would fail on same 5 classes every run. Authoring rules are upstream fix; Step 9 is safety net."
+        },
+        {
+          "approach": "Make Step 9 retry on TS errors",
+          "reason": "TS errors are deterministic. Retry produces identical output."
+        }
+      ],
+      "expected_outcomes": [
+        "SKILL.md §1a step 2 carries canonical lib/cva.ts passthrough shape",
+        "SKILL.md §1a step 3 names @storybook/react + tailwindcss as devDeps",
+        "SKILL.md §1e carries CVA boolean variants rule",
+        "SKILL.md §2 carries Omit-title rule",
+        "SKILL.md Step 9 shipped with 4 exit-0-required gates",
+        "phase-plan.md §F has Row 038 paragraph",
+        "feat-002 plan status draft → approved",
+        "Next /stylesheet-primitives: success: true is honest (typecheck + test + storybook all exit 0)",
+        "Negative-regression: revert one fix-pattern → Step 9.2 exits 1 → success: false"
+      ],
+      "evidence": "evidence/phase1-step-038-result.txt",
+      "polished": false,
+      "passes": false,
+      "attempt_count": 0,
+      "depends_on": ["phase1-step-037"],
+      "closed_at": null,
+      "outcome_summary": ""
     }
   ]
 }

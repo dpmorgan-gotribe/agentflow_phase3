@@ -443,6 +443,38 @@ Meta-lesson (extends the row-036 capture; now n=5 instances): _"Mechanical audit
 
 The rebuild guarantee for rows 032 + 033 + 034 + 035 + 036 + 037 combined: a clean rebuild from `phase-1-start` + this §F section should land all SKILL.md additions + both audit scripts (with D11's bg-context tokenizer + hardcoded blocklist + family-level vocab matching + severity tiering) + the preview-coverage dark-band assertion; empirical validation is the litmus test that the changes actually fix the regression class.
 
+### Row 038 — /stylesheet-primitives honest-complete verify gate (feat-002 verify-gate slice) — phase1-step-038
+
+Operator observed (2026-05-29 manual verify after /stylesheet-primitives reported success on test-app): the skill returned `success: true` after authoring 12 mandatory primitives + 23 patterns + 5 layouts + 4 ESLint rules + barrel + Storybook config, BUT operator-manual `pnpm typecheck` immediately surfaced 5 distinct compile-time bugs:
+
+1. Missing `@storybook/react` devDep (25+ "Cannot find module" errors across every `.stories.tsx`)
+2. Missing `tailwindcss` devDep (1 error in the kit's own `tailwind.config.ts`)
+3. Over-engineered `lib/cva.ts` wrapper with strict generics that rejected CVA's native `compoundVariants` typing
+4. CVA boolean variant key/value mismatch on Button + Card (variants used boolean keys but compoundVariants/defaultVariants used strings — wrapper-dependent flip)
+5. Hero pattern declared `title: ReactNode` while extending `React.HTMLAttributes<HTMLElement>` whose inherited `title?: string` clashed
+
+After 5 mechanical fixes (add 2 devDeps + simplify cva wrapper + revert booleans + Omit `"title"` from Hero extends), typecheck passed cleanly AND **all 105 unit tests across 29 files passed in 7.75s**. The entire 5-bug cluster was 100% catchable by `pnpm typecheck` + `pnpm test` — the skill returned success solely because step 8 _mentioned_ typecheck without _running it to exit-0 gating semantics_.
+
+Scope of this row is the **verify-gate slice of feat-002 only** — the full parallelization (Stages 0-4 — concurrent fan-out + audit script + concurrency knob + StylesheetOutput.failedComponents[] extension) ships as a separate follow-up row when implemented. The verify-gate slice closes the most-painful failure mode at the lowest cost.
+
+Two-part fix shipped at factory level:
+
+- `.claude/skills/stylesheet-primitives/SKILL.md` 5 authoring-rule extensions (close 4 of 5 bug classes at author-time):
+  - **§1a step 2** — canonical `lib/cva.ts` passthrough shape verbatim with explicit "NEVER replace with a wrapper that adds generic constraints" warning + 2026-05-29 empirical case reference
+  - **§1a step 3** — mandatory devDeps list naming `@storybook/react` + `@storybook/react-vite` + `@storybook/addon-essentials` + `storybook` + `tailwindcss` + `@types/react-dom` + `tsx` + `typescript` explicitly. Without these, Step 9.2 typecheck blocks
+  - **§1e** — CVA boolean variants rule with canonical shape example (JS `true`/`false` object keys IN variants, literal boolean values IN compoundVariants + defaultVariants)
+  - **§2** — Pattern props-interface contract requiring `Omit<HTMLAttributes<T>, "title">` (+ list of 11 other clashing builtins) when a pattern/layout's prop name collides with HTMLAttributes builtins
+- **New `.claude/skills/stylesheet-primitives/SKILL.md` Step 9 "Compile + test verification gate"** — deterministic exit-0-required chain run after Step 8's authoring + codemod + count gate:
+  - 9.1: `pnpm install` (catches Step 6's full-package.json rewrite needing fresh install)
+  - 9.2: `pnpm --filter @repo/ui-kit typecheck` (catches all 5 fix-pattern classes deterministically)
+  - 9.3: `pnpm --filter @repo/ui-kit test` (validates the per-component tests authored in Stages 1-3 actually pass — not just exist)
+  - 9.4: `pnpm --filter @repo/ui-kit build-storybook` (moved from Step 7 — also exit-0-required; failure writes `docs/design-system-gaps.md`)
+  - Non-zero on any → skill returns `success: false` with the error in `errors[]`. **NO LLM retry on TS errors** — they're deterministic; retry would loop unless upstream authoring rule changed. Step 9 short-circuits on `noChange: true` idempotency check (re-runs assumed clean since outputs are byte-identical).
+
+Meta-lesson (LESSONS.md candidate on close): _"`/stylesheet-primitives` reporting `success: true` is only as honest as its compile gate. `pnpm install + typecheck + test + build-storybook` as exit-0-required gates closes the 'authored but unverified' failure mode. The most-common compile-fail classes (missing devDep, cva wrapper shape, boolean variant mismatch, HTMLAttributes prop clash) become §1a/§1c/§2 authoring rules so the next run avoids them author-side; Step 9 is the hardcoded fallback when authoring still drifts. The two-layer pattern mirrors bug-005's 'fail-closed + hardcoded blocklist' shape for the same class — derivation-based audits AND mechanical compile gates are both required for honest signal."_
+
+The rebuild guarantee for rows 032 + 033 + 034 + 035 + 036 + 037 + 038 combined: a clean rebuild from `phase-1-start` + this §F section should land all SKILL.md additions + both audit scripts + Step 9 verify gate + 5 fix-pattern authoring rules; empirical validation is the litmus test (next `/stylesheet-primitives` run on a fresh kit must return `success: true` AND independently exit 0 on `pnpm typecheck` + `pnpm test`).
+
 ---
 
 # Phase 2 — Build orchestration (Mode B)
