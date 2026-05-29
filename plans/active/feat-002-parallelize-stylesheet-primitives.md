@@ -180,6 +180,64 @@ This is the existing SKILL.md steps 4 (022b artifacts) + 5 (barrel) + 6 (package
 
 The bug-029 `data-kit-component` retrofit codemod stays in Stage 4 — it's the safety net for any Stage-1 subagent that missed the attribute despite the audit (rare, but defense-in-depth).
 
+### Stage 5 — Compile + test verification gate (sequential, ~3–5 min wall-clock) — load-bearing
+
+**Empirical motivator (2026-05-29 session that authored this plan).** After the in-flight sequential run reported `success: true` (12 primitives + 23 patterns + 5 layouts + 4 ESLint rules + barrel all authored), the operator dispatched a manual verify pass that surfaced **5 distinct compile-time bugs the skill's "self-verify" did not catch**:
+
+1. `@storybook/react` not in devDeps despite being imported by every `.stories.tsx` file → 25+ "Cannot find module '@storybook/react' or its corresponding type declarations" errors
+2. `tailwindcss` not in devDeps despite `styles/tailwind.config.ts` importing it → 1 module-resolution error
+3. The kit-shipped `lib/cva.ts` wrapper used over-strict generics that rejected `cva()`'s native `compoundVariants` typing → 5 errors across `Button.variants.ts` + `Card.variants.ts`
+4. `Button.variants.ts` + `Card.variants.ts` used boolean-typed `compoundVariants: [{ iconOnly: true, ... }]` + `defaultVariants: { iconOnly: false }` — CVA v0.7.1 + the over-strict wrapper required `"true"` / `"false"` string keys (the wrapper inversion in #3 above flipped the requirement back to booleans after rewrite)
+5. `patterns/hero/hero.tsx` declared `interface HeroProps extends React.HTMLAttributes<HTMLElement>` with a `title: React.ReactNode` field — clashed with HTMLAttributes's inherited `title?: string` → 1 type-incompatibility error
+
+After fixes (add 2 devDeps + simplify cva wrapper + revert booleans + Omit `"title"` from Hero extends), **typecheck passed cleanly + all 105 unit tests across 29 files passed in 7.75s**. The 5-bug cluster was 100% catchable by `pnpm typecheck` + `pnpm test` — the skill returned `success: true` solely because step 8 _mentioned_ typecheck without _running it to exit-0 gating semantics_.
+
+**Stage 5 closes this gap by running the verify chain as HARD GATES.** Failure to exit 0 on any step aborts the skill with `success: false`:
+
+```bash
+# Stage 5.1 — Install workspace dependencies
+# Required because Stage 4's package.json rewrite added devDeps the
+# pre-rewrite install pass did not see. Skip on noChange short-circuit.
+pnpm install
+# Exit 0 required. Non-zero → abort: "Stage 5.1 install failed — see pnpm log"
+
+# Stage 5.2 — TypeScript compile gate
+pnpm --filter @repo/ui-kit typecheck
+# Exit 0 required. Non-zero → emit each tsc error in `errors[]` of return
+# JSON, mark `success: false`, abort. NO retry — TS errors are deterministic;
+# retry would loop unless the underlying authoring-rule is fixed in SKILL.md.
+
+# Stage 5.3 — Unit test gate
+pnpm --filter @repo/ui-kit test
+# Exit 0 required. Non-zero → emit failing test names + counts in `errors[]`,
+# mark `success: false`, abort. Per-test retry is the tester's job inside the
+# kit; Stage 5 just enforces the gate.
+
+# Stage 5.4 — Storybook build (existing SKILL.md step 7 — moved into the gate)
+pnpm --filter @repo/ui-kit build-storybook
+# Exit 0 required. Non-zero → write `docs/design-system-gaps.md` with the
+# error + emit `success: false` per existing SKILL.md §Error handling.
+```
+
+**Stage 5's audit-dimension extensions** — additions to `scripts/audit-ui-kit-component-consistency.mjs` so the verify gate's failures are observable to the orchestrator AND catchable at audit time before Stage 5 runs (defense in depth):
+
+| Dim                              | Check                                                                                                                                                                                                                                                                           | Pass condition        |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| **D-O** devDeps cover imports    | Walk every `.ts(x)` + `.stories.tsx` + `.test.tsx` in the kit, collect every bare-specifier `import { ... } from "<pkg>"`, assert every `<pkg>` is in `package.json.{dependencies,peerDependencies,devDependencies}`. Catches missing `@storybook/react` + `tailwindcss` class. | 0 missing-deps        |
+| **D-P** Stories import canonical | Every `.stories.tsx` imports from `@storybook/react` (not `@storybook/react-vite` ambiguity) AND uses the `Meta` + `StoryObj` types canonically. The pre-bug case authored `import type { Meta, StoryObj } from "@storybook/react"` which IS canonical — D-P just enforces it.  | 0 non-canonical       |
+| **D-Q** CVA boolean variants     | `.variants.ts` with `iconOnly: { true: ..., false: ... }` / `interactive: { true: ..., false: ... }` shape MUST have matching boolean (not string) values in `compoundVariants` + `defaultVariants`. Catches the boolean-vs-string mismatch in fix #4 above.                    | 0 mismatched booleans |
+| **D-R** Pattern title clash      | Any `.tsx` declaring `interface XProps extends React.HTMLAttributes<...>` that also declares `title: React.ReactNode` MUST use `Omit<React.HTMLAttributes<...>, "title">`. Mechanical regex.                                                                                    | 0 unresolved clashes  |
+
+The audit's existing retry loop covers D-O through D-R. A subagent that fails D-O on its first attempt gets the diagnostic ("your `stories.tsx` imports `@storybook/react` but it's not in devDeps; add it before reporting complete") + one retry. If the retry still fails, the orchestrator escalates to operator review.
+
+**Why a separate Stage 5 instead of folding into Stage 4's step 8.** Stage 4 is "single agent that runs ~10–20 min of join work"; Stage 5 is "deterministic verify chain with no LLM in the loop". Separating the two surfaces a clean gate boundary: a Stage-4-passes / Stage-5-fails return is unambiguously a compile-time bug class the audit didn't predict, which triggers a SKILL.md + audit-script extension (the meta-lesson loop from bug-005). Conflating them muddies the signal.
+
+**Cross-references for Stage 5:**
+
+- LESSONS.md candidate entry on close: _"`/stylesheet-primitives` reporting `success: true` is only as honest as its compile gate. Running `pnpm install + typecheck + test + build-storybook` as exit-0-required gates closes the 'authored but unverified' failure mode. Audit dimensions D-O through D-R catch the most-common subset at lower cost than the full compile."_
+- bug-005 sibling lesson: _"Derivation-based audits must fail-closed on empty contracts AND pair with hardcoded independent fallback assertions."_ Stage 5 IS the hardcoded fallback — the audit dimensions catch ~80% of the failures; Stage 5 catches 100% by actually running the compiler.
+- Concrete error catalog for the SKILL.md authoring section: see `## Empirical fix patterns observed (2026-05-29 sequential run)` below.
+
 ### Configuration knob
 
 Extend `~/.claude/models.yaml` schema (and the factory's `.claude/models.yaml`):
@@ -236,16 +294,126 @@ Per CLAUDE.md "Rebuild guarantee", add a paragraph to `phase-plan.md` §F docume
 
 - **Alternative G — Author the audit later as a follow-up bug (ship fan-out first, harden later)** — Rejected because: shipping fan-out without the audit re-introduces exactly the drift class bug-003 closed. The factory's LESSONS.md entry "Consumer-side rules in skill bodies need mechanical audits when shipped, not retroactively" was promoted specifically because the retroactive pattern bites. We pay the audit cost up-front or we pay it 10× later in operator triage.
 
+## Empirical fix patterns observed (2026-05-29 sequential run)
+
+The in-flight sequential run that this plan was authored against (test-app, ~3h 30m wall-clock) reported `success: true` and then immediately failed the operator's manual verify. The five distinct bugs that surfaced ALL stem from authoring-rule gaps the skill body did not name precisely enough. Each becomes an addition to either the §1e shared-rules block OR an audit dimension (D-O through D-R per Stage 5 above). Captured here as a single inventory so the SKILL.md edit + audit-script extension know exactly what surface to harden.
+
+### Fix-pattern 1 — Storybook devDeps mismatch
+
+**Observed**: Every `.stories.tsx` imported `from "@storybook/react"` but `package.json.devDependencies` only declared `@storybook/react-vite`. Result: 25+ `Cannot find module '@storybook/react'` errors at `pnpm typecheck` time.
+
+**Root cause**: Storybook 8 splits framework adapter (`@storybook/react-vite`) from the types-and-runtime package (`@storybook/react`). Stories canonically import types from `@storybook/react`. The skill body's step 6 `package.json` template named only the framework adapter.
+
+**SKILL.md authoring rule to add (§1a step 3)**: Required devDeps for the kit are: `@storybook/react ^8.4.7` (types + runtime), `@storybook/react-vite ^8.4.7` (framework adapter), `@storybook/addon-essentials ^8.4.7`, `storybook ^8.4.7`, `tailwindcss ^3.4.0`. The Stage-4 `package.json` rewrite MUST include all five.
+
+**Audit dimension that catches**: D-O (devDeps cover all bare-specifier imports).
+
+### Fix-pattern 2 — Tailwind config devDep mismatch
+
+**Observed**: `src/styles/tailwind.config.ts` line 5 `import type { Config } from "tailwindcss"` failed with `Cannot find module 'tailwindcss'`.
+
+**Root cause**: `tailwindcss` was treated as a "production peer" (consumer's app provides it) but the kit's own typecheck of its own config file required the import to resolve.
+
+**SKILL.md authoring rule to add (§1a step 3)**: `tailwindcss ^3.4.0` MUST be in the kit's devDependencies regardless of consumer-side configuration. The kit is responsible for its own typecheck-cleanness.
+
+**Audit dimension that catches**: D-O.
+
+### Fix-pattern 3 — Over-engineered `lib/cva.ts` wrapper
+
+**Observed**: The agent authored `lib/cva.ts` as a `kitCva<T>` wrapper with strict generic constraints around `Config<T>`. CVA's internal `compoundVariants` type expected boolean-keyed variant maps; the wrapper's `T extends Record<string, Record<string, ClassValue>>` rejected the inferred boolean-keyed shape. Result: 1 type error blocking compile.
+
+**Root cause**: The skill body's §1a step 2 only said `// Re-export the kit's preferred cva factory pattern` without naming the canonical shape. The agent inferred "preferred pattern" as "wrap with stricter generics" — a reasonable but wrong inference.
+
+**Canonical shape** (encoded as required source):
+
+```ts
+import { cva, cx, type VariantProps } from "class-variance-authority";
+import type { ClassValue } from "clsx";
+export { cva, cx, type VariantProps };
+export type { ClassValue };
+// kitCva is a passthrough — kept for future-swap convenience.
+export const kitCva = cva;
+```
+
+**SKILL.md authoring rule to add (§1a step 2)**: `lib/cva.ts` MUST match the canonical 6-line shape above verbatim. NO wrapper around `cva()` — the kit's "preference" is to use cva directly. The `kitCva` re-export is a stable identifier for future swap, NOT a typed wrapper.
+
+**Audit dimension that catches**: a new D-S (cva wrapper file matches canonical shape) — proposed; could fold into D-I (canonical imports) if the audit grows multi-line content matching.
+
+### Fix-pattern 4 — CVA boolean variant key/value inconsistency
+
+**Observed**: `Button.variants.ts` declared `iconOnly: { true: "...", false: "" }` (string keys) AND `compoundVariants: [{ iconOnly: true, ... }]` (boolean values) AND `defaultVariants: { iconOnly: false }` (boolean value). CVA v0.7.1 — paired with the wrapper from fix-pattern 3 — flipped between requiring `"true"` / `"false"` strings AND `true` / `false` booleans depending on the wrapper. Net: 4 type errors that toggled between two error shapes as the wrapper changed.
+
+**Root cause**: The skill body's §1c Button row says `iconOnly?: boolean` but doesn't show the variants-file shape. Agents inferred from JS habit (`true`/`false` keys + boolean values) but CVA's runtime accepts strings as boolean-keyed slots — so the runtime worked while the types didn't.
+
+**Canonical shape**:
+
+```ts
+// Inside cva(<base>, { variants: ... })
+variants: {
+  iconOnly: { true: "aspect-square px-0", false: "" },
+}
+// Inside compoundVariants: USE BOOLEAN
+compoundVariants: [
+  { iconOnly: true, size: "sm", class: "w-9" },
+]
+// Inside defaultVariants: USE BOOLEAN
+defaultVariants: { iconOnly: false }
+```
+
+With CVA v0.7.1 + the canonical `lib/cva.ts` (passthrough, not wrapper), this shape compiles cleanly.
+
+**SKILL.md authoring rule to add (§1c, applies to every primitive with a boolean variant)**: For variants of type boolean, use JS object keys `true` and `false` (which TS infers as string literals `"true"` / `"false"`). In `compoundVariants` array entries AND `defaultVariants`, use literal boolean values `true` / `false` (NOT string `"true"` / `"false"`).
+
+**Audit dimension that catches**: D-Q (cva boolean variants).
+
+### Fix-pattern 5 — Pattern props clashing with HTMLAttributes built-ins
+
+**Observed**: `patterns/hero/hero.tsx` declared `interface HeroProps extends React.HTMLAttributes<HTMLElement>` with `title: React.ReactNode`. `HTMLAttributes` has `title?: string` (the native HTML `title` attribute used for tooltips). Result: 1 type error `Type 'ReactNode' is not assignable to type 'string | undefined'`.
+
+**Root cause**: The skill body's §2 pattern roster doesn't warn about the HTMLAttributes builtins that conflict with common prop names (`title`, `color`, `placeholder`, `cite`, `data`, etc.). Agents extend HTMLAttributes by default for pass-through props but don't `Omit` the clashing builtins.
+
+**Canonical shape**:
+
+```ts
+export interface HeroProps extends Omit<
+  React.HTMLAttributes<HTMLElement>,
+  "title"
+> {
+  title: React.ReactNode;
+  // ...
+}
+```
+
+**SKILL.md authoring rule to add (§2 + §3)**: When a pattern or layout declares a prop whose name collides with `HTMLAttributes<T>`'s native attributes (`title`, `color`, `placeholder`, `cite`, `data`, `defaultChecked`, `defaultValue`, `suppressContentEditableWarning`, `suppressHydrationWarning`), the props interface MUST `Omit` the colliding key from the extended HTMLAttributes type.
+
+**Audit dimension that catches**: D-R (pattern title clash).
+
+### Catalogue summary
+
+| #   | Class                             | Fix surface                           | Audit dim                             | Caught by                      |
+| --- | --------------------------------- | ------------------------------------- | ------------------------------------- | ------------------------------ |
+| 1   | Missing devDep `@storybook/react` | SKILL.md §1a + package.json template  | D-O                                   | Stage 2/3 audit (pre-Stage 5)  |
+| 2   | Missing devDep `tailwindcss`      | Same as #1                            | D-O                                   | Stage 2/3 audit                |
+| 3   | Over-engineered `lib/cva.ts`      | SKILL.md §1a step 2 canonical source  | D-S (proposed) OR Stage 5.2 typecheck | Stage 5.2 typecheck (fallback) |
+| 4   | CVA boolean variant mismatch      | SKILL.md §1c per-primitive shape note | D-Q                                   | Stage 2 audit (pre-Stage 5)    |
+| 5   | Pattern title prop clash          | SKILL.md §2 + §3 Omit rule            | D-R                                   | Stage 3 audit (pre-Stage 5)    |
+
+**Net signal**: 4 of 5 bug classes are catchable at the audit layer BEFORE the compile gate runs. Fix-pattern 3 (cva wrapper shape) is the holdout — the audit can grep for `kitCva =` vs `kitCva<T>` but a multi-line content match feels brittle; cleaner to let Stage 5.2 catch it via tsc, since the fix is mechanical once surfaced.
+
 ## Expected Outcomes
 
 - [ ] `/stylesheet-primitives` completes in ≤45 min wall-clock on `projects/test-app` at default `concurrency=8` (measured against the current ~3.5h baseline)
 - [ ] All 12 mandatory primitives + ≥12 canonical patterns + 5 layouts ship with byte-identical file shape across components (5 files per component, canonical barrel format, canonical relative imports)
-- [ ] New `scripts/audit-ui-kit-component-consistency.mjs` exits 0 on test-app post-run; project-agnostic (no test-app-specific config); supports `--tier primitives|patterns-and-layouts|all` + `--dimension D-A..D-N|all` + `--json` + `--strict` flags
+- [ ] New `scripts/audit-ui-kit-component-consistency.mjs` exits 0 on test-app post-run; project-agnostic (no test-app-specific config); supports `--tier primitives|patterns-and-layouts|all` + `--dimension D-A..D-R|all` + `--json` + `--strict` flags
 - [ ] Negative-regression test passes: artificially edit one primitive to strip `data-kit-component` → audit exits 1, names the primitive + dimension D-C
 - [ ] models.yaml `stages.stylesheet-primitives.{concurrency,maxConcurrency,burstDelay}` knob controls fan-out width; verified at `concurrency=4` (slower) + `concurrency=8` (default) + `concurrency=16` (max)
 - [ ] Re-running on unchanged inputs is still a no-op (idempotency preserved from current skill — `.input-fingerprint-primitives.json` short-circuit at top of step 1)
 - [ ] `StylesheetOutput.failedComponents[]` populated correctly when subagents fail; empty when all pass; backward-compatible with existing consumers
-- [ ] `phase-plan.md` §F paragraph documents the four-stage DAG + shared-preamble + audit + retry loop + concurrency knob (Rebuild guarantee preserved)
+- [ ] `phase-plan.md` §F paragraph documents the five-stage DAG + shared-preamble + audit + retry loop + Stage 5 verify gate + concurrency knob (Rebuild guarantee preserved)
+- [ ] **Stage 5 verify gates fire and pass:** `pnpm install` exits 0, `pnpm --filter @repo/ui-kit typecheck` exits 0, `pnpm --filter @repo/ui-kit test` exits 0 with ≥1 test per shipped component, `pnpm --filter @repo/ui-kit build-storybook` exits 0
+- [ ] **Stage 5 verify gates abort honestly:** artificially break one primitive's typing (e.g. revert fix-pattern 4) → Stage 5.2 exits 1 → skill returns `success: false` with the tsc error in `errors[]` — NO false-positive `success: true`
+- [ ] **Audit dimensions D-O through D-R land + catch their fix-patterns:** the 5 bugs from the 2026-05-29 fix-pattern catalog are caught by the audit OR Stage 5 — none slip through to the operator
+- [ ] **SKILL.md §1a + §1c + §2 + §3 carry the 5 fix-pattern authoring rules verbatim** so future ui-designer agents see the precise shape before they author
 
 ## Validation Criteria
 

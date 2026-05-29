@@ -1,35 +1,5 @@
 [
   {
-    "hash": "184e3b5afac1",
-    "timestamp": 1780076589955,
-    "tool": "Read"
-  },
-  {
-    "hash": "edd960dd154d",
-    "timestamp": 1780076591586,
-    "tool": "Bash"
-  },
-  {
-    "hash": "228fdf796ea5",
-    "timestamp": 1780076592886,
-    "tool": "Read"
-  },
-  {
-    "hash": "f3edac6df113",
-    "timestamp": 1780076626987,
-    "tool": "Write"
-  },
-  {
-    "hash": "9e338f0771c5",
-    "timestamp": 1780076628546,
-    "tool": "Skill"
-  },
-  {
-    "hash": "0c6a2eddd03a",
-    "timestamp": 1780076636693,
-    "tool": "Bash"
-  },
-  {
     "hash": "df2baa98fa1a",
     "timestamp": 1780076637467,
     "tool": "Bash"
@@ -248,5 +218,35 @@
     "hash": "a1456521f0c3",
     "timestamp": 1780080459367,
     "tool": "TaskUpdate"
+  },
+  {
+    "hash": "f0c292e9f61c",
+    "timestamp": 1780080725228,
+    "tool": "Bash"
+  },
+  {
+    "hash": "25f6a2a1bc21",
+    "timestamp": 1780080731488,
+    "tool": "Read"
+  },
+  {
+    "hash": "320921395b70",
+    "timestamp": 1780080814554,
+    "tool": "Edit"
+  },
+  {
+    "hash": "80e8a953a3b3",
+    "timestamp": 1780080902767,
+    "tool": "Bash"
+  },
+  {
+    "hash": "2c40b8827c4a",
+    "timestamp": 1780080909095,
+    "tool": "Read"
+  },
+  {
+    "hash": "409edf067557",
+    "timestamp": 1780080973101,
+    "tool": "Edit"
   }
 ]
