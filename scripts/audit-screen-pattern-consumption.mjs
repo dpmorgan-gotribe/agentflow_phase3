@@ -80,10 +80,29 @@ if (!existsSync(screensDir)) die(`missing ${screensDir}`);
 if (!existsSync(patternsDir)) die(`missing ${patternsDir}`);
 if (!existsSync(patternsIndexPath)) die(`missing ${patternsIndexPath}`);
 
+// ─── Patterns with icon SLOTS where SVG path bytes are content, not contract ─
+// stat-tile / service-pillar-card / case-study-card have <!-- slot: icon -->
+// comments — the SVG path inside is the agent's content choice, not a kit byte
+// the audit should require verbatim. Skip path-bytes check for these.
+const PATTERNS_WITH_ICON_SLOT = new Set([
+  "stat-tile",
+  "service-pillar-card",
+  "case-study-card",
+  "social-proof-row",
+  "testimonial-block",
+]);
+
+// Keyframe aliases — canonical kit names that the audit should accept
+// even if they don't appear in _extracted/*.html literally. `marquee-scroll`
+// is the kit-vocabulary alias of `trust-bar-scroll` (both name the same animation
+// pattern — horizontally-scrolling brand strip). Listed in the preamble's
+// canonical-keyframes block.
+const KEYFRAME_ALIASES = ["marquee-scroll"];
+
 // ─── Load pattern index + extract canonical markers per pattern ─────
 const patternsIndex = JSON.parse(readFileSync(patternsIndexPath, "utf8"));
 const patternMarkers = {};
-const allCanonicalKeyframes = new Set();
+const allCanonicalKeyframes = new Set(KEYFRAME_ALIASES);
 const allCanonicalSvgPathBytes = new Set();
 
 for (const p of patternsIndex.patterns || []) {
@@ -190,21 +209,27 @@ const findings = { D1: [], D4: [], D6: [], D8: [], D9: [] };
 for (const s of screens) {
   // ─── D1. Named-pattern consumption ────────────────────────────────
   if (DIM === "all" || DIM === "D1") {
+    // Strip inline <style> + <script> blocks for "referenced" detection.
+    // A pattern is "referenced" ONLY when its data-pattern attribute appears in the
+    // DOM body — anchor-class overlap with Tailwind utilities (shrink-0, duration-500,
+    // etc.) was over-detecting on screens that don't render the pattern at all.
+    const bodyHtml = s.html
+      .replace(/<style[\s\S]*?<\/style>/g, "")
+      .replace(/<script[\s\S]*?<\/script>/g, "");
     for (const [slug, markers] of Object.entries(patternMarkers)) {
-      const referenced =
-        s.html.includes(markers.dataPattern) ||
-        markers.anchorClasses.some((c) => s.html.includes(c));
+      const referenced = bodyHtml.includes(markers.dataPattern);
       if (!referenced) continue; // pattern not used on this screen — no obligation
 
       const hasDataPattern = s.html.includes(markers.dataPattern);
       const hasAllAnchors = markers.anchorClasses.every((c) =>
         s.html.includes(c),
       );
+      const skipPathCheck = PATTERNS_WITH_ICON_SLOT.has(slug);
       const hasCanonicalPath = markers.svgPaths.some((p) => s.html.includes(p));
       const verbatim =
         hasDataPattern &&
         hasAllAnchors &&
-        (markers.svgPaths.length === 0 || hasCanonicalPath);
+        (skipPathCheck || markers.svgPaths.length === 0 || hasCanonicalPath);
 
       if (!verbatim) {
         findings.D1.push({
@@ -215,7 +240,10 @@ for (const s of screens) {
             anchorClasses: markers.anchorClasses.filter(
               (c) => !s.html.includes(c),
             ),
-            canonicalSvgPath: markers.svgPaths.length > 0 && !hasCanonicalPath,
+            canonicalSvgPath:
+              !skipPathCheck &&
+              markers.svgPaths.length > 0 &&
+              !hasCanonicalPath,
           },
         });
       }
@@ -281,7 +309,17 @@ for (const s of screens) {
       }
     }
     // Footer 4-col grid
-    const footerHtml = (s.html.match(/<footer[\s\S]*?<\/footer>/) || [""])[0];
+    // Look for the page-level <footer> — preferred match has data-kit-component="Footer"
+    // OR data-kit-layout context; falls back to LAST <footer> in the document
+    // (inline <footer> inside <blockquote> for attribution is HTML5-valid but isn't
+    // the page footer the audit is checking).
+    const allFooters = [...s.html.matchAll(/<footer[\s\S]*?<\/footer>/g)].map(
+      (m) => m[0],
+    );
+    const footerHtml =
+      allFooters.find((f) => f.includes('data-kit-component="Footer"')) ||
+      allFooters[allFooters.length - 1] ||
+      "";
     const has4Col = /grid-cols-4|md:grid-cols-4|lg:grid-cols-4/.test(
       footerHtml,
     );

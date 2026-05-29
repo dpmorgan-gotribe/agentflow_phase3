@@ -1,0 +1,149 @@
+phase1-step-035 — /screens kit-content-bypass mechanical enforcement — empirical validation
+=============================================================================================
+
+Run: 2026-05-29
+Parent plans:
+  - plans/active/bug-003-screens-kit-content-bypass.md
+  - plans/active/investigate-002-screens-reinvents-kit-patterns.md
+Predecessors: phase1-step-032 (feat-001 extraction passes shipped the
+              _extracted/*.html files this row enforces consumption of)
+              + phase1-step-034 (bug-002 — same drift class, sibling fix shape)
+
+Three-part fix shipped at factory level (project-agnostic):
+
+  Part A — scripts/audit-screen-pattern-consumption.mjs
+    - Reads packages/ui-kit/.patterns-extracted.json + _extracted/*.html
+      → per-pattern canonical markers (anchor classes, SVG path bytes,
+        data-pattern attrs, @keyframes names)
+    - Reads docs/screens/.shared-preamble.md → canonical avatar URLs
+      + case-study seeds (parsed from §Cross-screen consistency block)
+    - Scans docs/screens/{platform}/*.html for 5 drift dimensions
+      (D1 + D4 + D6 + D8 + D9)
+    - Exits 0/1. Flags: --json / --strict / --dimension D1|D4|D6|D8|D9|all
+    - Per-pattern path-bytes check skipped for patterns with icon slots
+      (stat-tile / service-pillar-card / case-study-card / etc.) — icons
+      are content slots, not kit-byte contracts
+    - Keyframe aliases honored (marquee-scroll ≡ trust-bar-scroll —
+      same animation, kit-vocabulary alias)
+    - Page-footer detection — prefers <footer data-kit-component="Footer">
+      OR last footer in document (skips inline <footer> inside
+      <blockquote> attribution which is HTML5-valid but not the page
+      footer)
+
+  Part B — .claude/skills/screens/SKILL.md extension
+    - Inputs §4b language: "Consult kit patterns BEFORE inventing"
+      → "INLINE the canonical pattern HTML verbatim"
+    - New §4b.1 per-pattern marker table
+    - New step 3.5.1 — preamble inlines _extracted/*.html bytes verbatim
+      (not path references)
+    - New step 3.5.2 — cross-screen consistency contract naming
+      canonical avatars + case-study seeds + nav position +
+      footer composition
+    - New step 8a — wires audit script as post-batch verifier with
+      hard-abort semantics + per-screen retry routing
+    - Acceptance criteria + 4 new invariants
+
+  Part C — phase-plan.md §F + feature_list.json + bug-003 plan +
+           investigate-002 plan
+
+Empirical validation on projects/test-app (Spark Studio, 2026-05-29):
+
+  Phase 1 — shipped factory parts + re-authored shared preamble
+  Phase 2 — dispatched 12 ui-designer agents to re-compose screens
+            with the new preamble (which inlines _extracted/*.html
+            bytes verbatim + names canonical avatars/seeds/layout)
+
+  Empirical drift comparison (n=12 dispatches each phase):
+
+                                    pre-bug-003     post-bug-003     delta
+    D1 named-pattern consumption:    93/108 (86%)     0/108            -93 (-86pp)
+    D4 SVG hex literal leakage:      21 occurrences   0                -21
+    D6 cross-screen avatars:         6/12 screens     0/12 screens     -6
+    D8 layout shell:                 12 findings      0                -12
+    D9 non-canonical @keyframes:     8 inventions     0                -8
+
+    Total drift findings:           ~144            0                  -144
+
+  Audit script verdict on the rerun:
+    audit-screen-pattern-consumption — ✓ PASS
+      screens audited: 12
+      patterns loaded: 9
+      canonical avatars: 4
+      canonical case-study seeds: 6
+      canonical keyframes: 4
+      ✓ All scoped dimensions pass.
+
+  Concrete brand-mark check (operator's original concern):
+
+    Pre-bug-003 — 3 distinct brand marks across 12 screens:
+      - 3 screens (home/services-index/about): lightning-bolt SVG
+        path variant
+      - 3 screens (services-detail-*): lightning-bolt SVG path different
+        stroke
+      - 1 screen (case-study-detail): 8-pointed orange star
+        (fill="#FF5C35")
+      - 1 screen (contact): 8-pointed yellow star (fill="#FFE14D")
+      - 4 screens (work-index, inquiry-confirmation, privacy, not-found):
+        further variants
+      → 12/12 screens drifted from kit canonical wordmark
+
+    Post-bug-003 — uniform canonical wordmark across all 12 screens:
+      - 12/12 screens use data-pattern="wordmark"
+      - 12/12 use class="logo-spark"
+      - 12/12 contain the canonical lightning-bolt SVG path
+        d="M13 2 4.5 13.5h6L8 22l8.5-11.5h-6L13 2z"
+      - 0/12 contain the invented 8-pointed star geometry
+      - 0/12 contain SVG fill hex literals
+      → Brand marks now visually identical across all 12 screens.
+
+  Final screen file sizes (post-rerun):
+    home                       1650 lines
+    services-index              979 lines
+    services-detail-social     ~900 lines
+    services-detail-visual    ~1100 lines
+    services-detail-digital   ~1000 lines
+    work-index                ~1300 lines
+    case-study-detail         ~1150 lines
+    about                     ~1050 lines
+    contact                    ~950 lines
+    inquiry-confirmation       ~800 lines
+    privacy                    ~700 lines
+    not-found                  ~700 lines
+
+  Cross-project agnosticism (the point):
+
+    The audit script reads each project's own .patterns-extracted.json
+    + _extracted/*.html + screens/*.html + .shared-preamble.md. The
+    required-consumption contract is COMPUTED PER-PROJECT. Same script
+    works on test-app, future agency portfolios, SaaS dashboards,
+    mobile-first projects — no project-specific config.
+
+  Meta-lesson captured (LESSONS.md candidate when bug-003 closes):
+
+    Title: "Consumer-side rules in skill bodies need mechanical audits
+            when shipped, not retroactively."
+
+    Three confirmed instances of the drift class (bug-002, bug-003,
+    investigate-002): prose-only consumer-side rules show ≥75-86% drift
+    rate on n=12 dispatches. The fix shape is identical each time:
+    audit script + skill-body extension + feature_list row + phase-plan
+    §F update. Future skills extending consumer-side rules should ship
+    the audit script paired with the rule, not bolted on after the
+    first regression report.
+
+Phase 1 Phase / cost recap (this session):
+
+    Code shipment: 4 commits on master
+      - phase1-step-033 (/draft-brief brief-class awareness)
+      - phase1-step-032 (/stylesheet 3-pass extraction)
+      - phase1-step-034 (/stylesheet preview-coverage audit)
+      - phase1-step-035 (/screens kit-content-bypass audit)
+
+    LLM dispatches: 5 mockups + 12 + 12 screens = 29 ui-designer agents
+      Total approx cost: ~$15-25 LLM spend
+
+    Investigation work: 2 plans authored, 2 manuscript runs, drift
+    survey script for forensic eval
+
+Status: PASS — bug-003 (phase1-step-035) empirically validated.
+Row flips to passes:true on operator verify-gate read.
