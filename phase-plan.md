@@ -377,6 +377,31 @@ Surfaced during the row 032 rerun on `projects/test-app` (2026-05-28T21:15Z) —
 
 The rebuild guarantee for rows 032 + 033 + 034 combined: a clean rebuild from `phase-1-start` + this §F section should land all SKILL.md additions + the audit script; empirical validation is the litmus test that the changes actually fix the regression class.
 
+**Row 035 — `/screens` kit-content-bypass mechanical enforcement (bug-003)** (`.claude/skills/screens/SKILL.md` + `scripts/audit-screen-pattern-consumption.mjs`):
+
+Surfaced during the row 032 rerun on `projects/test-app` (2026-05-28T22:00Z) — 12 parallel ui-designer dispatches produced screens with 86% drift on named-pattern consumption (0/12 used the kit's canonical `<span class="logo-spark">` + lightning-bolt SVG path; 3 distinct brand-mark designs across 12 screens). Root cause identified by `investigate-002`: the consumer-side rule in screens/SKILL.md Inputs §4b said "consult kit patterns BEFORE inventing" — prose-only enforcement. Operative verbs are "consult" and "reach for" — invitations to consume, not contracts. Agents read patterns, internalised intent, then wrote their own.
+
+`investigate-002` measured 5 drift dimensions (n=12 sample, single root cause):
+
+- D1 Named-pattern consumption: 86% drift rate (15/108 cells verbatim; 93/108 drifting across 9 named patterns)
+- D4 SVG hex literal leakage: 21 occurrences across 5 screens (correlated 1:1 with D1 — agents inventing brand marks need invented hex fills)
+- D6 Cross-screen imagery consistency: 6/12 screens use non-canonical avatar URLs (0/12 reuse all 4 canonical)
+- D8 Layout shell: 8/12 screens use `sticky` nav instead of preamble-required `fixed`; 4/12 missing 4-col footer
+- D9 Non-canonical `@keyframes`: 7 inventions across 4 screens (`spark-rotate` / `hatch-pulse` / `glyph-drift` etc., to animate the invented brand marks)
+
+Three-part project-agnostic fix (mirrors bug-002 shape):
+
+- New `scripts/audit-screen-pattern-consumption.mjs` — factory-level Node script. Reads each project's own `packages/ui-kit/.patterns-extracted.json` + `_extracted/*.html` → canonical pattern markers (anchor classes, SVG path bytes, `data-pattern` attrs, keyframe names). Reads `docs/screens/.shared-preamble.md` → canonical avatar URLs + case-study seeds. Scans `docs/screens/{platform}/*.html` for D1+D4+D6+D8+D9 drift. Exits 0/1. Flags: `--json` / `--strict` / `--dimension D1|D4|D6|D8|D9|all`. Same script works on test-app, future agency portfolios, SaaS dashboards. (added 2026-05-29 after phase1-step-035)
+- New screens/SKILL.md Inputs §4b language: "Consult kit patterns BEFORE inventing" → **"INLINE the canonical pattern HTML verbatim"**. New §4b.1 per-pattern marker table (logo-spark / pulse-dot / stat-tile-bob / trust-marquee / etc.) every screen MUST emit. (added 2026-05-29 after phase1-step-035)
+- New step 3.5.1 "INLINE all `_extracted/*.html` content into the preamble verbatim" — the preamble itself now carries the canonical pattern bytes (not just path references). Agents see the bytes; agents inline the bytes. New step 3.5.2 "Cross-screen consistency contract" naming canonical avatar URLs + case-study seeds + nav position + footer composition. (added 2026-05-29 after phase1-step-035)
+- New step 8a "Mechanical batch audit" — wires the audit script as post-batch verifier with hard-abort semantics. On exit code != 0, halt the batch + populate `failedScreens[]` from the audit's per-screen findings + the orchestrator re-dispatches single-screen retries with the audit's specific findings as retry context. Max 2 retries per screen. (added 2026-05-29 after phase1-step-035)
+- Acceptance criteria updated with 4 new invariants tied to phase1-step-035. (added 2026-05-29 after phase1-step-035)
+- **Validation status:** passes:false in feature_list.json pending re-run of `/screens` on `projects/test-app` producing screens that the audit passes (exit 0 across D1+D4+D6+D8+D9). (added 2026-05-29 after phase1-step-035)
+
+Meta-lesson (to capture in LESSONS.md on close): _"Consumer-side rules in skill bodies need mechanical audits when shipped, not retroactively."_ Three instances now confirmed (bug-002 for /stylesheet preview; bug-003 for /screens kit-content; pattern likely recurs for future skills extending consumer-side rules). Empirical drift rate ≥75-86% on prose-only consumer rules across n=12 dispatches.
+
+The rebuild guarantee for rows 032 + 033 + 034 + 035 combined: a clean rebuild from `phase-1-start` + this §F section should land all SKILL.md additions + both audit scripts; empirical validation is the litmus test that the changes actually fix the regression class.
+
 ---
 
 # Phase 2 — Build orchestration (Mode B)

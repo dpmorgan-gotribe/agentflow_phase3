@@ -4420,6 +4420,56 @@
       "depends_on": ["phase1-step-032"],
       "closed_at": null,
       "outcome_summary": ""
+    },
+    {
+      "id": "phase1-step-035",
+      "category": "mode-a-design-pipeline",
+      "description": "Ship bug-003 — /screens consumer-side kit-content rules were prose-only ('consult kit patterns BEFORE inventing') and agents reinvented patterns across 5 drift dimensions during phase1-step-032 rerun. Empirical measurement via investigate-002 (n=12 ui-designer dispatches on test-app, 2026-05-28T22:00Z): D1 named-pattern consumption 86% drift rate (0/12 screens use kit's canonical wordmark; 3 distinct brand-mark designs across 12 screens); D4 21 SVG fill hex literals across 5 screens; D6 6/12 screens use non-canonical avatar URLs; D8 8/12 screens use sticky nav instead of preamble-required fixed; D9 7 non-canonical @keyframes definitions. Same drift class as bug-002 (prose-only consumer-side rule). Three-part fix: (A) author scripts/audit-screen-pattern-consumption.mjs — project-agnostic Node script reading .patterns-extracted.json + _extracted/*.html canonical markers, scanning screens/*.html for D1+D4+D6+D8+D9 drift, exit non-zero on any; (B) extend .claude/skills/screens/SKILL.md — Inputs §4b verbatim-inline contract replacing 'consult before inventing'; new §4b.1 per-pattern marker table; new §4h cross-screen consistency contract naming canonical avatars + case-study seeds + nav position + footer composition; step 3.5 preamble generator inlines _extracted/*.html content verbatim (not just path references); new step 8a wires audit script as post-batch verifier with hard-abort + failedScreens[] retry routing; (C) update phase-plan.md §F documenting the verbatim-inline contract + kit-content-bypass class. Parent plans: plans/active/investigate-002-screens-reinvents-kit-patterns.md + plans/active/bug-003-screens-kit-content-bypass.md.",
+      "steps": [
+        "Author scripts/audit-screen-pattern-consumption.mjs — project-agnostic; reads .patterns-extracted.json + _extracted/*.html for markers; scans screens for D1 (pattern verbatim) + D4 (hex leakage) + D6 (imagery consistency) + D8 (layout shell) + D9 (non-canonical keyframes); exits 0/1 + --json + --strict + --dimension flags",
+        "Extend .claude/skills/screens/SKILL.md: Inputs §4b INLINE-verbatim contract; §4b.1 per-pattern marker table; §4h cross-screen consistency contract; step 3.5 preamble generator inlines _extracted/*.html bytes verbatim; new step 8a mechanical batch audit with hard-abort + per-screen retry routing",
+        "Update acceptance criteria + integration points + output contract summary",
+        "Update phase-plan.md §F with new 'Row 035' paragraph documenting durable behavior",
+        "Re-run /screens on projects/test-app — confirm audit script exits 0; visually eyeball brand marks for uniformity",
+        "Negative-regression test: edit one screen to substitute fill='#FF5C35' → audit exits 1 with hex-leakage finding",
+        "Write evidence/phase1-step-035-result.txt with before/after audit transcripts + drift matrix delta",
+        "Commit on master with descriptive message",
+        "Flip passes:true ONLY after evidence file is read (verify-gate.mjs gate)"
+      ],
+      "approach": "bug-003 closes the third (and largest) drift class in the consumer-side-rule prose-enforcement pattern. Same fix shape as bug-002 — project-agnostic audit script + skill-body extension + feature_list row + phase-plan §F update. The fix is structural: every consumer-side rule that depends on agent compliance ships paired with a mechanical audit. Future skills extending consumer-side rules MUST follow the same pattern (LESSONS.md meta-lesson to be captured on close).",
+      "rejected_alternatives": [
+        {
+          "approach": "Tighten the prose further to 'USE VERBATIM, do not adapt'",
+          "reason": "Empirical n=12 already showed prose-only enforcement fails ≥75% even when dispatch prompts said 'USE VERBATIM'. More prose without mechanical enforcement is not load-bearing."
+        },
+        {
+          "approach": "Block /screens via PreToolUse hook on Read of _extracted/*.html without subsequent paste",
+          "reason": "Hooks check tool calls, not output content. Audit must check the output HTML, not the agent's tool-call sequence."
+        },
+        {
+          "approach": "Have orchestrator pre-compose kit patterns into HTML scaffolds; dispatch agents only to fill content slots",
+          "reason": "Too rigid — patterns need contextual variation (per-screen avatar URLs, stat values, copy). Fix is mechanical content verification, not mechanical layout pre-composition."
+        },
+        {
+          "approach": "File 5 separate narrow bugs (one per drift dimension)",
+          "reason": "Same root cause + same fix shape + same validation surface = 5× plan-archiving overhead with no incremental value. investigate-002 explicitly recommended consolidation."
+        }
+      ],
+      "expected_outcomes": [
+        "scripts/audit-screen-pattern-consumption.mjs exists and runs project-agnostic; takes --json + --strict + --dimension flags",
+        "skills/screens/SKILL.md Inputs §4b says 'INLINE verbatim' (not 'consult before inventing'); §4b.1 has the per-pattern marker table; §4h has cross-screen consistency contract; step 3.5 preamble inlines bytes; step 8a wires audit",
+        "Re-running /screens on projects/test-app produces an audit that exits 0 across all 5 dimensions",
+        "Negative-regression test: editing one screen to substitute a hex literal triggers audit exit 1 + reports the screen + the substitution",
+        "phase-plan.md §F has the bug-003 paragraph (rebuild manifest captures the contract)",
+        "Visual eyeball on all 12 screens: brand marks visually identical across screens; eyebrows uniform; stat tiles + trust bar canonical; avatar URLs reused"
+      ],
+      "evidence": "evidence/phase1-step-035-result.txt",
+      "polished": false,
+      "passes": false,
+      "attempt_count": 0,
+      "depends_on": ["phase1-step-032", "phase1-step-034"],
+      "closed_at": null,
+      "outcome_summary": ""
     }
   ]
 }

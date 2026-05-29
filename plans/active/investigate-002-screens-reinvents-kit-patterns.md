@@ -359,8 +359,6 @@ The drift cluster analysis:
 
 **Recommendation: ONE comprehensive bug** covering D1 + D4 + D6 + D8 + D9. The single audit script covers all dimensions; the single skill-body extension tightens the verbatim-consumption rule + names canonical assets. Empirical validation = re-running `/screens` on test-app and getting a passing audit.
 
-
-
 ## Recommendation
 
 ### File ONE comprehensive bug — `bug-003-screens-kit-content-bypass`
@@ -395,9 +393,10 @@ Visual eyeball: open all 12 screens in a browser. All brand marks should be visu
 
 ### Meta-lesson to capture (LESSONS.md after bug-003 closes)
 
-Title: *"Consumer-side rules in skill bodies need mechanical audits when shipped, not retroactively."*
+Title: _"Consumer-side rules in skill bodies need mechanical audits when shipped, not retroactively."_
 
 Pattern observed across three drift surfaces in one investigation:
+
 - bug-002 (`/stylesheet` preview-coverage) — prose rule "every component must be rendered", agents skipped — bug-002 added audit
 - bug-003 (`/screens` kit-content-bypass) — prose rule "consult patterns before inventing", agents reinvented — bug-003 adds audit
 - (potentially) future bugs as more consumer-side rules ship
@@ -409,6 +408,7 @@ Cross-references: investigate-001 (parent regression), bug-002 (sibling drift cl
 ### Strategy decision: one bug vs multiple
 
 Rejected: 5 separate narrow bugs (one per drift dimension). Reasoning:
+
 - Same root cause (prose enforcement)
 - Same fix shape (audit script + skill edit + feature_list row + §F update)
 - Same empirical validation surface (one /screens rerun)
@@ -417,24 +417,27 @@ Rejected: 5 separate narrow bugs (one per drift dimension). Reasoning:
 Chosen: one comprehensive `bug-003-screens-kit-content-bypass`.
 
 A. **One comprehensive bug** (if drift dimensions are correlated):
-   - File bug-003 "screens cross-screen drift — kit-consumption rules are prose-only"
-   - Ship a single `scripts/audit-cross-screen-consistency.mjs` covering D1-D9
-   - One skill-body extension that tightens the shared-preamble + adds the verbatim-consumption table for patterns + bootstrap drift checks
-   - Single feature_list row + phase-plan §F update
+
+- File bug-003 "screens cross-screen drift — kit-consumption rules are prose-only"
+- Ship a single `scripts/audit-cross-screen-consistency.mjs` covering D1-D9
+- One skill-body extension that tightens the shared-preamble + adds the verbatim-consumption table for patterns + bootstrap drift checks
+- Single feature_list row + phase-plan §F update
 
 B. **Multiple narrow bugs** (if drift dimensions are independent):
-   - bug-003 (D1): pattern consumption
-   - bug-004 (D3): bootstrap drift
-   - bug-005 (D2): data-kit-* density
-   - bug-006 (D4): hex literal prohibition
-   - bug-007 (D6-D7): copy + imagery consistency
-   - Each ships its own audit + skill edit + feature_list row
+
+- bug-003 (D1): pattern consumption
+- bug-004 (D3): bootstrap drift
+- bug-005 (D2): data-kit-\* density
+- bug-006 (D4): hex literal prohibition
+- bug-007 (D6-D7): copy + imagery consistency
+- Each ships its own audit + skill edit + feature_list row
 
 C. **Hybrid** (one for systemic prose-enforcement, narrow ones for atomic regressions):
-   - bug-003 covers the systemic drift class (D1 + D3 + D9 — all the "kit-content-bypass" dimensions)
-   - bug-004 covers `data-kit-*` density (D2 — distinct from kit-content; it's about builder-translation contract)
-   - bug-005 covers hex-literal prohibition (D4 — atomic, easy audit)
-   - bug-006 covers copy-voice (D7 — atomic, easy audit)
+
+- bug-003 covers the systemic drift class (D1 + D3 + D9 — all the "kit-content-bypass" dimensions)
+- bug-004 covers `data-kit-*` density (D2 — distinct from kit-content; it's about builder-translation contract)
+- bug-005 covers hex-literal prohibition (D4 — atomic, easy audit)
+- bug-006 covers copy-voice (D7 — atomic, easy audit)
 
 The drift matrix from step 1 determines which strategy. Default: hybrid (option C) unless drift is overwhelmingly one root cause.
 

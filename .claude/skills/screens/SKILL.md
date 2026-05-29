@@ -28,7 +28,32 @@ Screens are HTML previews (not React) — builders (tasks 029 / 030) convert to 
 3. `docs/analysis/{platform}/screens.json` (v3.0) per platform → authoritative full screen list with per-screen `navigation`, `components[]`, `icons[]`, `flows[]`. Do NOT read `companion/navigation-schema.json` — that was a user input the Analyst already consumed.
 4. `packages/ui-kit/.components-plan.json` → map of analyst-name → PascalCase kit-name + custom-pattern set. (Pre-feat-074 this skill also read `packages/ui-kit/src/index.ts` for the live primitive catalog; that barrel is now authored post-architect by `/stylesheet-primitives`. `.components-plan.json` is the authoritative source pre-architect.)
    4a. `packages/ui-kit/.components-shapes.json` → per-primitive default visual contract extracted from the selected mockup (phase1-step-032 / feat-001). When composing a Button instance in a screen, look up `primitives.Button.default.tailwindClass` and use it literally — do NOT default to `rounded-md`. When composing a Nav, use the extracted height + backdrop + link-shape.
-   4b. `packages/ui-kit/.patterns-extracted.json` + `packages/ui-kit/src/patterns/_extracted/*.html` → named patterns extracted from the selected mockup (Wordmark, Eyebrow, StatTile, TrustBar, HeroBadge, ServicePillarCard, CaseStudyCard, etc.) (phase1-step-032 / feat-001). **Consult kit patterns BEFORE inventing.** When a section needs a logo composition, reach for `_extracted/wordmark.html` instead of inventing one. When a section heading needs an eyebrow, reach for `_extracted/eyebrow.html`. When a hero needs a floating stat overlay, reach for `_extracted/stat-tile.html`. This is what makes screens look LIKE the mockup, not GENERIC. Closes the empirical regression where /screens reinvented headers / eyebrows / stat tiles per screen and they drifted from the mockup intent (investigate-001).
+   4b. `packages/ui-kit/.patterns-extracted.json` + `packages/ui-kit/src/patterns/_extracted/*.html` → named patterns extracted from the selected mockup (Wordmark, Eyebrow, StatTile, TrustBar, HeroBadge, ServicePillarCard, CaseStudyCard, etc.) (phase1-step-032 / feat-001).
+
+   **INLINE the canonical pattern HTML verbatim — phase1-step-035 / bug-003.** When a section needs a kit pattern, copy the `_extracted/{slug}.html` content byte-for-byte into the screen HTML. Do NOT modify the SVG path bytes. Do NOT change the anchor class names (`logo-spark`, `pulse-dot`, `stat-tile-bob`, `trust-marquee`, etc.). Do NOT substitute your own brand mark, eyebrow shape, stat-tile composition, or keyframe. The `data-pattern="{slug}"` attribute MUST appear on the root element of every consumed pattern instance.
+
+   "Consult", "consume creatively", "use as inspiration", "adapt to context" are **explicitly forbidden** as interpretations of this rule. The kit's `_extracted/*.html` files are the canonical content — reproduction equals identity. Bug-003's empirical motivator (n=12 dispatches, 2026-05-28T22:00Z): 86% drift rate across 9 patterns when this rule was prose-only ("consult before inventing"). The verbatim contract closes the drift.
+
+   **The shared preamble (per step 3.5) inlines `_extracted/*.html` content directly — agents see the canonical bytes, agents inline them.**
+
+   Closes the empirical regression where /screens reinvented headers / eyebrows / stat tiles / brand marks per screen, surfaced by investigate-001 and re-confirmed by investigate-002.
+
+   4b.1. **Per-pattern marker table (phase1-step-035 / bug-003).** Each screen that uses a kit pattern MUST contain ALL of the canonical markers below. The audit at step 8a greps for these mechanically:
+
+   | Pattern               | Required `data-pattern` attr         | Required anchor classes                                                                                   | Required canonical SVG path bytes                                                                        | Required `@keyframes` names |
+   | --------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | --------------------------- |
+   | `wordmark`            | `data-pattern="wordmark"`            | `logo-spark`                                                                                              | the lightning-bolt path from `_extracted/wordmark.html` (e.g. `M13 2 4.5 13.5h6L8 22l8.5-11.5h-6L13 2z`) | n/a                         |
+   | `eyebrow`             | `data-pattern="eyebrow"`             | (canonical bar uses kit Tailwind classes — `inline-block h-1 w-6 bg-accent-500 rounded-full` MUST appear) | n/a                                                                                                      | n/a                         |
+   | `stat-tile`           | `data-pattern="stat-tile"`           | `stat-tile-bob`                                                                                           | the icon-square SVG path from `_extracted/stat-tile.html`                                                | `stat-tile-bob`             |
+   | `trust-bar`           | `data-pattern="trust-bar"`           | `trust-marquee`                                                                                           | n/a                                                                                                      | `trust-bar-scroll`          |
+   | `hero-badge`          | `data-pattern="hero-badge"`          | `pulse-dot`                                                                                               | n/a                                                                                                      | `hero-badge-pulse`          |
+   | `service-pillar-card` | `data-pattern="service-pillar-card"` | (icon-badge + heading + lede + ul.feature-list + "Explore service" CTA composition)                       | (icon SVG path from the analyst's selected lucide icon)                                                  | n/a                         |
+   | `case-study-card`     | `data-pattern="case-study-card"`     | (image + tag pill + headline + outcome metric composition)                                                | n/a                                                                                                      | n/a                         |
+   | `testimonial-block`   | `data-pattern="testimonial-block"`   | (accent-500 quote-mark glyph + italic display-serif quote + attribution row)                              | n/a                                                                                                      | n/a                         |
+   | `social-proof-row`    | `data-pattern="social-proof-row"`    | (avatar-stack overlapping circles + count + tagline composition)                                          | n/a                                                                                                      | n/a                         |
+
+   The audit script (`scripts/audit-screen-pattern-consumption.mjs` — step 8a) parses each project's own `_extracted/*.html` to derive its actual canonical markers — the table above is the contract; project-specific markers come from the project's own kit. Cross-project agnostic.
+
 5. `packages/ui-kit/package.json.version` → pinned into every screen's return manifest + sign-off contract. Pre-feat-074 the version was `1.0.0`; with the split, this skill consumes the `0.1.0-tokens-only` stub written by slimmed `/stylesheet`. `/stylesheet-primitives` later bumps to `0.2.0-primitives` post-architect.
 6. `docs/mockups/style-{K}/manifest.json` for the winning K → identifies screens already rendered at `/mockups` time; those are NOT regenerated (handled by the representative-set subtraction below).
 7. `docs/analysis/shared/components.md` → cross-platform component inventory (for the kit-only check + usage-count reporting).
@@ -138,6 +163,40 @@ Before fanning out composition agents, assemble a single **shared-preamble** blo
 **Write the preamble to `docs/screens/.shared-preamble.md`** at the start of a batch run. Every spawned agent prompt begins with: "Read `docs/screens/.shared-preamble.md` verbatim. It is the coherence contract for this run. Do not deviate." Retry attempts use the same file — so a re-run inherits the identical starting ink.
 
 **Single-screen mode (`--screen`) ALSO reads `.shared-preamble.md`** so retry-fix agents respect the same contract. If the file is missing (edge case), abort with a message instructing to run batch mode once first.
+
+#### 3.5.1. INLINE all `_extracted/*.html` content into the preamble verbatim — phase1-step-035 / bug-003
+
+The preamble MUST include — under a `## Kit patterns (INLINE these verbatim)` section — the FULL content of every `_extracted/*.html` file the kit ships, prefixed by a header naming the slug. Do NOT include a path reference and trust the agent to read the file — bug-003 empirical evidence shows agents read referenced files and then reinvent. The bytes go into the preamble itself.
+
+Concrete pattern (per agent reading the preamble):
+
+```
+## Kit patterns (INLINE these verbatim — phase1-step-035 / bug-003)
+
+When a screen section needs the wordmark, INLINE the contents below into the screen HTML byte-for-byte. Do NOT modify the SVG path, do NOT change the `logo-spark` class name, do NOT substitute your own brand mark. The `data-pattern="wordmark"` attribute MUST appear on the root element.
+
+### pattern: wordmark
+<verbatim contents of packages/ui-kit/src/patterns/_extracted/wordmark.html>
+
+### pattern: eyebrow
+<verbatim contents of packages/ui-kit/src/patterns/_extracted/eyebrow.html>
+
+…(repeat for every pattern in .patterns-extracted.json)…
+```
+
+This adds ~200-400 lines to the preamble (proportional to the number of patterns × pattern size) but removes the prose-only enforcement gap. The preamble file becomes the **complete kit-pattern bytes the agents inline** — no indirection, no path-following ambiguity.
+
+#### 3.5.2. Cross-screen consistency contract — phase1-step-035 / bug-003
+
+The preamble MUST include — under a `## Cross-screen consistency (canonical assets — REUSE across screens)` section — explicit named lists of:
+
+- **Canonical avatar URLs** (4-8 Unsplash URLs naming team members or recurring people). Format: one URL per line under a `### Avatars` heading. EVERY screen that renders an avatar MUST use exactly these URLs — no substitutions.
+- **Canonical case-study image seeds** (3-5 picsum or Unsplash seeds). Format: one seed per line under a `### Case-study seeds` heading. EVERY screen that references the same client uses the same seed.
+- **Canonical nav position**: `fixed` (per `.components-shapes.json` Nav.position). EVERY screen's `<header>` / `<nav>` element MUST carry `fixed` (not `sticky`, not `absolute`).
+- **Canonical footer composition**: 4-column grid (`grid-cols-1 md:grid-cols-4`). EVERY screen's `<footer>` MUST use this layout.
+- **Canonical max-width**: `max-w-[1280px]`. EVERY content container MUST use this.
+
+These are enforced by the audit at step 8a — `D6` (avatar consistency) + `D8` (layout shell).
 
 ### 4. Compose each remaining screen
 
@@ -414,6 +473,42 @@ The `files[]` array is sorted by path. Each `sha256` is over that file's bytes. 
 
 **Self-verify before writing the manifest:** assert `files.every(f => typeof f.routePattern === "string" && f.routePattern.length > 0)`. If ANY entry lacks routePattern, do NOT write the manifest — instead emit a hard error explaining which screens are missing routePattern. The PM stage's §2c (bug-025) already emits a warning when routePattern is missing per-task, but the warning isn't load-bearing — by the time PM fires, the screens are already authored without the field. Failing in /screens is the cheapest detection layer (bug-114).
 
+### 8a. Mechanical batch audit — phase1-step-035 / bug-003
+
+After writing all screens + the manifest, invoke the factory-level audit script from the project cwd:
+
+```bash
+node $FACTORY_ROOT/scripts/audit-screen-pattern-consumption.mjs
+```
+
+The script reads each project's own:
+
+- `packages/ui-kit/.patterns-extracted.json` + `_extracted/*.html` → canonical pattern markers (anchor classes, SVG path bytes, `data-pattern` attrs, keyframe names)
+- `docs/screens/.shared-preamble.md` → canonical avatar URLs + case-study seeds (parsed from the §Cross-screen consistency block)
+- `docs/screens/{platform}/*.html` → the just-written screens
+
+…and verifies five drift dimensions:
+
+| Dim                              | Check                                                                                                                                                                                      | Pass condition   |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
+| **D1** Named-pattern consumption | Every screen that references a kit pattern (via `data-pattern` attr or anchor class) contains the canonical anchor classes + SVG path bytes + keyframe names from `_extracted/{slug}.html` | 0 cells drifting |
+| **D4** Hex-literal leakage       | Every SVG `fill="#XXXXXX"` in a screen matches a canonical kit-pattern byte sequence; no inventing new brand-mark SVGs with literal hex                                                    | 0 leaks          |
+| **D6** Cross-screen imagery      | Canonical avatars (per preamble) are reused across screens; canonical case-study seeds match across home/work-index/case-study-detail                                                      | 0 mismatches     |
+| **D8** Layout shell              | Nav position = `fixed`; footer = 4-column grid; max-w-[1280px] present                                                                                                                     | 0 violations     |
+| **D9** Non-canonical keyframes   | Every `@keyframes <name>` defined in inline `<style>` is in the canonical set extracted from `_extracted/*.html`                                                                           | 0 non-canonical  |
+
+**Hard-abort contract.** On exit code != 0, this skill ABORTS with `success: false` and `failedScreens[]` populated from the audit's per-screen findings. Per-screen retry logic:
+
+1. For each screen in `failedScreens[]`, the orchestrator re-dispatches a ui-designer subagent with `--screen <platform>/<screen-id>` + the audit's findings for that screen as retry context. The retry prompt explicitly names the missing canonical markers (e.g. "your wordmark instance is missing the `logo-spark` class and uses an invented SVG path — INLINE the contents of `_extracted/wordmark.html` byte-for-byte instead").
+2. Max 2 retry attempts per screen. After 2 failures, the screen is marked `needsHumanReview` and the batch continues.
+3. Once all screens pass the audit OR have hit max retries, the skill returns with the final `failedScreens[]` list.
+
+Idempotency: re-running this audit on already-passing screens is a no-op (exit 0).
+
+Cross-project agnostic: the script reads each project's own `_extracted/*.html` + `screens/*.html`. No project-specific config. Same script works on test-app, future agency portfolios, SaaS dashboards, mobile-first projects.
+
+**Empirical motivator (phase1-step-035 / bug-003):** n=12 dispatches on test-app at 2026-05-28T22:00Z surfaced 48 D1 drifts (out of 108 cells where patterns were referenced), 21 D4 hex leaks across 5 screens, 12 D8 layout violations, 8 D9 non-canonical keyframes. Drift rate ≥75% confirmed. The audit closes the prose-only enforcement gap.
+
 ### 9. Report (batch mode)
 
 Emit progress every 20 screens (`completed N / M, elapsed Xs, ETA Ys`). Do NOT invoke `/user-flows-generator` from this skill — the orchestrator (035) invokes it AFTER `/visual-review` has produced `docs/visual-review/report.json`, since the viewer embeds visual-review badges sourced from that report.
@@ -635,3 +730,7 @@ HTML, JSON go to files. Response text contains ONLY status + paths + return-JSON
 - [ ] Kit-change-request detour flagged as cross-task dep on PM (021, `--mode=kit-change-request`) + orchestrator (035)
 - [ ] Return JSON matches `ScreensOutput` in 034b (batch + single-screen variants)
 - [ ] 022b `validate-consumer` + ESLint explicitly scoped to `.ts(x)/.js(x)` — NOT HTML; enforcement for HTML is anti-slop + 032b + 025b
+- [ ] Inputs §4b says "INLINE the canonical pattern HTML verbatim" (NOT "consult before inventing") + §4b.1 per-pattern marker table is present (phase1-step-035 / bug-003)
+- [ ] Step 3.5.1 documents that the shared preamble INLINES `_extracted/*.html` content verbatim (not path references); step 3.5.2 documents cross-screen consistency contract naming canonical avatars + case-study seeds + nav position + footer composition (phase1-step-035 / bug-003)
+- [ ] Step 8a wires `node $FACTORY_ROOT/scripts/audit-screen-pattern-consumption.mjs` as mechanical post-batch verifier with hard-abort semantics + per-screen retry routing (phase1-step-035 / bug-003)
+- [ ] `node $FACTORY_ROOT/scripts/audit-screen-pattern-consumption.mjs` exits 0 from the project cwd — D1 + D4 + D6 + D8 + D9 all pass (phase1-step-035 / bug-003)
