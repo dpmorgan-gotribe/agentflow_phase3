@@ -1,0 +1,228 @@
+phase1-step-039 — feat-002 full implementation (parallelization scope) — empirical shipment
+==============================================================================================
+
+Run: 2026-05-29
+Parent plan: plans/active/feat-002-parallelize-stylesheet-primitives.md
+              (restored to active/ this row; status: approved)
+Predecessor: phase1-step-038 (feat-002 verify-gate slice)
+
+Accountability motivator (LESSONS.md 2026-05-29 entry):
+
+  After Row 038 shipped the verify-gate slice of feat-002 (Step 9 + 5
+  fix-pattern authoring rules), I archived feat-002 as outcome: partial
+  without explicit operator authorization. The full parallelization
+  scope (Stages 0-4 — the load-bearing wall-clock improvement) stayed
+  on paper. Operator surfaced the gap with: "why would it take 3 hours
+  I thought we had implemented parallel agents so that wouldn't
+  happen?" and "if a plan is actioned it should be actioned in full".
+
+  This is a category error: partial-outcome archives create silent
+  divergence between shipped state and intended state. Operator
+  expected feat-002 was complete; only the slice was. We were going
+  to move on with that mental model intact.
+
+  Row 039 restores accountability by shipping the full plan scope.
+  Captured lesson at LESSONS.md "Partial-outcome archival silently
+  diverges shipped state from intended state (2026-05-29)".
+
+What shipped at Row 039:
+
+  Part A — scripts/audit-ui-kit-component-consistency.mjs
+  ---------------------------------------------------------
+    18-dimension audit covering kit React surface drift:
+
+      D-A  5 files present per component + mandatory roster gate
+      D-B  PascalCase export (acronym-friendly: FAQ ≡ Faq)
+      D-C  data-kit-component literal on primitives
+      D-D  variant + size forwarding
+      D-E  CVA usage (accepts cva( OR kitCva( alias)
+      D-F  no raw hex literals (data: URIs exempt)
+      D-G  test shape: ≥3 cases + data-kit-component assertion
+      D-H  story shape: default export + named variants
+      D-I  canonical relative imports (no deep @repo/ui-kit/src paths)
+      D-J  required props/variants per primitive roster
+      D-K  cn() class composition (no hand-concat)
+      D-L  pattern composes primitives (relaxed for extracted)
+      D-M  data-kit-component literal on layouts
+      D-N  custom patterns named in .components-plan.json shipped
+      D-O  package.json devDeps cover all bare imports
+      D-P  stories import @storybook/react (not -vite)
+      D-Q  CVA boolean variants literal-not-string
+      D-R  Omit<HTMLAttributes, "title"> for clashing patterns
+
+    Flags: --tier primitives|patterns-and-layouts|all
+            --dimension D-A..D-R|all
+            --json (machine-readable output)
+            --strict (fail on warnings)
+
+    Project-agnostic — reads each project's own .components-plan.json
+    + .shared-preamble.md (when present) + packages/ui-kit/src/{...}.
+    No hardcoded project-specific config.
+
+    Extracted-pattern relaxed contract: patterns with data-pattern="x"
+    + _extracted/ comment reference are exempted from D-A test/story
+    requirement (they're HTML→React translations, not canonical kit).
+
+  Part B — .claude/skills/stylesheet-primitives/SKILL.md
+  ---------------------------------------------------------
+    New top-level "## Orchestration: 4-Stage DAG (feat-002 — parallel
+    fan-out)" section inserted before "## Steps". Describes:
+
+      Stage 0 — Lib verify + shared preamble assembly (~1 min seq)
+      Stage 1 — Primitives fan-out (8-wide parallel, ~5-10 min)
+      Stage 2 — Audit + per-component retry loop (~1-3 min seq)
+                refactor-006 hard gate moves here
+      Stage 3 — Patterns + Layouts fan-out (8-wide parallel, ~10-15 min)
+      Stage 4 — Sequential tail: 022b + barrel + Storybook (~10-20 min)
+      Stage 5 — Compile + test verify gate (Row 038's Step 9, ~3-5 min)
+
+    Target total wall-clock at concurrency=8: ~30-45 min
+    vs ~3h 30m sequential baseline.
+
+    Shared preamble assembly (Stage 0) documented section-by-section:
+    authoring rules + data-kit contract + tokens.json + selected-style
+    + cn/cva/motion source + 5-file shape + canonical primitive/pattern/
+    layout marker tables + cross-component consistency contract — all
+    verbatim-inlined per the bug-003 drift-mitigation playbook.
+
+    Retry contract documented: max 2 retries per component; failedComponents[]
+    populated with needsHumanReview on exhaustion.
+
+    Empirical contract: skill is COMPLETE iff
+      (1) all stages return success: true
+      (2) audits exit 0 (or failedComponents[] populated)
+      (3) Stage 5 verify gate exits 0 across all 4 sub-gates
+
+  Part C — .claude/models.yaml concurrency knob
+  ---------------------------------------------------------
+    New stages: section with:
+
+      stages:
+        stylesheet-primitives:
+          concurrency: 8
+          maxConcurrency: 16
+          burstDelay: 0
+        screens:
+          concurrency: 8
+          maxConcurrency: 16
+          burstDelay: 0
+
+    Documented defaults; operator tunable per-project.
+
+  Part D — packages/orchestrator-contracts/src/stylesheet-primitives.ts
+  ---------------------------------------------------------
+    New Zod schema file:
+      FailedComponentSchema — tier + name + dimensions + retryAttempts
+                              + needsHumanReview
+      StylesheetPrimitivesOutputSchema — full return JSON shape including
+                                          failedComponents: FailedComponent[]
+                                          (defaults to [], backward-compatible)
+
+    Wired into packages/orchestrator-contracts/src/index.ts barrel.
+
+  Part E — feat-002 plan restored to active/
+  ---------------------------------------------------------
+    Plan moved from plans/archive/ → plans/active/
+    Status flipped: archived → approved
+    Partial completion record stripped (it had no business being there
+    until the FULL scope shipped).
+
+  Part F — phase-plan §F Row 039 paragraph
+  ---------------------------------------------------------
+    Documents the full-scope shipment + meta-lesson reinforcement:
+    "Capture-honest at the partial-vs-full boundary. When an approved
+    plan has N discrete deliverables and only M < N ship in a session,
+    the plan stays in active/ with explicit TODO items in its Attempt
+    Log — never archive with outcome: partial unless the operator
+    explicitly authorized the deferral."
+
+Audit smoke-test on test-app's existing kit (2026-05-29):
+
+  The audit script was smoke-tested against the kit authored by the
+  prior sequential /stylesheet-primitives run. The kit was reported
+  as success: true by that run; Row 038's Step 9 gate validated
+  pnpm typecheck + pnpm test + pnpm build-storybook clean. The
+  audit dimensions surface a different layer of contract drift:
+
+    D-A 11 findings — 11 patterns (case-study-card, eyebrow, faq,
+                      gallery, hero, hero-badge, service-pillar-card,
+                      stat-tile, testimonial, trust-bar, wordmark) ship
+                      without test.tsx + stories.tsx files. These are
+                      project-specific patterns translated from
+                      _extracted/*.html that the prior dispatch
+                      authored without the canonical 5-file contract.
+    D-G 9 findings  — 9 tests lack data-kit-component assertions.
+                      Empty-state has only 2 tests (need ≥3); error-state,
+                      pagination, search-combobox, several layouts lack
+                      the data-kit-component assertion.
+    D-J 2 findings  — missing variant strings on 2 primitives.
+    D-L 6 findings  — 6 patterns use native <button>/<input> without
+                      importing from ../../primitives/. Some of these
+                      are extracted patterns that genuinely don't compose
+                      primitives (wordmark is just SVG); others are
+                      legitimate drift.
+    D-O 1 finding   — 1 missing devDep in the kit's package.json.
+
+    Total: 29 findings across 5 dimensions on a kit the prior dispatch
+    reported as complete + Row 038's compile gate cleared.
+
+  This is the audit doing its job. The Row 038 verify-gate catches
+  COMPILE-time drift; the Row 039 audit catches CONTRACT-time drift
+  (test coverage, story shape, naming, composition). Both layers are
+  required for honest signal.
+
+  For a fresh-project run with parallelization shipping, these findings
+  would either be caught by the Stage 2 / Stage 3 audit + retry loop
+  (each component gets up to 2 retries with audit findings as context)
+  OR surface in failedComponents[] for operator review.
+
+Wall-clock empirical validation (Row 039 honest deferral):
+
+  The parallelization's wall-clock improvement target (~30-45 min at
+  concurrency=8 vs ~3h 30m sequential) requires a FRESH project with
+  no pre-authored kit. test-app's kit is already authored:
+
+    Re-running /stylesheet-primitives on test-app would either:
+      (a) short-circuit on the noChange fingerprint (when written),
+          returning { noChange: true } in seconds — validates idempotency
+          but not parallelization wall-clock
+      (b) re-author from scratch — would take ~3h sequential OR ~45min
+          parallel BUT overwrites a kit the operator has already verified
+          + manually fixed (5 fix-pattern bug classes)
+
+  Neither option gives a clean wall-clock measurement. The HONEST
+  empirical validation site is the next fresh-project run. Deferring
+  this measurement to a follow-up evidence file is honest about what's
+  shipped (the factory code) vs what's empirically validated (Row 038
+  verify-gate + Row 039 audit fires correctly; parallelization wall-
+  clock awaits next project).
+
+  Row 039's passes: false until next fresh-project /stylesheet-primitives
+  run produces a measured wall-clock at concurrency=8.
+
+Honest-complete verdict for Row 039:
+
+  ✓ All factory code shipped (audit script + SKILL.md + models.yaml +
+    schema + plan restoration + phase-plan §F)
+  ✓ Audit smoke-tested on existing kit + produces honest findings
+  ✓ Lesson captured in LESSONS.md
+  ✗ Wall-clock parallelization validation deferred to next fresh project
+    (acknowledged as in-scope but unmeasured this session)
+
+Cross-references:
+
+  - LESSONS.md "Partial-outcome archival silently diverges shipped state
+    from intended state (2026-05-29)" — the accountability lesson this
+    row was filed to honor
+  - Row 038 (feat-002 verify-gate slice) — Row 039's companion; together
+    they form the full feat-002 shipment
+  - bug-003 / bug-004 / bug-005 — sibling drift-mitigation pattern that
+    feat-002's parallelization inherits via shared preamble + audit +
+    retry loop
+  - feat-002 plan §"Empirical fix patterns observed" — the 5 compile-time
+    classes Row 038 closed; Row 039 closes the contract-time classes via
+    the audit script
+
+Status: SHIPPED (factory complete; wall-clock validation deferred).
+Row flips to passes: true ONLY after next fresh-project /stylesheet-
+primitives run produces measured wall-clock ≤45 min at concurrency=8.

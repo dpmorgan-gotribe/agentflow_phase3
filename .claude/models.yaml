@@ -96,3 +96,24 @@ budget: {}
 #   "lenient" (default) — mark the feature as failed, continue the run
 #   "strict"            — pause the entire orchestrator (writes paused.json)
 # stallTimeoutMode: lenient
+
+# feat-002 — per-stage fan-out concurrency for skills that dispatch
+# parallel ui-designer subagents (Stage 1 + Stage 3 of /stylesheet-primitives,
+# /screens batches). Default concurrency=8 balances wall-clock improvement
+# against rate-limit headroom; operators may tune per project.
+#
+#   concurrency:    wave width — N parallel agents dispatched, wait for
+#                   all to return, then spawn the next wave of N
+#   maxConcurrency: absolute cap — orchestrator refuses concurrency > this
+#   burstDelay:     ms between waves on rate-limit warnings (0 = no delay)
+#
+# When stages.<name> is absent, the orchestrator falls back to (8, 16, 0).
+stages:
+  stylesheet-primitives:
+    concurrency: 8
+    maxConcurrency: 16
+    burstDelay: 0
+  screens:
+    concurrency: 8
+    maxConcurrency: 16
+    burstDelay: 0

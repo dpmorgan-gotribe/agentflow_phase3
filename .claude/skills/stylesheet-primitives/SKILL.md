@@ -117,6 +117,124 @@ packages/ui-kit/
 
 The agnostic surface authored by `/stylesheet` (tokens, styles, lib, illustrations, icons) is consumed as-is — this skill does NOT regenerate it. If a re-run is needed after token changes, the operator re-runs `/stylesheet` first, then this skill picks up the new tokens.
 
+## Orchestration: 4-Stage DAG (feat-002 — parallel fan-out)
+
+Pre-feat-002, this skill dispatched ONE sequential ui-designer subagent to author the entire React surface (12 primitives + 12 patterns + 5 layouts + 022b artifacts + barrel + Storybook). Empirical wall-clock on test-app was ~3h 30m. Per feat-002, the work fans out across a 4-stage DAG that respects real dependencies + applies the bug-003 drift-mitigation playbook (shared preamble + verbatim-inline contract + post-batch audit + per-component retry) at each fan-out boundary.
+
+The DAG (with target wall-clock at `concurrency=8`):
+
+```
+Stage 0 — Lib + agnostic verify + shared preamble assembly         (sequential, ~1 min)
+   ↓
+Stage 1 — Primitives fan-out (12 mandatory + N extended)           (parallel 8-wide, ~5-10 min)
+   ↓
+Stage 2 — Post-Stage-1 audit + per-component retry loop            (sequential, ~1-3 min)
+   ↓ (gate: <12 mandatory = stage fails)
+Stage 3 — Patterns + Layouts fan-out (12 canonical + N custom + 5) (parallel 8-wide, ~10-15 min)
+   ↓
+Stage 4 — Sequential tail (022b artifacts + barrel + package.json) (sequential, ~10-20 min)
+   ↓
+Stage 5 — Compile + test verification gate (Step 9)                (sequential, ~3-5 min)
+```
+
+**Total target wall-clock: ~30-45 min** at default `concurrency=8` (vs ~3h 30m sequential baseline).
+
+### Concurrency knob (`.claude/models.yaml`)
+
+```yaml
+stages:
+  stylesheet-primitives:
+    concurrency: 8 # default — primitives + patterns fan-out width
+    maxConcurrency: 16 # absolute cap
+    burstDelay: 0 # ms between waves on rate-limit warnings
+```
+
+Operator may tune per-project. The orchestrator reads from `.claude/models.yaml` first, then `~/.claude/models.yaml` as fallback.
+
+### Stage 0 — Lib + agnostic verify + shared preamble assembly
+
+Sequential pre-flight. The invoker:
+
+1. Verifies `packages/ui-kit/src/lib/cn.ts` + `cva.ts` + `motion.ts` exist (authored by `/stylesheet`).
+2. Verifies `tokens.json` + `selected-style.json` + `.components-plan.json` exist.
+3. **Pre-writes** `vitest.config.ts` + `vitest.setup.ts` + `tsconfig.json` BEFORE the fan-out (so every subagent sees the test harness ready).
+4. **Pre-writes** the devDeps + peerDeps into `package.json` (full devDep list per §1a step 3) BEFORE the fan-out. Stage 4 will rewrite `package.json` with the full exports map; this step just lands the deps so subagent self-verify finds the harness installed.
+5. Runs `pnpm install` to make the pre-written devDeps available to subagent test runs.
+6. **Assembles `packages/ui-kit/.shared-preamble.md`** — the canonical "starting ink" every subagent receives identically. Sections:
+
+   a. Authoring rules verbatim (copy of §1e — cn + cva, no raw hex, a11y, server/client defaults, test shape, `data-kit-*` contract)
+   b. `data-kit-*` attribute contract verbatim (copy of §1b.1 — the feat-028 visual-parity contract)
+   c. `tokens.json` content verbatim
+   d. `selected-style.json` content verbatim
+   e. `cn.ts` + `cva.ts` + `motion.ts` source verbatim (so subagents see canonical import patterns)
+   f. Per-target 5-file shape contract + canonical naming + barrel format
+   g. Canonical primitive marker table verbatim (copy of §1c roster)
+   h. Canonical pattern marker table verbatim (copy of §2a roster)
+   i. Canonical layout marker table verbatim (copy of §3 roster)
+   j. **Cross-component consistency contract** — canonical relative imports (`from "../../lib/cn"` not `from "@repo/ui-kit/lib/cn"`); canonical test imports (`from "@testing-library/react"` + `import "@testing-library/jest-dom/vitest"`); canonical story imports (`from "@storybook/react"` per feat-002 fix-pattern 1); canonical PascalCase mapping; canonical `data-kit-component` hardcoded as string literal
+
+   The preamble is the bug-003-style drift-mitigation primitive: agents see the bytes, agents reuse the bytes. Without it, n=12 parallel agents drift at the empirically-measured 75-86% rate.
+
+### Stage 1 — Primitives fan-out
+
+For each primitive in the mandatory 12 + extended N (gated by signoff `componentsApproved[]`):
+
+1. Build the dispatch envelope: shared preamble (read at dispatch) + §1c row for THIS primitive (props/variants/style binding inlined) + target directory path + 5-file contract restated.
+2. Dispatch via the Agent tool with `subagent_type=ui-designer`. **Concurrency: 8 (default)**. Wave-based — spawn 8, wait for all returns, spawn next 8.
+3. Per-subagent self-verify (mirrors `/screens` anti-slop): all 5 files exist + .tsx exports the PascalCase function + root has `data-kit-component="<PascalName>"` literal + test asserts the attribute + no raw hex + `.variants.ts` calls `cva(`/`kitCva(`. Subagent retries internally once before returning `success: false`.
+4. **Observability**: emit `primitive wave {N}: {W} completed · {T}/{TOTAL} total` after each wave.
+
+### Stage 2 — Post-Stage-1 audit + retry loop
+
+After Stage 1's final wave returns, invoke from project cwd:
+
+```bash
+node $FACTORY_ROOT/scripts/audit-ui-kit-component-consistency.mjs --tier primitives
+```
+
+The audit script (shipped by feat-002 alongside this SKILL.md) verifies 18 dimensions D-A through D-R per primitive (see `scripts/audit-ui-kit-component-consistency.mjs` header comment for the full table).
+
+**Retry contract:**
+
+1. For each primitive in `failedComponents[]`, re-dispatch a ui-designer subagent with `--component primitives/{kebab-name}` plus the audit's per-dimension findings as retry context. The retry prompt explicitly names the missing markers ("your `Button.tsx` root is missing `data-kit-component="Button"` — add the literal string, do not derive from a prop").
+2. Max 2 retries per primitive. After 2 failures, mark `needsHumanReview`.
+3. Once all primitives pass OR have hit max retries, advance to Stage 3.
+
+**Hard abort** if <12 mandatory primitives pass (refactor-006 gate, owned by Stage 2). The existing Step 8 hard-gate count moves earlier — fires at end of Stage 2, blocks Stage 3.
+
+### Stage 3 — Patterns + Layouts fan-out
+
+Gated on Stage 2 passing. Identical mechanics to Stage 1, with:
+
+- Roster = 12 canonical patterns (§2a) + N custom patterns (from `.components-plan.json.customPatternsGenerated[]`) + 5 canonical layouts (§3) + N extracted patterns (from `_extracted/*.html` translations).
+- Per-component dispatch envelope adds a **"compose, don't atomize" reminder**: patterns import canonical primitives via `from "../../primitives/{primitive-name}"`; never inline an atomic.
+- Post-fan-out audit runs `--tier patterns-and-layouts` with the additional dimensions D-L (pattern composes primitives), D-M (layout `data-kit-component`), D-N (custom patterns named in plan), D-R (HTMLAttributes title clash).
+
+Same retry loop as Stage 2, max 2 retries per component.
+
+### Stage 4 — Sequential tail (single agent)
+
+Existing Steps 4 (022b artifacts) + 5 (barrel) + 6 (`package.json` full rewrite) + 7 (Storybook build) + 8 (finalize + bug-029 retrofit codemod + ≥12 primitives count gate). Runs as ONE agent since:
+
+- The barrel `src/index.ts` needs the final list of all directories
+- `package.json` rewrite is one file with the full exports map
+- Storybook build is a single invocation
+- The hard count gate has already fired at end of Stage 2
+
+### Stage 5 — Compile + test verification gate
+
+Step 9 (existing). Deterministic exit-0-required chain run after Stage 4. No LLM in the loop. See §"### 9. Compile + test verification gate" below for the full spec.
+
+### Empirical contract
+
+`/stylesheet-primitives` is COMPLETE iff:
+
+1. All 4 fan-out + sequential stages have returned `success: true`
+2. The Stage 2 + Stage 3 audits exit 0 (or the orchestrator marked `needsHumanReview` on max-retries-exhausted components — the return JSON's `failedComponents[]` array surfaces these)
+3. The Stage 5 verify gate exits 0 across all 4 sub-gates (install + typecheck + test + build-storybook)
+
+Reporting `success: true` without ALL THREE conditions is a contract violation (the empirical motivator for feat-002 in the first place).
+
 ## Steps
 
 ### 1. Generate primitives (12 core mandatory + 8 extended on-demand)

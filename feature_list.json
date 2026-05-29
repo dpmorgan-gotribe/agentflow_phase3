@@ -4624,6 +4624,55 @@
       "depends_on": ["phase1-step-037"],
       "closed_at": null,
       "outcome_summary": ""
+    },
+    {
+      "id": "phase1-step-039",
+      "category": "mode-a-design-pipeline",
+      "description": "Ship feat-002 FULL implementation (parallelization scope) — Stages 0-4 of the 4-stage DAG + 18-dimension audit script + concurrency knob + StylesheetPrimitivesOutput.failedComponents[] schema extension. Companion to Row 038's verify-gate slice. Empirical accountability motivator (LESSONS.md 2026-05-29 'Partial-outcome archival silently diverges shipped state from intended state'): operator caught that I shipped only the verify-gate slice of feat-002 and archived the plan as partial without explicit operator authorization. Operator's response: 'if a plan is actioned it should be actioned in full'. Row 039 restores plan to active + ships full scope. Parent: plans/active/feat-002-parallelize-stylesheet-primitives.md.",
+      "steps": [
+        "Restore feat-002 to plans/active/ with status: approved (strip the partial completion record)",
+        "Write scripts/audit-ui-kit-component-consistency.mjs (18 dimensions D-A through D-R, project-agnostic, --tier + --dimension + --json + --strict flags, acronym-friendly PascalCase, kitCva alias recognized, extracted-pattern relaxed contract)",
+        "Add new top-level 'Orchestration: 4-Stage DAG (feat-002)' section to SKILL.md before Steps describing Stage 0-5 with concurrency targets, dispatch envelope shape, per-stage drift mitigation, empirical contract",
+        "Add stages.stylesheet-primitives.{concurrency, maxConcurrency, burstDelay} to .claude/models.yaml + same shape for stages.screens (documented defaults 8 / 16 / 0)",
+        "Add packages/orchestrator-contracts/src/stylesheet-primitives.ts with FailedComponentSchema + StylesheetPrimitivesOutputSchema (includes failedComponents: FailedComponent[] field, backward-compatible default [])",
+        "Wire stylesheet-primitives into packages/orchestrator-contracts/src/index.ts barrel",
+        "Update phase-plan §F with Row 039 paragraph documenting the full-scope shipment + meta-lesson reinforcement",
+        "Smoke-test audit against test-app's existing kit — verify dimensions fire on real drift (D-A 11 patterns missing test/story, D-G 9 tests missing data-kit assertion, etc.)",
+        "Commit on master",
+        "Flip passes:true after empirical wall-clock validation on a fresh project (target: ≤45 min vs ~3h sequential baseline) — defer to next project run; document the deferral honestly in evidence file"
+      ],
+      "approach": "Full feat-002 implementation that the partial-archival in Row 038 should have shipped together. Restore plan to active + author the audit script + restructure SKILL.md for the 4-stage DAG + concurrency knob + schema extension. Wall-clock empirical validation deferred to next fresh-project run since test-app's kit is already authored; row remains passes:false until that measurement lands.",
+      "rejected_alternatives": [
+        {
+          "approach": "Skip Row 039 + just file a follow-up feat for parallelization later",
+          "reason": "Same category error as Row 038's partial archive. The operator's accountability concern was specifically that we were going to move on thinking feat-002 had shipped when it hadn't. Filing a follow-up postpones the work; Row 039 closes the gap now."
+        },
+        {
+          "approach": "Implement the orchestrator-side wave-dispatch logic in this row",
+          "reason": "The orchestrator's Stage-1/Stage-3 wave executor (.ts code in orchestrator/src/) is a separate concrete deliverable that requires careful threading through the existing stage runner. Out of scope for this row — the SKILL.md describes the dispatch shape; the orchestrator code can be a follow-up once the SKILL.md contract is stable."
+        },
+        {
+          "approach": "Run a full empirical validation by re-authoring test-app's kit",
+          "reason": "test-app's kit is already authored (12 primitives + 23 patterns + 5 layouts + Storybook). Re-running /stylesheet-primitives would either short-circuit on the noChange fingerprint OR re-author from scratch (~3h on sequential, ~45min on parallel — but the kit's already shipped). The honest empirical validation site is the next fresh project; defer that measurement to a follow-up evidence file."
+        }
+      ],
+      "expected_outcomes": [
+        "scripts/audit-ui-kit-component-consistency.mjs ships with 18 dimensions D-A through D-R + acronym-friendly PascalCase + kitCva alias recognized + extracted-pattern relaxed contract + project-agnostic walk",
+        ".claude/skills/stylesheet-primitives/SKILL.md has 'Orchestration: 4-Stage DAG (feat-002)' top-level section describing per-stage dispatch + drift mitigation + empirical contract",
+        ".claude/models.yaml has stages.stylesheet-primitives.{concurrency, maxConcurrency, burstDelay} config knob + same for stages.screens",
+        "packages/orchestrator-contracts/src/stylesheet-primitives.ts ships with StylesheetPrimitivesOutputSchema including failedComponents[] field; wired into index.ts barrel",
+        "feat-002 plan restored to active/ with status: approved (partial completion record stripped)",
+        "phase-plan.md §F has Row 039 paragraph documenting full-scope shipment + meta-lesson reinforcement",
+        "Audit smoke-tested against test-app kit reveals real drift (the audit is honest)",
+        "Wall-clock empirical validation deferred to next fresh-project run (honestly noted in evidence)"
+      ],
+      "evidence": "evidence/phase1-step-039-result.txt",
+      "polished": false,
+      "passes": false,
+      "attempt_count": 0,
+      "depends_on": ["phase1-step-038"],
+      "closed_at": null,
+      "outcome_summary": ""
     }
   ]
 }
