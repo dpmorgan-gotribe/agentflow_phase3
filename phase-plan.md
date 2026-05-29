@@ -402,6 +402,23 @@ Meta-lesson (to capture in LESSONS.md on close): _"Consumer-side rules in skill 
 
 The rebuild guarantee for rows 032 + 033 + 034 + 035 combined: a clean rebuild from `phase-1-start` + this §F section should land all SKILL.md additions + both audit scripts; empirical validation is the litmus test that the changes actually fix the regression class.
 
+### Row 036 — /screens chrome consistency (bug-004) — phase1-step-036
+
+Operator observed (post phase1-step-035): chrome styling drifts ACROSS screens within the same project. Specifically — 50% of test-app's 12 screens shipped with `bg-surface-inverted` page-level footers when the gate-3-signed-off `design-system-preview.html` committed `bg-surface-base`; 5/12 mixed `text-text-secondary` (mid-grey #6B6B6B) into dark-band contexts where the preview's vocabulary was `text-text-inverted` / `text-white` / `text-white/85`. Result: visually inconsistent footers (some grey, some near-black) and unreadable dark-grey body text on near-black CTA bands (fails WCAG AA contrast).
+
+This is the **fourth instance of the prose-only-consumer-rule drift class** observed in this Phase-1 session (bug-002, bug-003, investigate-002 — now bug-004). Empirical: when /screens has NO explicit rule about a chrome dimension, parallel agents idiomatically pick whatever their training-data instinct prefers — drift compounds across n=12 parallel agents to roughly the rates observed (50% / 42%).
+
+Three-part project-agnostic fix (mirrors bug-002 + bug-003 shape — consistency-within-project derived from the project's own design-system-preview.html, NOT hardcoded "all projects must have grey footers"):
+
+- `scripts/audit-screen-pattern-consumption.mjs` extended with two new dimensions: **D10 footer-bg consistency** — parses `docs/design-system-preview.html` to find the page-level `<footer>` background utility class; asserts every screen's page-level `<footer>` carries the same class. **D11 dark-band text-vocabulary consistency** — parses dark-bg blocks in the preview (`bg-surface-inverted` / `bg-neutral-{800,900,950}` / `bg-secondary-{500,600}` / `bg-primary-{800,900}` / `bg-accent-{800,900}` / `bg-black`) + collects the set of `text-*` classes used as descendants; asserts every screen's dark-band block uses ONLY text-color classes from that set. Both dimensions project-agnostic — a project whose preview committed a black footer + low-contrast typography passes if every screen mirrors that; what's enforced is consistency-within-project. (added 2026-05-29 after phase1-step-036)
+- `.claude/skills/screens/SKILL.md` §3.5.2 extended with a "Canonical chrome reference — `docs/design-system-preview.html`" subsection. Preamble assembly (step 3.5.1) additionally parses the preview to extract two contracts — canonical footer bg class + canonical dark-band text vocabulary — inlined verbatim into the shared preamble under named subheadings. EVERY screen's page-level `<footer>` MUST emit the canonical footer-bg class; EVERY screen's dark-band block MUST use ONLY the canonical dark-band text vocabulary. Audit dimensions D10 + D11 enforce. (added 2026-05-29 after phase1-step-036)
+- `feature_list.json` row `phase1-step-036` + this §F paragraph + `plans/active/bug-004-screens-chrome-consistency.md`. (added 2026-05-29 after phase1-step-036)
+- **Validation status:** passes:false in feature_list.json pending re-run of `/screens` (single-screen mode, only the 6 D10-affected screens) on `projects/test-app` producing screens that the audit passes (exit 0 across D1+D4+D6+D8+D9+D10+D11). (added 2026-05-29 after phase1-step-036)
+
+Meta-lesson (now n=4 instances of the same drift class — extends the row-035 capture): _"Consumer-side rules in skill bodies need mechanical audits when shipped, not retroactively."_ Concrete empirical rates from this session: bug-002 preview-coverage class — 100% (every project missed components without enforcement); bug-003 kit-content-bypass — 75-86% across n=12 dispatches; bug-004 chrome-consistency — 50% footer-bg + 42% dark-band-text-vocab across n=12 dispatches. Different surfaces, same shape. Forward-looking rule: any skill extension that adds a CONSUMER-SIDE rule (i.e. one the downstream model is expected to follow) ships with the audit script in the same PR — never as a follow-up.
+
+The rebuild guarantee for rows 032 + 033 + 034 + 035 + 036 combined: a clean rebuild from `phase-1-start` + this §F section should land all SKILL.md additions + both audit scripts + D10 + D11 dimensions; empirical validation is the litmus test that the changes actually fix the regression class.
+
 ---
 
 # Phase 2 — Build orchestration (Mode B)

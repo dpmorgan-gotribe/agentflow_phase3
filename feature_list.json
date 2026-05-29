@@ -4470,6 +4470,58 @@
       "depends_on": ["phase1-step-032", "phase1-step-034"],
       "closed_at": null,
       "outcome_summary": ""
+    },
+    {
+      "id": "phase1-step-036",
+      "category": "mode-a-design-pipeline",
+      "description": "Ship bug-004 — /screens cross-screen chrome (footer background + dark-band descendant text classes) drifts within a project. Empirical motivator (operator visual review of test-app post-bug-003 run, 2026-05-29): inquiry-confirmation has a dark footer while other screens have light grey footers; 5 screens use text-text-secondary inside bg-surface-inverted blocks (mid-grey on near-black — fails WCAG contrast) while others correctly use text-text-inverted. Fourth instance of the prose-only-consumer-rule drift class (after bug-002, bug-003, and the parent investigate-002). PROJECT-AGNOSTIC framing: the audit enforces consistency-within-project, NOT specific colors. A SaaS dashboard may legitimately want black footers; a fashion brand may want low-contrast typography. The audit derives the canonical chrome from each project's docs/design-system-preview.html (the operator-signed-off gate-3 artefact); each screen's page-footer + dark-band text vocabulary MUST match the preview's. Three-part fix: (A) extend scripts/audit-screen-pattern-consumption.mjs with D10 (footer-bg consistency: parse design-system-preview footer bg-* class, assert all screens match) + D11 (dark-band text vocabulary consistency: parse preview dark-band blocks, extract descendant text-color class set, assert screens only use classes from that set); (B) extend .claude/skills/screens/SKILL.md §3.5.2 with explicit Canonical chrome reference clause naming design-system-preview.html as authoritative + chrome inheritance rules; (C) update phase-plan.md §F with Row 036 paragraph. Parent: plans/active/bug-004-screens-chrome-consistency.md + plans/active/investigate-002-screens-reinvents-kit-patterns.md.",
+      "steps": [
+        "Extend scripts/audit-screen-pattern-consumption.mjs with D10 (footer-bg consistency) + D11 (dark-band text vocabulary consistency) — both derived from docs/design-system-preview.html for project-agnosticism",
+        "Extend .claude/skills/screens/SKILL.md §3.5.2 with Canonical chrome reference clause: 'design-system-preview.html is authoritative for footer chrome + dark-band text vocabulary; every screen MUST match its classes'",
+        "Update step 8a wiring to cover D10 + D11",
+        "Update Acceptance criteria with new invariants",
+        "Update phase-plan.md §F with new Row 036 paragraph documenting durable behavior + project-agnostic framing",
+        "Re-run /screens on projects/test-app — confirm audit script exits 0 across all 11 dimensions (D1+D4+D6+D8+D9+D10+D11)",
+        "Negative-regression test: edit one screen to swap footer bg → audit exits 1 with footer-mismatch finding",
+        "Cross-project sanity: confirm the audit's consistency-derived contract works on a hypothetical second project with a different preview chrome (e.g. SaaS dashboard with black footer)",
+        "Write evidence/phase1-step-036-result.txt with before/after audit + chrome class table per screen",
+        "Commit on master",
+        "Flip passes:true ONLY after evidence file is read (verify-gate.mjs gate)"
+      ],
+      "approach": "bug-004 closes the fourth observed instance of the prose-only-consumer-rule drift class in one Phase-1 session (bug-002 / bug-003 / bug-004 + investigate-002). Same fix shape: audit script + skill-body extension + feature_list row + phase-plan §F. KEY DIFFERENCE FROM PRIOR BUGS: the audit's contract is PROJECT-AGNOSTIC consistency, derived from each project's own design-system-preview.html. Hatch's preview commits to light-grey footer + high-contrast dark-band text; future projects may commit to different vocabularies — the audit asserts consistency-within-project regardless. Strengthens the LESSONS.md meta-lesson candidate: consumer-side rules need mechanical audits shipped paired with the rule, not retroactively.",
+      "rejected_alternatives": [
+        {
+          "approach": "Hardcode 'footer must be bg-surface-base' + 'dark-band text must be text-text-inverted' in SKILL.md",
+          "reason": "Projects vary. SaaS dashboards may want black footers; fashion brands may want low-contrast typography. Drift-prevention is consistency-within-project, derived from the project's own design-system-preview.html (operator-signed-off chrome contract)."
+        },
+        {
+          "approach": "Surgical-patch the 12 test-app screens directly without filing a bug",
+          "reason": "Same drift would recur on the next project. Pattern observed: prose-only consumer-side rules drift ≥75% of the time across n=4 instances this session."
+        },
+        {
+          "approach": "Wait for /visual-review (task 025b) to catch this via screenshot rubric",
+          "reason": "/visual-review fires AFTER /screens completes + uses interpretive rubric. Mechanical class-vocabulary check catches drift faster + deterministically + before /visual-review burns LLM time."
+        },
+        {
+          "approach": "Make audit detect WCAG contrast failures by resolving CSS variables + computing contrast ratio",
+          "reason": "Too much surface area for v1. Vocabulary consistency is the simpler proxy. WCAG calc is a future enhancement."
+        }
+      ],
+      "expected_outcomes": [
+        "scripts/audit-screen-pattern-consumption.mjs gains D10 + D11 dimensions both deriving contracts from docs/design-system-preview.html (project-agnostic)",
+        "skills/screens/SKILL.md §3.5.2 has the new Canonical chrome reference clause; step 8a audit invocation covers D10 + D11",
+        "Re-running /screens on projects/test-app produces 12 screens that the extended audit passes (all 11 dimensions)",
+        "Visual eyeball: all 12 footers identical shade; dark CTA bands have readable + consistent text colors",
+        "Negative-regression test: per-screen edit triggers audit failure with specific dimension flagged",
+        "phase-plan.md §F has Row 036 paragraph"
+      ],
+      "evidence": "evidence/phase1-step-036-result.txt",
+      "polished": false,
+      "passes": false,
+      "attempt_count": 0,
+      "depends_on": ["phase1-step-032", "phase1-step-034", "phase1-step-035"],
+      "closed_at": null,
+      "outcome_summary": ""
     }
   ]
 }

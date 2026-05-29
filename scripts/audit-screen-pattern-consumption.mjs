@@ -75,6 +75,7 @@ const componentsShapesPath = join(
   ".components-shapes.json",
 );
 const preamblePath = join(ROOT, "docs", "screens", ".shared-preamble.md");
+const previewPath = join(ROOT, "docs", "design-system-preview.html");
 
 if (!existsSync(screensDir)) die(`missing ${screensDir}`);
 if (!existsSync(patternsDir)) die(`missing ${patternsDir}`);
@@ -204,7 +205,90 @@ const screens = screenFiles.map((f) => ({
 if (screens.length === 0) die(`no screens found under ${screensDir}`);
 
 // ─── Run audits per screen per dimension ────────────────────────────
-const findings = { D1: [], D4: [], D6: [], D8: [], D9: [] };
+const findings = { D1: [], D4: [], D6: [], D8: [], D9: [], D10: [], D11: [] };
+
+// ─── Parse design-system-preview.html for canonical chrome (D10 + D11) ─
+let previewFooterBg = null;
+let previewDarkBandTextVocab = new Set();
+const DARK_BG_PATTERNS = [
+  /bg-surface-inverted/,
+  /bg-neutral-(8|9)\d{2}/,
+  /bg-secondary-[56]00/,
+  /bg-black/,
+];
+function isDarkBgClass(cls) {
+  return DARK_BG_PATTERNS.some((re) => re.test(cls));
+}
+
+if (existsSync(previewPath)) {
+  const preview = readFileSync(previewPath, "utf8");
+
+  // D10: canonical page-footer bg class
+  const previewFooters = [
+    ...preview.matchAll(/<footer[\s\S]*?<\/footer>/g),
+  ].map((m) => m[0]);
+  const pageFooterHtml =
+    previewFooters.find(
+      (f) =>
+        f.includes('data-comp="Footer') ||
+        f.includes('data-kit-component="Footer"'),
+    ) ||
+    previewFooters[previewFooters.length - 1] ||
+    "";
+  if (pageFooterHtml) {
+    const footerOpen = pageFooterHtml.match(/<footer[^>]*class="([^"]+)"/);
+    if (footerOpen) {
+      const bgClass = footerOpen[1]
+        .split(/\s+/)
+        .find((c) => /^bg-[a-z0-9-]+(\/\d+)?$/.test(c));
+      if (bgClass) previewFooterBg = bgClass;
+    }
+  }
+
+  // D11: canonical dark-band text-color vocabulary
+  // Find every element with a dark bg class; extract all text-* classes used as descendants
+  const findDarkBlocks = (s) => {
+    const blocks = [];
+    const tagOpen =
+      /<(section|div|aside|footer|header|main|article)\b[^>]*class="([^"]+)"[^>]*>/g;
+    let m;
+    while ((m = tagOpen.exec(s)) !== null) {
+      const classes = m[2].split(/\s+/);
+      if (classes.some(isDarkBgClass)) {
+        const tag = m[1];
+        const opener = new RegExp(`<${tag}\\b`, "g");
+        const closer = new RegExp(`</${tag}>`, "g");
+        let depth = 1;
+        let cursor = tagOpen.lastIndex;
+        while (depth > 0 && cursor < s.length) {
+          opener.lastIndex = cursor;
+          closer.lastIndex = cursor;
+          const no = opener.exec(s);
+          const nc = closer.exec(s);
+          if (!nc) break;
+          if (no && no.index < nc.index) {
+            depth++;
+            cursor = no.index + no[0].length;
+          } else {
+            depth--;
+            cursor = nc.index + nc[0].length;
+          }
+        }
+        blocks.push(s.slice(tagOpen.lastIndex, cursor));
+        tagOpen.lastIndex = cursor;
+      }
+    }
+    return blocks;
+  };
+  const previewDarkBlocks = findDarkBlocks(preview);
+  for (const blk of previewDarkBlocks) {
+    for (const cm of blk.matchAll(
+      /text-(text-)?[a-z][a-zA-Z0-9-]*(\/[0-9]+)?/g,
+    )) {
+      previewDarkBandTextVocab.add(cm[0]);
+    }
+  }
+}
 
 for (const s of screens) {
   // ─── D1. Named-pattern consumption ────────────────────────────────
@@ -362,6 +446,96 @@ for (const s of screens) {
       }
     }
   }
+
+  // ─── D10. Footer-bg consistency with design-system-preview ─────────
+  if ((DIM === "all" || DIM === "D10") && previewFooterBg) {
+    // Find page-level footer (preferring data-kit-component="Footer", else last footer)
+    const allFooters = [...s.html.matchAll(/<footer[\s\S]*?<\/footer>/g)].map(
+      (m) => m[0],
+    );
+    const pageFooter =
+      allFooters.find((f) => f.includes('data-kit-component="Footer"')) ||
+      allFooters[allFooters.length - 1] ||
+      "";
+    if (pageFooter) {
+      const footerOpen = pageFooter.match(/<footer[^>]*class="([^"]+)"/);
+      const screenBg = footerOpen
+        ? footerOpen[1]
+            .split(/\s+/)
+            .find((c) => /^bg-[a-z0-9-]+(\/\d+)?$/.test(c))
+        : null;
+      if (screenBg !== previewFooterBg) {
+        findings.D10.push({
+          screen: s.id,
+          actual: screenBg || "(no bg-* class)",
+          expected: previewFooterBg,
+          source: "docs/design-system-preview.html page-footer",
+        });
+      }
+    }
+  }
+
+  // ─── D11. Dark-band text-vocabulary consistency ────────────────────
+  if ((DIM === "all" || DIM === "D11") && previewDarkBandTextVocab.size > 0) {
+    // Find dark-band blocks in the screen + collect descendant text-* classes;
+    // anything not in the preview's vocabulary is drift.
+    const findScreenDarkBlocks = (s2) => {
+      const blocks = [];
+      const tagOpen =
+        /<(section|div|aside|footer|header|main|article)\b[^>]*class="([^"]+)"[^>]*>/g;
+      let m;
+      while ((m = tagOpen.exec(s2)) !== null) {
+        const classes = m[2].split(/\s+/);
+        if (classes.some(isDarkBgClass)) {
+          const tag = m[1];
+          const opener = new RegExp(`<${tag}\\b`, "g");
+          const closer = new RegExp(`</${tag}>`, "g");
+          let depth = 1;
+          let cursor = tagOpen.lastIndex;
+          while (depth > 0 && cursor < s2.length) {
+            opener.lastIndex = cursor;
+            closer.lastIndex = cursor;
+            const no = opener.exec(s2);
+            const nc = closer.exec(s2);
+            if (!nc) break;
+            if (no && no.index < nc.index) {
+              depth++;
+              cursor = no.index + no[0].length;
+            } else {
+              depth--;
+              cursor = nc.index + nc[0].length;
+            }
+          }
+          blocks.push({
+            content: s2.slice(tagOpen.lastIndex, cursor),
+            startLine: s2.slice(0, m.index).split("\n").length,
+          });
+          tagOpen.lastIndex = cursor;
+        }
+      }
+      return blocks;
+    };
+    const screenDarkBlocks = findScreenDarkBlocks(s.html);
+    for (const blk of screenDarkBlocks) {
+      const found = new Set();
+      for (const cm of blk.content.matchAll(
+        /text-(text-)?[a-z][a-zA-Z0-9-]*(\/[0-9]+)?/g,
+      )) {
+        found.add(cm[0]);
+      }
+      const outsideVocab = [...found].filter(
+        (cls) => !previewDarkBandTextVocab.has(cls),
+      );
+      if (outsideVocab.length > 0) {
+        findings.D11.push({
+          screen: s.id,
+          darkBandStartLine: blk.startLine,
+          outsideVocab,
+          previewVocab: [...previewDarkBandTextVocab],
+        });
+      }
+    }
+  }
 }
 
 // ─── D6. Cross-screen avatar consistency ────────────────────────────
@@ -404,6 +578,8 @@ const counts = {
   D6: findings.D6.length,
   D8: findings.D8.length,
   D9: findings.D9.length,
+  D10: findings.D10.length,
+  D11: findings.D11.length,
 };
 const totalDriftCount = Object.values(counts).reduce((a, b) => a + b, 0);
 
@@ -457,6 +633,12 @@ console.log(
 console.log(
   `    D9 (non-canonical keyframes): ${counts.D9} keyframe definitions`,
 );
+console.log(
+  `    D10 (footer-bg consistency): ${counts.D10} screens mismatch preview footer-bg`,
+);
+console.log(
+  `    D11 (dark-band text vocab):   ${counts.D11} screen × dark-band findings`,
+);
 
 const showDetails = (label, arr, render) => {
   if (arr.length === 0) return;
@@ -501,6 +683,18 @@ showDetails(
   findings.D9,
   (f) =>
     `${f.screen}: @keyframes "${f.keyframeName}" (not in canonical kit set)`,
+);
+showDetails(
+  "D10",
+  findings.D10,
+  (f) =>
+    `${f.screen} page-footer bg: actual="${f.actual}" expected="${f.expected}" (from preview)`,
+);
+showDetails(
+  "D11",
+  findings.D11,
+  (f) =>
+    `${f.screen} dark-band ~line ${f.darkBandStartLine}: outside-vocab=[${f.outsideVocab.slice(0, 6).join(", ")}]`,
 );
 
 console.log(
