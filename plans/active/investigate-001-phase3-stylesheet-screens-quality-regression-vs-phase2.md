@@ -310,3 +310,15 @@ No code edits were made during this investigation — read-only static compariso
 - Phase 2 test-app path: `C:\Development\ps\claude\claude_\agentflow_phase2\projects\test-app`
 - Phase 3 test-app path: `C:\Development\ps\claude\claude_\agentflow_phase3\projects\test-app`
 - Gulia reference (Phase 2-era quality baseline): `C:\Development\ps\claude\claude_\agentflow\agentflow_version2\agentflow\projects\gulia\outputs\screens\screen-01-home.html`
+
+## Operator scoring baseline (calibration data — 2026-05-29)
+
+| Reference run | Operator score (out of 10) | Notes |
+|---|---|---|
+| Phase 2 gulia `/stylesheet` + `/screens` (the empirical "good") | **9 / 10** | What "right" looks like. Rich custom CSS decoration, floating overlays, logo marquee, stats band, hero visual card, backdrop-blur nav, warm shadow tints used at page level. |
+| Phase 3 test-app `/stylesheet` + `/screens` (this session's run) | **1 / 10** | Generic kit-only Tailwind composition, no decoration, no fidelity to the Spark Studio mockup. 771-line home.html vs gulia's 1507. |
+| **Gap to close** | **+8 points** | Investigation target: get Phase 3 to ≥7/10 on a clean test-app run. |
+
+The 8-point gap is concrete enough that the investigation's "did we fix it?" check is a re-run of `/stylesheet` + `/screens` on Phase 3 test-app, scored against the same rubric the operator used for the gulia 9/10. If post-fix Phase 3 lands at ≥7/10, the regression is closed; <5/10 means the fix didn't address the root cause and the investigation re-opens with a stronger hypothesis.
+
+Operator decided to proceed past Phase 1 Gates 3+4 on 2026-05-29 with the current 1/10 quality, accepting v1 output so the rebuild's end-to-end smoke can continue. The investigation remains active in `plans/active/`; whoever executes it (operator on demand, or a fresh /plan-investigation session) inherits this calibration baseline.
