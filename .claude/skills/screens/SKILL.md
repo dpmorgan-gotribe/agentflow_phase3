@@ -212,6 +212,32 @@ Both contracts are project-agnostic: a project whose preview committed a black f
 
 These are enforced by the audit at step 8a — `D10` (footer-bg consistency) + `D11` (dark-band text-vocabulary consistency).
 
+##### Pattern inlining inside dark contexts — phase1-step-037 / bug-005
+
+`_extracted/*.html` patterns are extracted from light-bg sections of the selected mockup and carry baked-in text-color classes appropriate for light surfaces. The eyebrow pattern (`_extracted/eyebrow.html`) is the canonical example: its source class list includes `text-text-secondary` (mid-grey, designed for legibility on `bg-surface-base`).
+
+When inlining such a pattern into a DARK section (any block carrying `bg-surface-inverted` / `bg-neutral-{800,900,950}` / `bg-secondary-{500,600,700,800,900}` / `bg-primary-{800,900,950}` / `bg-accent-{800,900,950}` / `bg-black`), inlining VERBATIM is the wrong default — the baked-in light-bg text tokens resolve to dark colors that fail WCAG AA contrast on dark surfaces.
+
+**Required swaps when inlining a light-bg pattern into a dark section:**
+
+| Source class (light-bg)              | Dark-band equivalent (pick one)            |
+| ------------------------------------ | ------------------------------------------ |
+| `text-text-primary`                  | `text-text-inverted` OR `text-white`       |
+| `text-text-secondary`                | `text-text-inverted/70` OR `text-white/70` |
+| `text-text-tertiary`                 | `text-text-inverted/50` OR `text-white/50` |
+| `text-neutral-{600,700,800,900,950}` | `text-text-inverted/70` OR `text-white/70` |
+| `text-black`                         | `text-text-inverted` OR `text-white`       |
+
+Use the `text-text-inverted/N` form when the project's preview's dark-CTA-band uses that vocabulary (canonical kit token); use `text-white/N` when the project's preview uses literal-utility text-white. Both are equivalent on dark bg.
+
+Audit dimension D11 enforces this mechanically via TWO independent checks:
+
+1. **Hardcoded dark-text-class blocklist** (ALWAYS errors): any `text-text-{primary,secondary,tertiary}` / `text-neutral-{700-950}` / `text-black` inside a dark-bg block (bg-context-aware) is unambiguously broken regardless of vocab membership. These tokens resolve to dark colors per `tokens.css`. Hardcoded findings ABORT the batch and trigger per-screen retry.
+
+2. **Vocab-derived consistency check** (warnings by default; errors in `--strict`): text-\* classes inside dark-bg blocks that aren't family-equivalent to the preview's dark-band vocabulary surface as informational drift. The preview's dark-band vocabulary is derived from `docs/design-system-preview.html`'s dark-bg blocks — if your project's preview models a dark CTA band, the vocabulary will cover the legit dark-band tokens automatically.
+
+The two checks are defense-in-depth: hardcoded catches universally-broken combinations; vocab-derived catches project-specific drift relative to the chosen chrome.
+
 ### 4. Compose each remaining screen
 
 For each screen in the remaining set:
@@ -504,15 +530,15 @@ The script reads each project's own:
 
 …and verifies seven drift dimensions:
 
-| Dim                               | Check                                                                                                                                                                                      | Pass condition   |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
-| **D1** Named-pattern consumption  | Every screen that references a kit pattern (via `data-pattern` attr or anchor class) contains the canonical anchor classes + SVG path bytes + keyframe names from `_extracted/{slug}.html` | 0 cells drifting |
-| **D4** Hex-literal leakage        | Every SVG `fill="#XXXXXX"` in a screen matches a canonical kit-pattern byte sequence; no inventing new brand-mark SVGs with literal hex                                                    | 0 leaks          |
-| **D6** Cross-screen imagery       | Canonical avatars (per preamble) are reused across screens; canonical case-study seeds match across home/work-index/case-study-detail                                                      | 0 mismatches     |
-| **D8** Layout shell               | Nav position = `fixed`; footer = 4-column grid; max-w-[1280px] present                                                                                                                     | 0 violations     |
-| **D9** Non-canonical keyframes    | Every `@keyframes <name>` defined in inline `<style>` is in the canonical set extracted from `_extracted/*.html`                                                                           | 0 non-canonical  |
-| **D10** Footer-bg consistency     | Every screen's page-level `<footer>` carries the same `bg-*` class as the page-level footer in `docs/design-system-preview.html` (phase1-step-036 / bug-004)                               | 0 mismatches     |
-| **D11** Dark-band text vocabulary | Every `text-*` class used inside a dark-bg block on a screen also appears inside a dark-bg block in `docs/design-system-preview.html` (phase1-step-036 / bug-004)                          | 0 outside-vocab  |
+| Dim                               | Check                                                                                                                                                                                                                                                                                                                                                                | Pass condition                         |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| **D1** Named-pattern consumption  | Every screen that references a kit pattern (via `data-pattern` attr or anchor class) contains the canonical anchor classes + SVG path bytes + keyframe names from `_extracted/{slug}.html`                                                                                                                                                                           | 0 cells drifting                       |
+| **D4** Hex-literal leakage        | Every SVG `fill="#XXXXXX"` in a screen matches a canonical kit-pattern byte sequence; no inventing new brand-mark SVGs with literal hex                                                                                                                                                                                                                              | 0 leaks                                |
+| **D6** Cross-screen imagery       | Canonical avatars (per preamble) are reused across screens; canonical case-study seeds match across home/work-index/case-study-detail                                                                                                                                                                                                                                | 0 mismatches                           |
+| **D8** Layout shell               | Nav position = `fixed`; footer = 4-column grid; max-w-[1280px] present                                                                                                                                                                                                                                                                                               | 0 violations                           |
+| **D9** Non-canonical keyframes    | Every `@keyframes <name>` defined in inline `<style>` is in the canonical set extracted from `_extracted/*.html`                                                                                                                                                                                                                                                     | 0 non-canonical                        |
+| **D10** Footer-bg consistency     | Every screen's page-level `<footer>` carries the same `bg-*` class as the page-level footer in `docs/design-system-preview.html` (phase1-step-036 / bug-004)                                                                                                                                                                                                         | 0 mismatches                           |
+| **D11** Dark-band text vocabulary | Two independent checks: (a) **hardcoded blocklist** (ALWAYS errors) — `text-text-{primary,secondary,tertiary}` / `text-neutral-{700-950}` / `text-black` inside a dark-bg block (bg-context-aware) (phase1-step-037 / bug-005); (b) **vocab-derived** (warnings; `--strict` to enforce) — `text-*` classes whose family is not in the preview's dark-band vocabulary | 0 hardcoded + 0 outside-vocab (strict) |
 
 **Hard-abort contract.** On exit code != 0, this skill ABORTS with `success: false` and `failedScreens[]` populated from the audit's per-screen findings. Per-screen retry logic:
 
@@ -755,3 +781,5 @@ HTML, JSON go to files. Response text contains ONLY status + paths + return-JSON
 - [ ] `node $FACTORY_ROOT/scripts/audit-screen-pattern-consumption.mjs` exits 0 from the project cwd — D1 + D4 + D6 + D8 + D9 all pass (phase1-step-035 / bug-003)
 - [ ] §3.5.2 includes a "Canonical chrome reference — docs/design-system-preview.html" subsection naming the canonical footer-bg class + canonical dark-band text vocabulary derivation (phase1-step-036 / bug-004)
 - [ ] Audit dimensions D10 (footer-bg consistency) + D11 (dark-band text vocabulary consistency) — both PASS from project cwd; both derived per-project by parsing `docs/design-system-preview.html` (phase1-step-036 / bug-004)
+- [ ] §3.5.2 includes a "Pattern inlining inside dark contexts" subsection naming the required swaps when inlining a light-bg `_extracted/*.html` pattern into a dark section (phase1-step-037 / bug-005)
+- [ ] Audit D11 has fail-closed semantics on empty preview-dark-band vocab + bg-context tracking + hardcoded dark-text blocklist as independent secondary check (phase1-step-037 / bug-005). Auxiliary: `audit-preview-coverage` asserts the preview models ≥1 dark-bg block with descendant text.

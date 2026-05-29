@@ -166,11 +166,64 @@ for (const [primitive, variants] of requiredVariants) {
 
 const missingIcons = [...requiredIcons].filter((i) => !presentIcons.has(i));
 
+// ─── Dark-band coverage assertion — bug-005 / Part B ───────────────────
+// Required by audit-screen-pattern-consumption D11: the preview must model
+// at least one dark-bg block with descendant text so D11's vocab-derivation
+// has something to learn. Without it, D11 either silently no-ops (pre-bug-005)
+// or fail-closes with empty-vocab (post-bug-005). Both are blocking.
+// The structural fix is upstream: force the preview to model the surface.
+const DARK_BG_PATTERNS = [
+  /^bg-surface-inverted/,
+  /^bg-neutral-(800|900|950)/,
+  /^bg-secondary-(500|600|700|800|900)/,
+  /^bg-primary-(800|900|950)/,
+  /^bg-accent-(800|900|950)/,
+  /^bg-black/,
+];
+const isDarkBgClass = (cls) => DARK_BG_PATTERNS.some((re) => re.test(cls));
+// Find any tag in the preview with a dark-bg class AND with ≥1 descendant
+// carrying a `text-*` class (color, opacity-variant, etc.). Returns true if
+// the preview models a dark surface with typography.
+const previewModelsDarkBand = (() => {
+  const opens = [
+    ...preview.matchAll(/<([a-zA-Z][a-zA-Z0-9]*)\b[^>]*class="([^"]+)"[^>]*>/g),
+  ];
+  for (const m of opens) {
+    const classes = m[2].split(/\s+/);
+    if (!classes.some(isDarkBgClass)) continue;
+    const tag = m[1];
+    // Find matching closer
+    const oRe = new RegExp(`<${tag}\\b`, "g");
+    const cRe = new RegExp(`</${tag}>`, "g");
+    let depth = 1;
+    let cursor = m.index + m[0].length;
+    while (depth > 0 && cursor < preview.length) {
+      oRe.lastIndex = cursor;
+      cRe.lastIndex = cursor;
+      const no = oRe.exec(preview);
+      const nc = cRe.exec(preview);
+      if (!nc) break;
+      if (no && no.index < nc.index) {
+        depth++;
+        cursor = no.index + no[0].length;
+      } else {
+        depth--;
+        cursor = nc.index + nc[0].length;
+      }
+    }
+    const block = preview.slice(m.index + m[0].length, cursor);
+    if (/text-[a-z][a-zA-Z0-9/-]*/.test(block)) return true;
+  }
+  return false;
+})();
+const darkBandCoverageGap = !previewModelsDarkBand;
+
 const totalGaps =
   missingObserved.length +
   missingCanonicalUnused.length +
   missingVariants.length +
-  (STRICT_ICONS ? missingIcons.length : 0);
+  (STRICT_ICONS ? missingIcons.length : 0) +
+  (darkBandCoverageGap ? 1 : 0);
 
 // ─── Report ────────────────────────────────────────────────────────
 const result = {
@@ -194,6 +247,7 @@ const result = {
     missingVariants,
     missingIcons: STRICT_ICONS ? missingIcons : [],
     missingIconsWarning: STRICT_ICONS ? [] : missingIcons,
+    darkBandCoverageGap,
   },
   pass: totalGaps === 0,
 };
@@ -243,6 +297,37 @@ if (STRICT_ICONS && missingIcons.length > 0) {
     `\n  ⚠ Icons not in preview catalog (${missingIcons.length}) — warning only (run with --strict to fail):`,
   );
   missingIcons.forEach((i) => console.log(`      - ${i}`));
+}
+
+if (darkBandCoverageGap) {
+  console.log(`\n  ✗ Preview missing dark-band coverage (bug-005 / Part B):`);
+  console.log(
+    `      design-system-preview.html does not contain a dark-bg block with`,
+  );
+  console.log(
+    `      descendant text. Audit-screen-pattern-consumption D11 derives its`,
+  );
+  console.log(
+    `      dark-band text vocabulary from this section; without it, D11 either`,
+  );
+  console.log(
+    `      fail-closes (post-bug-005) or silently no-ops (pre-bug-005).`,
+  );
+  console.log("");
+  console.log(
+    `      Fix: extend design-system-preview.html with a section like:`,
+  );
+  console.log(
+    `        <section class="bg-surface-inverted text-text-inverted py-20">`,
+  );
+  console.log(`          <div class="max-w-[1280px] mx-auto px-8">`);
+  console.log(`            <h2 class="text-text-inverted">Contact CTA</h2>`);
+  console.log(`            <p class="text-text-inverted/70">...</p>`);
+  console.log(`          </div>`);
+  console.log(`        </section>`);
+  console.log(
+    `      …demonstrating how the kit's typography looks on dark surfaces.`,
+  );
 }
 
 if (result.pass) {

@@ -81,6 +81,7 @@ The audit's preview parser at lines 250-290 finds the dark-bg blocks in `docs/de
 The `<a>` tags are NOT in the audit's tag list → the dark case-study-card blocks are never opened by the walker. The scrim `<div>` IS opened, but its content is just an `aria-hidden` overlay with no descendant `text-*` classes. Net result: `previewDarkBandTextVocab` is the empty set.
 
 Verified by direct instrumentation:
+
 ```
 Vocab (full, audit-equivalent): []
 Contains text-text-secondary? false
@@ -104,10 +105,10 @@ When D11 IS active (vocab non-empty), the screen-side scanner (lines 482-535) wa
 
 Bg-context-aware re-detection against the 12 test-app screens surfaces **2 real dark-on-dark text instances** that D11 PASSED:
 
-| Screen                          | Line  | Issue                                                                                                                                                                                                                                                            |
-| ------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `services-detail-visual.html`   | ~1191 | Eyebrow pattern inlined verbatim from `_extracted/eyebrow.html` (with its baked-in `text-text-secondary` for light-bg use) into the screen's `<section class="bg-surface-inverted text-text-inverted">` CTA band → mid-grey "Let's talk" eyebrow on near-black bg |
-| `services-index.html`           | ~738  | Identical pattern: same eyebrow shape (`text-text-secondary`) inside same shape of `bg-surface-inverted` CTA band                                                                                                                                                |
+| Screen                        | Line  | Issue                                                                                                                                                                                                                                                             |
+| ----------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `services-detail-visual.html` | ~1191 | Eyebrow pattern inlined verbatim from `_extracted/eyebrow.html` (with its baked-in `text-text-secondary` for light-bg use) into the screen's `<section class="bg-surface-inverted text-text-inverted">` CTA band → mid-grey "Let's talk" eyebrow on near-black bg |
+| `services-index.html`         | ~738  | Identical pattern: same eyebrow shape (`text-text-secondary`) inside same shape of `bg-surface-inverted` CTA band                                                                                                                                                 |
 
 Other 10 screens correctly handle dark-band eyebrows (using `text-white/70` / `text-text-inverted` / explicit "inverted variant" comment markers). So the visual issue the operator sees is real, narrow, and concentrated on the eyebrow-pattern-in-dark-CTA collision.
 
@@ -152,6 +153,7 @@ Track the work + capture the meta-lesson: "Even mechanical audits can silently n
 ### Recovery validation pass (post-Part A + B + C)
 
 Re-run `/screens` in single-screen mode on the 2 affected screens (`services-detail-visual`, `services-index`) only. Confirm:
+
 - The strengthened audit fires D11 with specific findings
 - Post-fix, audit exits 0
 - Visual eyeball: dark CTA bands have readable high-contrast text on those 2 screens

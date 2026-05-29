@@ -4522,6 +4522,59 @@
       "depends_on": ["phase1-step-032", "phase1-step-034", "phase1-step-035"],
       "closed_at": null,
       "outcome_summary": ""
+    },
+    {
+      "id": "phase1-step-037",
+      "category": "mode-a-design-pipeline",
+      "description": "Ship bug-005 — D11 dark-band detector silently no-ops (fail-open) when design-system-preview.html doesn't model a dark-bg block with descendant text. Empirical motivator (investigate-003, 2026-05-29): operator visually saw dark-on-dark text remaining on test-app screens after bug-004 shipped + reported PASS. Triple-compounding bug found: (F1) preview parser tag list omits <a>/<button>/<span> so case-study-card-style dark blocks invisible; (F2) empty vocab silently disables D11 instead of failing closed; (F3) no bg-context tracking inside dark blocks so descendants of nested light cards pollute vocab. Real impact: 2 of 12 test-app screens (services-detail-visual, services-index) have text-text-secondary on eyebrow inside bg-surface-inverted CTA band — D11 passed them silently. Fifth instance of prose-only-consumer-rule drift class but with NEW shape: even mechanical audits can no-op when their contract is derived from upstream artifacts that don't model the contract surface. Four-part fix: (A) strengthen D11 — extend tag list, fail-closed on empty vocab, bg-context tracking, hardcoded dark-text-class blocklist as independent secondary check; (B) extend scripts/audit-preview-coverage.mjs to assert preview models ≥1 dark-bg block with descendant text (structural fix upstream of D11); (C) extend .claude/skills/screens/SKILL.md §3.5.2 with explicit pattern-inlining-into-dark-contexts clause; (D) phase-plan.md §F Row 037 + meta-lesson capture. Parent: plans/active/bug-005-d11-dark-on-dark-detector-strengthening.md + investigate-003.",
+      "steps": [
+        "Extend scripts/audit-screen-pattern-consumption.mjs D11: tag list (a/button/span), fail-closed on empty vocab, bg-context tracking, hardcoded dark-text-class blocklist as independent secondary check",
+        "Extend scripts/audit-preview-coverage.mjs with preview-dark-band-coverage assertion (≥1 dark-bg block with descendant text)",
+        "Extend test-app's docs/design-system-preview.html with a Contact CTA band example (closes the upstream contract-surface gap so D11 vocab is non-empty)",
+        "Extend .claude/skills/screens/SKILL.md §3.5.2 with Pattern inlining inside dark contexts clause: when inlining light-bg pattern into dark section, swap text-text-{primary,secondary,tertiary}/text-neutral-{700-950}/text-black to dark-band equivalents (text-white/N or text-text-inverted/N)",
+        "Update phase-plan.md §F with new Row 037 paragraph + meta-lesson capture",
+        "Surgical re-fix on services-detail-visual + services-index — swap text-text-secondary → text-white/70 in dark CTA band eyebrows",
+        "Run strengthened audit — confirm 0 findings across D1+D4+D6+D8+D9+D10+D11",
+        "Negative-regression test: remove dark CTA band from preview → audit-preview-coverage exits 1; D11 vocab empty → audit fail-closes with structured warning",
+        "Write evidence/phase1-step-037-result.txt with before/after audit + bug-context detector trace + dark CTA preview addition shape",
+        "Commit on master",
+        "Flip passes:true ONLY after evidence file is read (verify-gate.mjs gate)"
+      ],
+      "approach": "bug-005 closes the FIFTH observed instance of the prose-only-consumer-rule drift class in one Phase-1 session (bug-002 / bug-003 / bug-004 / bug-005 + investigate-002 + investigate-003). NEW SHAPE: mechanical audits can themselves silently no-op when their contracts are derived from upstream artifacts that don't model the contract surface. Fix shape is the same triad (audit + skill body + feature_list row + phase-plan §F) but the audit fix is structural: fail-closed semantics + an independent hardcoded fallback blocklist + an UPSTREAM preview-coverage assertion that forces the contract surface to be modeled. Meta-lesson candidate for LESSONS.md: derivation-based audits must fail-CLOSED on empty contracts and must be paired with hardcoded independent fallback assertions for universally-broken combinations.",
+      "rejected_alternatives": [
+        {
+          "approach": "Add text-text-secondary / text-text-tertiary to the preview's dark-band vocab manually",
+          "reason": "Vocab pollution doesn't help. The tokens resolve to dark colors per tokens.css regardless of where they appear; approving them in vocab just masks the bug."
+        },
+        {
+          "approach": "Convert _extracted/eyebrow.html to use currentColor instead of text-text-secondary",
+          "reason": "Valid design-system improvement but it's a refactor of every extracted pattern (eyebrow + every other pattern that bakes in text colors). Out of scope; worth filing as follow-up after bug-005 stabilizes the audit."
+        },
+        {
+          "approach": "Move D11 enforcement out of screens audit into Playwright + getComputedStyle assertions",
+          "reason": "bug-078 territory (audit-computed-styles, deferred). Heavyweight runtime dependency before any builder fires. Class-level static checks catch ≥90% of regression class with zero runtime overhead."
+        },
+        {
+          "approach": "Hardcode the dark-text blocklist as the SOLE D11 check; drop vocab-derived approach",
+          "reason": "Defense in depth. Vocab catches project-specific drift (e.g. screen uses text-white/40 when preview committed text-white/85); blocklist catches universally-broken combinations. Both valuable in tandem."
+        }
+      ],
+      "expected_outcomes": [
+        "scripts/audit-screen-pattern-consumption.mjs D11 has extended tag list, fail-closed on empty vocab, bg-context tracking, hardcoded dark-text-class blocklist as independent secondary check",
+        "scripts/audit-preview-coverage.mjs asserts preview models ≥1 dark-bg block with descendant text",
+        "skills/screens/SKILL.md §3.5.2 has Pattern inlining inside dark contexts clause",
+        "Re-running /screens on projects/test-app (with extended preview + 2 surgical screen fixes) produces 12 screens that strengthened D11 passes",
+        "Visual eyeball: services-detail-visual + services-index dark CTA bands have readable high-contrast eyebrow text",
+        "Negative-regression test: empty-vocab condition fails audit closed; preview-coverage missing dark-band fails preview audit",
+        "phase-plan.md §F has Row 037 paragraph + meta-lesson capture"
+      ],
+      "evidence": "evidence/phase1-step-037-result.txt",
+      "polished": false,
+      "passes": false,
+      "attempt_count": 0,
+      "depends_on": ["phase1-step-034", "phase1-step-035", "phase1-step-036"],
+      "closed_at": null,
+      "outcome_summary": ""
     }
   ]
 }

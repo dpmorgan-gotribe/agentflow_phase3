@@ -44,6 +44,7 @@ import { join } from "node:path";
 const ROOT = process.cwd();
 const JSON_OUT = process.argv.includes("--json");
 const STRICT = process.argv.includes("--strict");
+const SKIP_D11 = process.argv.includes("--skip-D11");
 const dimArgIdx = process.argv.indexOf("--dimension");
 const DIM = dimArgIdx > 0 ? process.argv[dimArgIdx + 1] : "all";
 
@@ -210,14 +211,99 @@ const findings = { D1: [], D4: [], D6: [], D8: [], D9: [], D10: [], D11: [] };
 // ─── Parse design-system-preview.html for canonical chrome (D10 + D11) ─
 let previewFooterBg = null;
 let previewDarkBandTextVocab = new Set();
+
+// DARK_BG_PATTERNS — match the bg-* class against any of these to classify a
+// surface as dark. Anchor on `^` so we match the class name (not a substring).
 const DARK_BG_PATTERNS = [
-  /bg-surface-inverted/,
-  /bg-neutral-(8|9)\d{2}/,
-  /bg-secondary-[56]00/,
-  /bg-black/,
+  /^bg-surface-inverted/,
+  /^bg-neutral-(800|900|950)/,
+  /^bg-secondary-(500|600|700|800|900)/,
+  /^bg-primary-(800|900|950)/,
+  /^bg-accent-(800|900|950)/,
+  /^bg-black/,
+];
+// LIGHT_BG_PATTERNS — descendants carrying these RESET the dark context.
+// Required so a `<span class="bg-surface-raised text-text-primary">` pill
+// nested inside a `bg-neutral-900` card is NOT treated as a dark-band
+// descendant. (bug-005 / investigate-003 F3.)
+const LIGHT_BG_PATTERNS = [
+  /^bg-white/,
+  /^bg-surface-base/,
+  /^bg-surface-raised/,
+  /^bg-surface-overlay/,
+  /^bg-neutral-(50|100|200|300|400)/,
+  /^bg-accent-(50|100|200|300|400|500|600|700)/,
+  /^bg-highlight-/,
+  /^bg-yellow-/,
+];
+// HARDCODED_DARK_TEXT — these classes resolve to dark colors per tokens.css
+// regardless of any project's preview vocab. Their use inside a dark-bg
+// block is ALWAYS a D11 finding (bug-005 / Part A.4 independent secondary
+// check). Defense in depth alongside vocab-derived consistency.
+const HARDCODED_DARK_TEXT = [
+  /^text-text-primary(\/\d+)?$/,
+  /^text-text-secondary(\/\d+)?$/,
+  /^text-text-tertiary(\/\d+)?$/,
+  /^text-neutral-(700|800|900|950)(\/\d+)?$/,
+  /^text-black(\/\d+)?$/,
 ];
 function isDarkBgClass(cls) {
   return DARK_BG_PATTERNS.some((re) => re.test(cls));
+}
+function isLightBgClass(cls) {
+  return LIGHT_BG_PATTERNS.some((re) => re.test(cls));
+}
+function isHardcodedDarkText(cls) {
+  return HARDCODED_DARK_TEXT.some((re) => re.test(cls));
+}
+
+// Bg-context-aware tokenizer walker. Pushes/pops a bg-context stack as it
+// encounters opening / closing tags. Emits a callback for every opening tag
+// with its current bg-context ("dark"|"light"|null) AND the class-attribute
+// classes on that opening tag.
+function walkBgContext(html, onTag) {
+  const VOID = new Set([
+    "br",
+    "img",
+    "input",
+    "meta",
+    "link",
+    "hr",
+    "source",
+    "area",
+    "col",
+    "base",
+    "embed",
+    "param",
+    "track",
+    "wbr",
+  ]);
+  const tokenRe = /<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b([^>]*?)(\/?)>/g;
+  const stack = []; // each: {tag, bg, line}
+  let m;
+  while ((m = tokenRe.exec(html)) !== null) {
+    const isClose = m[1] === "/";
+    const tag = m[2].toLowerCase();
+    const attrs = m[3];
+    const selfClose = m[4] === "/" || VOID.has(tag);
+    if (isClose) {
+      for (let i = stack.length - 1; i >= 0; i--) {
+        if (stack[i].tag === tag) {
+          stack.length = i;
+          break;
+        }
+      }
+      continue;
+    }
+    const classMatch = attrs.match(/\sclass="([^"]+)"/);
+    const classes = classMatch ? classMatch[1].split(/\s+/) : [];
+    let bg = stack.length ? stack[stack.length - 1].bg : null;
+    if (classes.some(isDarkBgClass)) bg = "dark";
+    else if (classes.some(isLightBgClass)) bg = "light";
+    const line = html.slice(0, m.index).split("\n").length;
+    onTag({ tag, classes, bg, line, attrs });
+    if (!selfClose) stack.push({ tag, bg, line });
+  }
 }
 
 if (existsSync(previewPath)) {
@@ -245,49 +331,24 @@ if (existsSync(previewPath)) {
     }
   }
 
-  // D11: canonical dark-band text-color vocabulary
-  // Find every element with a dark bg class; extract all text-* classes used as descendants
-  const findDarkBlocks = (s) => {
-    const blocks = [];
-    const tagOpen =
-      /<(section|div|aside|footer|header|main|article)\b[^>]*class="([^"]+)"[^>]*>/g;
-    let m;
-    while ((m = tagOpen.exec(s)) !== null) {
-      const classes = m[2].split(/\s+/);
-      if (classes.some(isDarkBgClass)) {
-        const tag = m[1];
-        const opener = new RegExp(`<${tag}\\b`, "g");
-        const closer = new RegExp(`</${tag}>`, "g");
-        let depth = 1;
-        let cursor = tagOpen.lastIndex;
-        while (depth > 0 && cursor < s.length) {
-          opener.lastIndex = cursor;
-          closer.lastIndex = cursor;
-          const no = opener.exec(s);
-          const nc = closer.exec(s);
-          if (!nc) break;
-          if (no && no.index < nc.index) {
-            depth++;
-            cursor = no.index + no[0].length;
-          } else {
-            depth--;
-            cursor = nc.index + nc[0].length;
-          }
-        }
-        blocks.push(s.slice(tagOpen.lastIndex, cursor));
-        tagOpen.lastIndex = cursor;
+  // D11: canonical dark-band text-color vocabulary — bg-context-aware
+  // Walks every opening tag; when current bg-context is "dark", collects
+  // text-* color classes on that element into the vocab. A descendant with
+  // its own light bg resets context → its text-* are NOT vocab. Same logic
+  // applied to screen-side scanner below.
+  walkBgContext(preview, ({ classes, bg }) => {
+    if (bg !== "dark") return;
+    for (const cls of classes) {
+      if (/^(hover:|focus:|focus-visible:|group-hover:)?text-/.test(cls)) {
+        // Strip variant prefix for vocab membership
+        const base = cls.replace(
+          /^(hover:|focus:|focus-visible:|group-hover:)/,
+          "",
+        );
+        previewDarkBandTextVocab.add(base);
       }
     }
-    return blocks;
-  };
-  const previewDarkBlocks = findDarkBlocks(preview);
-  for (const blk of previewDarkBlocks) {
-    for (const cm of blk.matchAll(
-      /text-(text-)?[a-z][a-zA-Z0-9-]*(\/[0-9]+)?/g,
-    )) {
-      previewDarkBandTextVocab.add(cm[0]);
-    }
-  }
+  });
 }
 
 for (const s of screens) {
@@ -476,66 +537,128 @@ for (const s of screens) {
   }
 
   // ─── D11. Dark-band text-vocabulary consistency ────────────────────
-  if ((DIM === "all" || DIM === "D11") && previewDarkBandTextVocab.size > 0) {
-    // Find dark-band blocks in the screen + collect descendant text-* classes;
-    // anything not in the preview's vocabulary is drift.
-    const findScreenDarkBlocks = (s2) => {
-      const blocks = [];
-      const tagOpen =
-        /<(section|div|aside|footer|header|main|article)\b[^>]*class="([^"]+)"[^>]*>/g;
-      let m;
-      while ((m = tagOpen.exec(s2)) !== null) {
-        const classes = m[2].split(/\s+/);
-        if (classes.some(isDarkBgClass)) {
-          const tag = m[1];
-          const opener = new RegExp(`<${tag}\\b`, "g");
-          const closer = new RegExp(`</${tag}>`, "g");
-          let depth = 1;
-          let cursor = tagOpen.lastIndex;
-          while (depth > 0 && cursor < s2.length) {
-            opener.lastIndex = cursor;
-            closer.lastIndex = cursor;
-            const no = opener.exec(s2);
-            const nc = closer.exec(s2);
-            if (!nc) break;
-            if (no && no.index < nc.index) {
-              depth++;
-              cursor = no.index + no[0].length;
-            } else {
-              depth--;
-              cursor = nc.index + nc[0].length;
-            }
-          }
-          blocks.push({
-            content: s2.slice(tagOpen.lastIndex, cursor),
-            startLine: s2.slice(0, m.index).split("\n").length,
-          });
-          tagOpen.lastIndex = cursor;
-        }
-      }
-      return blocks;
+  // bug-005 strengthening: two independent checks running in tandem.
+  //  (a) hardcoded blocklist — text-text-{primary,secondary,tertiary} /
+  //      text-neutral-{700..950} / text-black inside a dark-bg block is
+  //      ALWAYS a finding, regardless of vocab. Defense in depth.
+  //  (b) vocab-derived — text-* classes inside a dark-bg block that aren't
+  //      in the preview's vocab are drift relative to the project's chrome.
+  //  Both checks use bg-context-aware walkBgContext — descendants of
+  //  nested light bg are NOT considered dark-band descendants.
+  if ((DIM === "all" || DIM === "D11") && !SKIP_D11) {
+    const vocabAvailable = previewDarkBandTextVocab.size > 0;
+    // Build a family-set from the vocab: text-white/85 → family "text-white";
+    // text-text-inverted/70 → "text-text-inverted"; text-accent-300 → "text-accent-*".
+    // Family-level matching tolerates opacity + shade variants of the same color.
+    const familyOf = (cls) => {
+      const noOpacity = cls.replace(/\/\d+$/, "");
+      // text-accent-300 / text-neutral-500 → text-{family}-*
+      const shaded = noOpacity.match(/^(text-[a-z]+(?:-[a-z]+)*)-\d+$/);
+      if (shaded) return shaded[1] + "-*";
+      return noOpacity;
     };
-    const screenDarkBlocks = findScreenDarkBlocks(s.html);
-    for (const blk of screenDarkBlocks) {
-      const found = new Set();
-      for (const cm of blk.content.matchAll(
-        /text-(text-)?[a-z][a-zA-Z0-9-]*(\/[0-9]+)?/g,
-      )) {
-        found.add(cm[0]);
-      }
-      const outsideVocab = [...found].filter(
-        (cls) => !previewDarkBandTextVocab.has(cls),
+    const vocabFamilies = new Set([...previewDarkBandTextVocab].map(familyOf));
+    // Classes that are not color utilities — skip vocab + hardcoded checks.
+    const isNonColorTextUtility = (cls) =>
+      /^text-(xs|sm|base|md|lg|xl|\d+xl|left|right|center|justify|balance|wrap|nowrap|ellipsis|clip|opacity|underline|uppercase|lowercase|capitalize|\[)/.test(
+        cls,
       );
-      if (outsideVocab.length > 0) {
-        findings.D11.push({
-          screen: s.id,
-          darkBandStartLine: blk.startLine,
-          outsideVocab,
-          previewVocab: [...previewDarkBandTextVocab],
+    // Cluster findings per-screen by dark-block line
+    const perScreenHits = new Map();
+    walkBgContext(s.html, ({ classes, bg, line }) => {
+      if (bg !== "dark") return;
+      const textClasses = classes.filter((c) =>
+        /^(hover:|focus:|focus-visible:|group-hover:)?text-/.test(c),
+      );
+      if (textClasses.length === 0) return;
+      const clusterKey = line;
+      if (!perScreenHits.has(clusterKey)) {
+        perScreenHits.set(clusterKey, {
+          outsideVocab: new Set(),
+          hardcoded: new Set(),
         });
       }
+      const entry = perScreenHits.get(clusterKey);
+      for (const raw of textClasses) {
+        const base = raw.replace(
+          /^(hover:|focus:|focus-visible:|group-hover:)/,
+          "",
+        );
+        if (isNonColorTextUtility(base)) continue;
+        // (a) hardcoded blocklist — ALWAYS a finding
+        if (isHardcodedDarkText(base)) {
+          entry.hardcoded.add(base);
+          continue;
+        }
+        // (b) vocab-derived family check — only when vocab is available
+        if (vocabAvailable && !vocabFamilies.has(familyOf(base))) {
+          entry.outsideVocab.add(base);
+        }
+      }
+    });
+    // Emit findings
+    for (const [startLine, entry] of perScreenHits.entries()) {
+      const hardcoded = [...entry.hardcoded];
+      const outsideVocab = [...entry.outsideVocab];
+      if (hardcoded.length === 0 && outsideVocab.length === 0) continue;
+      findings.D11.push({
+        screen: s.id,
+        darkBandStartLine: startLine,
+        hardcoded,
+        outsideVocab,
+        previewVocab: [...previewDarkBandTextVocab],
+      });
     }
   }
+}
+
+// ─── D11 fail-closed gate — bug-005 / Part A.2 ───────────────────────
+// If D11 was requested AND vocab is empty AND no hardcoded findings fired,
+// emit a structured warning + exit non-zero. Silent-PASS is the load-bearing
+// detection-stack hole investigate-003 surfaced.
+if (
+  (DIM === "all" || DIM === "D11") &&
+  !SKIP_D11 &&
+  previewDarkBandTextVocab.size === 0 &&
+  findings.D11.length === 0
+) {
+  if (!JSON_OUT) {
+    console.error(
+      "\n[audit-screen-pattern-consumption] WARNING: D11 vocab is empty.",
+    );
+    console.error(
+      "  docs/design-system-preview.html does not model a dark-bg block with descendant text.",
+    );
+    console.error(
+      "  D11 vocab-derived consistency check cannot run. Hardcoded blocklist DID run (zero hits).",
+    );
+    console.error("");
+    console.error("  Resolution options:");
+    console.error(
+      "    1. Extend design-system-preview.html with a Contact CTA / Inverted footer / Dark hero section",
+    );
+    console.error(
+      "       demonstrating how the kit's typography looks on dark surfaces.",
+    );
+    console.error(
+      "    2. Run audit-preview-coverage.mjs to enforce this upstream (recommended).",
+    );
+    console.error(
+      "    3. Pass --skip-D11 to explicitly opt out (project intentionally has no dark surfaces).",
+    );
+    console.error("");
+  }
+  // Fail closed via the standard findings flow — push a synthetic finding
+  // so the strict-mode + reporter paths fire consistently.
+  findings.D11.push({
+    screen: "(no screen — preview-level gap)",
+    darkBandStartLine: 0,
+    hardcoded: [],
+    outsideVocab: [],
+    previewVocab: [],
+    vocabEmpty: true,
+    note: "D11 vocab derived from design-system-preview.html is empty. Extend preview to model a dark-bg block with descendant text, OR pass --skip-D11.",
+  });
 }
 
 // ─── D6. Cross-screen avatar consistency ────────────────────────────
@@ -572,6 +695,21 @@ if ((DIM === "all" || DIM === "D6") && canonicalAvatars.length > 0) {
 }
 
 // ─── Report ─────────────────────────────────────────────────────────
+// bug-005 severity model:
+//   - D1/D4/D6/D8/D9/D10 + D11 hardcoded findings + D11 vocab-empty = errors (always fail)
+//   - D11 outsideVocab-only findings = warnings (fail only in --strict)
+// Hardcoded blocklist catches the real dark-on-dark text bugs unambiguously.
+// outsideVocab is informational drift relative to the preview's narrow vocab.
+const d11Hard = findings.D11.filter(
+  (f) => (f.hardcoded && f.hardcoded.length > 0) || f.vocabEmpty,
+);
+const d11SoftOnly = findings.D11.filter(
+  (f) =>
+    !(f.hardcoded && f.hardcoded.length > 0) &&
+    !f.vocabEmpty &&
+    f.outsideVocab &&
+    f.outsideVocab.length > 0,
+);
 const counts = {
   D1: findings.D1.length,
   D4: findings.D4.length,
@@ -579,9 +717,19 @@ const counts = {
   D8: findings.D8.length,
   D9: findings.D9.length,
   D10: findings.D10.length,
-  D11: findings.D11.length,
+  D11_errors: d11Hard.length,
+  D11_warnings: d11SoftOnly.length,
 };
-const totalDriftCount = Object.values(counts).reduce((a, b) => a + b, 0);
+const errorCount =
+  counts.D1 +
+  counts.D4 +
+  counts.D6 +
+  counts.D8 +
+  counts.D9 +
+  counts.D10 +
+  counts.D11_errors;
+const warningCount = counts.D11_warnings;
+const totalDriftCount = errorCount + (STRICT ? warningCount : 0);
 
 const result = {
   rootCwd: ROOT,
@@ -593,6 +741,8 @@ const result = {
   dimensionScope: DIM,
   strict: STRICT,
   counts,
+  errorCount,
+  warningCount,
   findings,
   pass: totalDriftCount === 0,
 };
@@ -637,7 +787,10 @@ console.log(
   `    D10 (footer-bg consistency): ${counts.D10} screens mismatch preview footer-bg`,
 );
 console.log(
-  `    D11 (dark-band text vocab):   ${counts.D11} screen × dark-band findings`,
+  `    D11 errors (hardcoded blocklist + empty vocab): ${counts.D11_errors}`,
+);
+console.log(
+  `    D11 warnings (outside vocab):                  ${counts.D11_warnings}${STRICT ? " (FAIL — strict mode)" : " (informational; --strict to enforce)"}`,
 );
 
 const showDetails = (label, arr, render) => {
@@ -690,12 +843,20 @@ showDetails(
   (f) =>
     `${f.screen} page-footer bg: actual="${f.actual}" expected="${f.expected}" (from preview)`,
 );
-showDetails(
-  "D11",
-  findings.D11,
-  (f) =>
-    `${f.screen} dark-band ~line ${f.darkBandStartLine}: outside-vocab=[${f.outsideVocab.slice(0, 6).join(", ")}]`,
-);
+showDetails("D11", findings.D11, (f) => {
+  if (f.vocabEmpty) {
+    return `(preview-level gap) D11 vocab empty: ${f.note}`;
+  }
+  const hardStr =
+    f.hardcoded && f.hardcoded.length > 0
+      ? `hardcoded=[${f.hardcoded.slice(0, 6).join(", ")}]`
+      : "";
+  const vocabStr =
+    f.outsideVocab && f.outsideVocab.length > 0
+      ? `outside-vocab=[${f.outsideVocab.slice(0, 6).join(", ")}]`
+      : "";
+  return `${f.screen} dark-band ~line ${f.darkBandStartLine}: ${[hardStr, vocabStr].filter(Boolean).join(" ")}`;
+});
 
 console.log(
   `\n  ✗ /screens output has kit-content-bypass drift. Patch the screens (or re-run /screens with the updated SKILL.md) and re-run.\n`,
