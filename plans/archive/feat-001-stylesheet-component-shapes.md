@@ -1,10 +1,10 @@
 ---
 id: feat-001-stylesheet-component-shapes
 type: feature
-status: draft
+status: archived
 author-agent: Claude (Phase 3 build)
 created: 2026-05-28
-updated: 2026-05-28
+updated: 2026-05-29
 parent-plan: investigate-001-phase3-stylesheet-screens-quality-regression-vs-phase2
 supersedes: null
 superseded-by: null
@@ -178,3 +178,30 @@ Tooling note: this can be automated later (vision-LLM compares preview vs mockup
 ## Attempt Log
 
 <!-- Populated automatically by agents. -->
+
+---
+
+# COMPLETION RECORD (appended to archived plan)
+
+completed: 2026-05-29
+outcome: success
+actual-files-changed:
+
+- .claude/skills/stylesheet/SKILL.md (modified)
+- .claude/skills/screens/SKILL.md (modified)
+- .claude/agents/ui-designer.md (modified)
+- packages/orchestrator-contracts/src/stylesheet.ts (modified)
+  commits:
+- hash: b6bc23f
+  message: "phase1-step-032: ship feat-001 — /stylesheet 3-pass extraction"
+  attempts: 1
+  lessons:
+- "3-pass extraction (tokens → component-default-shapes → named-patterns) closes the visual-richness gap between P2 and P3 design output without breaking the framework-agnostic kit shape."
+- "Component shapes (.components-shapes.json) + extracted patterns (\_extracted/\*.html) become the load-bearing inputs for /screens — without them, screens drift to generic defaults regardless of how rich the mockup was."
+- "The extraction must run on the SELECTED mockup style, not all styles — re-extraction at /stylesheet time is the cleanest hook because gate-2 has selected the winning style."
+  test-results:
+  unit: n/a (skill body change)
+  integration: verified via phase1-step-032 evidence
+  duration-minutes: 90
+
+---

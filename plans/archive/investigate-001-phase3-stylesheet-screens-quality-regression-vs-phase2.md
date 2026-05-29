@@ -1,10 +1,10 @@
 ---
 id: investigate-001-phase3-stylesheet-screens-quality-regression-vs-phase2
 type: investigation
-status: approved
+status: archived
 author-agent: Claude (Phase 3 build)
 created: 2026-05-28
-updated: 2026-05-28
+updated: 2026-05-29
 parent-plan: null
 supersedes: null
 superseded-by: null
@@ -313,12 +313,33 @@ No code edits were made during this investigation — read-only static compariso
 
 ## Operator scoring baseline (calibration data — 2026-05-29)
 
-| Reference run | Operator score (out of 10) | Notes |
-|---|---|---|
-| Phase 2 gulia `/stylesheet` + `/screens` (the empirical "good") | **9 / 10** | What "right" looks like. Rich custom CSS decoration, floating overlays, logo marquee, stats band, hero visual card, backdrop-blur nav, warm shadow tints used at page level. |
-| Phase 3 test-app `/stylesheet` + `/screens` (this session's run) | **1 / 10** | Generic kit-only Tailwind composition, no decoration, no fidelity to the Spark Studio mockup. 771-line home.html vs gulia's 1507. |
-| **Gap to close** | **+8 points** | Investigation target: get Phase 3 to ≥7/10 on a clean test-app run. |
+| Reference run                                                    | Operator score (out of 10) | Notes                                                                                                                                                                        |
+| ---------------------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 2 gulia `/stylesheet` + `/screens` (the empirical "good")  | **9 / 10**                 | What "right" looks like. Rich custom CSS decoration, floating overlays, logo marquee, stats band, hero visual card, backdrop-blur nav, warm shadow tints used at page level. |
+| Phase 3 test-app `/stylesheet` + `/screens` (this session's run) | **1 / 10**                 | Generic kit-only Tailwind composition, no decoration, no fidelity to the Spark Studio mockup. 771-line home.html vs gulia's 1507.                                            |
+| **Gap to close**                                                 | **+8 points**              | Investigation target: get Phase 3 to ≥7/10 on a clean test-app run.                                                                                                          |
 
 The 8-point gap is concrete enough that the investigation's "did we fix it?" check is a re-run of `/stylesheet` + `/screens` on Phase 3 test-app, scored against the same rubric the operator used for the gulia 9/10. If post-fix Phase 3 lands at ≥7/10, the regression is closed; <5/10 means the fix didn't address the root cause and the investigation re-opens with a stronger hypothesis.
 
 Operator decided to proceed past Phase 1 Gates 3+4 on 2026-05-29 with the current 1/10 quality, accepting v1 output so the rebuild's end-to-end smoke can continue. The investigation remains active in `plans/active/`; whoever executes it (operator on demand, or a fresh /plan-investigation session) inherits this calibration baseline.
+
+---
+
+# COMPLETION RECORD (appended to archived plan)
+
+completed: 2026-05-29
+outcome: success
+actual-files-changed: []
+commits: []
+attempts: 1
+lessons:
+
+- "Initial Phase-3 design-pipeline output was materially worse than Phase 2 for the same test-app brief. Multi-causal: (a) input brief deltas introduced restraint boilerplate, (b) component-shape extraction wasn't running, (c) chrome contract was implicit."
+- "Investigation surfaced 3 distinct fix plans (feat-001, bug-001, bug-002) — none of which were obvious from the initial 'looks worse' signal. The investigation was load-bearing for routing the fixes correctly."
+- "Closed by feat-001 + bug-001 + bug-002. Downstream investigate-002 + investigate-003 surfaced from this work as further drift dimensions emerged."
+  test-results:
+  unit: n/a (research only)
+  integration: n/a (research only)
+  duration-minutes: 90
+
+---

@@ -1,7 +1,7 @@
 ---
 id: bug-003-screens-kit-content-bypass
 type: bug
-status: draft
+status: archived
 author-agent: Claude (Phase 3 build)
 created: 2026-05-29
 updated: 2026-05-29
@@ -196,3 +196,31 @@ Empirical pattern (bug-002 + bug-003 are sibling instances):
 ## Attempt Log
 
 <!-- Populated automatically by agents. -->
+
+---
+
+# COMPLETION RECORD (appended to archived plan)
+
+completed: 2026-05-29
+outcome: success
+actual-files-changed:
+
+- .claude/skills/screens/SKILL.md (modified)
+- scripts/audit-screen-pattern-consumption.mjs (created)
+  commits:
+- hash: 43539af
+  message: "phase1-step-035: ship bug-003 — /screens kit-content-bypass mechanical enforcement"
+- hash: 0a440f0
+  message: "phase1-step-035: empirical validation passes — audit ✓ + script refinements"
+  attempts: 1
+  lessons:
+- "SECOND instance of prose-only-consumer-rule class. 'Consult kit patterns before inventing' drifted 75-86% across n=12 ui-designer dispatches. Verbatim-inline contract + audit closes it."
+- "Patterns with icon SLOTS (stat-tile, service-pillar-card, case-study-card) need a skipPathCheck carve-out — their canonical-bytes contract is anchor classes + data-pattern attrs, NOT the icon SVG bytes (which are agent content slots)."
+- "Page-footer detection must prefer <footer data-kit-component='Footer'> OR last footer in document — case-study-detail has inline <footer> inside <blockquote> (HTML5-valid citation attribution) which is not the page chrome."
+- "Keyframe aliases (marquee-scroll ≡ trust-bar-scroll) need explicit whitelisting in the audit — the kit's vocab tolerates name variants that all resolve to the same animation pattern."
+  test-results:
+  unit: n/a (audit script)
+  integration: verified via phase1-step-035 evidence — D1+D4+D6+D8+D9 all PASS post 12-screen re-dispatch
+  duration-minutes: 180
+
+---

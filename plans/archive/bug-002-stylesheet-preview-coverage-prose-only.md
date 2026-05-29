@@ -1,10 +1,10 @@
 ---
 id: bug-002-stylesheet-preview-coverage-prose-only
 type: bug
-status: draft
+status: archived
 author-agent: Claude (Phase 3 build)
 created: 2026-05-28
-updated: 2026-05-28
+updated: 2026-05-29
 parent-plan: investigate-001-phase3-stylesheet-screens-quality-regression-vs-phase2
 supersedes: null
 superseded-by: null
@@ -163,3 +163,28 @@ Track the work as `phase1-step-034` (paired with the existing phase1-step-032/03
 ## Attempt Log
 
 <!-- Populated automatically by agents. -->
+
+---
+
+# COMPLETION RECORD (appended to archived plan)
+
+completed: 2026-05-29
+outcome: success
+actual-files-changed:
+
+- .claude/skills/stylesheet/SKILL.md (modified)
+- scripts/audit-preview-coverage.mjs (created)
+  commits:
+- hash: f480908
+  message: "phase1-step-034: ship bug-002 — /stylesheet preview-coverage mechanical enforcement"
+  attempts: 1
+  lessons:
+- "FIRST observed instance of the prose-only-consumer-rule drift class. The SKILL.md said 'render every component live' but had no audit — preview shipped without showing the components the operator needed to gate-3-approve. Operator caught it visually; the mechanical audit closes it for future projects."
+- "Audit shape: derive contract from each project's components.md JSON trailer + tokens/icons/illustrations manifests; assert every D1 component + every variant + every canonical-unused has a visible block in design-system-preview.html."
+- "Pattern that recurs (bug-003/004/005): when a SKILL.md ships a consumer-side rule, ship the audit script paired with it — never as a follow-up. The empirical drift rate on prose-only rules is high (75-100% across n=12 dispatches)."
+  test-results:
+  unit: n/a (audit script)
+  integration: verified via phase1-step-034 evidence — audit catches missing components on test-app pre-fix, passes post-fix
+  duration-minutes: 90
+
+---

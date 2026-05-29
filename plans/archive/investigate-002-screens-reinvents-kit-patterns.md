@@ -1,10 +1,10 @@
 ---
 id: investigate-002-screens-cross-screen-drift
 type: investigation
-status: completed
+status: archived
 author-agent: Claude (Phase 3 build)
 created: 2026-05-28
-updated: 2026-05-28
+updated: 2026-05-29
 parent-plan: investigate-001-phase3-stylesheet-screens-quality-regression-vs-phase2
 supersedes: null
 superseded-by: null
@@ -453,3 +453,20 @@ In all strategies, /screens needs to be re-run on test-app after the fixes land;
 - Operator (David Morgan) previewed the screens mid-run and noticed logo issues across screens; confirmed empirically by spot-check showing 3 entirely different brand marks across the 12 screens.
 - Same drift class as bug-002 (which was for /stylesheet's preview). Fixing one and not the other leaves the kit-consumption contract half-enforced.
 - Parent investigation `investigate-001` documented the broader regression class; this is a specific follow-up for the kit-consumption surface that feat-001 was supposed to close.
+
+---
+# COMPLETION RECORD (appended to archived plan)
+completed: 2026-05-29
+outcome: success
+actual-files-changed: []
+commits: []
+attempts: 1
+lessons:
+  - "Surfaced 3 brand-mark variants + 4 chrome dimensions of cross-screen drift on n=12 ui-designer dispatches — empirical motivation for bug-003 (kit-content-bypass) + bug-004 (chrome-consistency)."
+  - "Cross-screen consistency is a separate contract from per-screen pattern consumption — agents can correctly inline a wordmark per-screen but use different wordmarks across screens. Requires explicit cross-screen contract in the shared preamble."
+  - "Closed by bug-003 + bug-004."
+test-results:
+  unit: n/a (research only)
+  integration: n/a (research only)
+duration-minutes: 60
+---

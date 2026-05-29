@@ -1,7 +1,7 @@
 ---
 id: bug-005-d11-dark-on-dark-detector-strengthening
 type: bug
-status: draft
+status: archived
 author-agent: Claude (Phase 3 build)
 created: 2026-05-29
 updated: 2026-05-29
@@ -188,3 +188,39 @@ Track the work + capture the meta-lesson:
 ## Attempt Log
 
 <!-- Populated automatically by agents. -->
+
+---
+
+# COMPLETION RECORD (appended to archived plan)
+
+completed: 2026-05-29
+outcome: success
+actual-files-changed:
+
+- scripts/audit-screen-pattern-consumption.mjs (modified — D11 strengthening)
+- scripts/audit-preview-coverage.mjs (modified — dark-band coverage assertion)
+- .claude/skills/screens/SKILL.md (modified — §3.5.2 pattern-inlining-into-dark-contexts clause)
+- phase-plan.md (modified — §F Row 037)
+- feature_list.json (modified — phase1-step-037 row)
+- projects/test-app/docs/design-system-preview.html (modified — Contact CTA band test fixture)
+- projects/test-app/docs/screens/webapp/services-detail-visual.html (modified — surgical eyebrow swap)
+- projects/test-app/docs/screens/webapp/services-index.html (modified — surgical eyebrow swap)
+  commits:
+- hash: 49e12be
+  message: "phase1: bug-005 — D11 dark-band detector strengthening + preview-coverage dark-band assertion"
+- hash: 0d098ed
+  message: "phase1: evidence — phase1-step-037 (bug-005 D11 strengthening) empirical validation"
+  attempts: 1
+  lessons:
+- "FIFTH instance of prose-only-consumer-rule class with NEW shape: mechanical audits can THEMSELVES silently no-op when their contracts are DERIVED from upstream artifacts that don't model the contract surface."
+- "Triple-compounding bug shape: (F1) preview parser tag list omitted load-bearing tags, (F2) empty-vocab silently DISABLED the entire check (fail-OPEN), (F3) no bg-context tracking caused vocab pollution + screen-side over-counting."
+- "Forward-looking rules: derivation-based audits MUST (a) fail-CLOSED on empty contracts, (b) pair with a hardcoded independent fallback assertion for universally-broken combinations, (c) be backed by an upstream coverage audit that forces the contract surface to be modeled."
+- "Severity tiering matters: hardcoded blocklist findings = errors (always fail); vocab-derived findings = warnings (fail only with --strict). Conflating the two produces noise that masks real bugs."
+- "Family-level vocab matching (text-white/85 family accepts text-white/70 etc.) reduces noise without losing signal — text-color tokens have natural family + opacity hierarchies that exact-match misses."
+- "Surgical Edit-tool fixes worked correctly for the 2-screen swap — confirms the bug-004 dispatch-destruction lesson: Read+Edit is the right primitive for class-name substitutions, NOT shell-based search/replace."
+  test-results:
+  unit: n/a (audit script + skill body)
+  integration: verified via phase1-step-037 evidence — both audits PASS post Part A+B+C+D + 2-screen surgical fix
+  duration-minutes: 240
+
+---

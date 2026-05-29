@@ -1,10 +1,10 @@
 ---
 id: bug-001-draft-brief-over-restrains-portfolio-briefs
 type: bug
-status: draft
+status: archived
 author-agent: Claude (Phase 3 build)
 created: 2026-05-28
-updated: 2026-05-28
+updated: 2026-05-29
 parent-plan: investigate-001-phase3-stylesheet-screens-quality-regression-vs-phase2
 supersedes: null
 superseded-by: null
@@ -145,3 +145,29 @@ The minimum-viable fix (Phase A) is just classes 1 + 2 + 3 — taxonomy + detect
 ## Attempt Log
 
 <!-- Populated automatically by agents. -->
+
+---
+
+# COMPLETION RECORD (appended to archived plan)
+
+completed: 2026-05-29
+outcome: success
+actual-files-changed:
+
+- .claude/skills/draft-brief/SKILL.md (modified)
+- brief-template.md (modified)
+- schemas/brief-frontmatter.schema.json (modified)
+  commits:
+- hash: 481332c
+  message: "phase1-step-033: ship bug-001 — /draft-brief brief-class awareness"
+  attempts: 1
+  lessons:
+- "Restraint clauses in /draft-brief §1 directional-principles boilerplate actively HARM portfolio / agency / studio / creative-service projects — the site IS the proof of work, so visual ambition is the product."
+- "Brief-class taxonomy (12 classes: site-as-portfolio vs b2b-saas vs dashboard etc.) lets /draft-brief author class-aware §1/§2 sections that don't pre-flatten downstream ui-designer output."
+- "The brief-class signal must be EXPLICIT (frontmatter field), not inferred — operator review catches mis-classifications before they propagate through 4 downstream stages."
+  test-results:
+  unit: n/a (skill body change)
+  integration: verified via phase1-step-033 evidence
+  duration-minutes: 75
+
+---

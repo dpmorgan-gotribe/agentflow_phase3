@@ -1,7 +1,7 @@
 ---
 id: investigate-003-d11-dark-band-detector-gap
 type: investigation
-status: completed
+status: archived
 author-agent: Claude (Phase 3 build)
 created: 2026-05-29
 updated: 2026-05-29
@@ -164,3 +164,24 @@ Re-run `/screens` in single-screen mode on the 2 affected screens (`services-det
 ### Attempt 1 — 2026-05-29
 
 Investigation completed in ~25 minutes (well within 60-min time-box). All 5 investigation steps executed; root cause confirmed via direct instrumentation; recommendation written. No further investigation needed; proceed to bug-005 fix shipment per Recommendation.
+
+---
+
+# COMPLETION RECORD (appended to archived plan)
+
+completed: 2026-05-29
+outcome: success
+actual-files-changed: []
+commits: []
+attempts: 1
+lessons:
+
+- "Time-box discipline worked: completed in ~25 of allotted 60 minutes. Direct instrumentation (dumping the audit-equivalent vocab via a Node snippet) was the highest-signal step — surfaced the empty-vocab condition immediately."
+- "Hypothesis-driven investigation (stated 2 strongest priors + 3 lower-priors BEFORE digging) focused the search. F1 + F2 were among the named priors; F3 (bg-context tracking) emerged from concrete screen inspection in step 3."
+- "Closed by bug-005. The investigation's recommendation (4-part fix) shipped verbatim with one refinement (severity tiering + family-level vocab matching emerged during implementation)."
+  test-results:
+  unit: n/a (research only)
+  integration: n/a (research only)
+  duration-minutes: 25
+
+---

@@ -1,7 +1,7 @@
 ---
 id: bug-004-screens-chrome-consistency
 type: bug
-status: draft
+status: archived
 author-agent: Claude (Phase 3 build)
 created: 2026-05-29
 updated: 2026-05-29
@@ -193,3 +193,32 @@ Track the work + document durable behavior so the rebuild manifest captures the 
 ## Attempt Log
 
 <!-- Populated automatically by agents. -->
+
+---
+
+# COMPLETION RECORD (appended to archived plan)
+
+completed: 2026-05-29
+outcome: success
+actual-files-changed:
+
+- .claude/skills/screens/SKILL.md (modified)
+- scripts/audit-screen-pattern-consumption.mjs (modified — added D10 + D11)
+- plans/active/bug-004-screens-chrome-consistency.md (created)
+  commits:
+- hash: 65cd7fa
+  message: "phase1: bug-004 — /screens chrome-consistency factory fix (D10 + D11 audit + SKILL.md §3.5.2 chrome contract)"
+- hash: d0367b6
+  message: "phase1: evidence — phase1-step-036 (bug-004 chrome consistency) empirical validation"
+  attempts: 1
+  lessons:
+- "FOURTH instance of prose-only-consumer-rule class. Footer-bg drift 50% + dark-band-text-vocab drift 42% across n=12 dispatches when chrome contract was implicit."
+- "PROJECT-AGNOSTIC framing matters: audit derives canonical chrome from each project's own design-system-preview.html (the gate-3 signoff artifact), not from hardcoded values. A SaaS dashboard whose preview commits to black footer + low-contrast typography passes — consistency-within-project is what's enforced."
+- "Operator instruction 'lets only re dispatch on affected screens' is the right cost-saving heuristic — surgical retries on only the audit-flagged screens, not the full batch."
+- "Single-screen surgical retries must use Read+Edit, NOT PowerShell `(Get-Content -Raw) -replace … | Set-Content`. Empirical destruction: case-study-detail.html dispatch lost a 1498-line file via shell-pipe quoting failure. Full regeneration recovered it."
+  test-results:
+  unit: n/a (audit script + skill body)
+  integration: verified via phase1-step-036 evidence — 12 screens × 7 dimensions all PASS post 6-screen surgical re-dispatch
+  duration-minutes: 240
+
+---
