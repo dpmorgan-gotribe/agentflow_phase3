@@ -1,0 +1,46 @@
+phase2-step-016 — conflict-resolution handoff wired
+=====================================================
+
+Run: 2026-05-29
+Predecessor: phase2-step-004 (git-agent close-feature), phase2-step-009 (reviewer)
+
+Deliverables verified:
+
+  1. resolve-conflict-handoff op type discriminator
+     - feature-graph.ts:163-165 declares the union variant:
+       op: "resolve-conflict-handoff" | conflictingFiles: readonly string[]
+     - Returned by close-feature when merge --no-ff fails
+
+  2. Conflict detection + parsing
+     - close-feature parses: git diff --name-only --diff-filter=U
+     - Returns conflictingFiles[] as part of resolve-conflict-handoff payload
+     - feature-graph.ts:999-1006 walks conflictingFiles for routing
+
+  3. Last-writing-agent routing
+     - feature-graph.ts:2100 documentation:
+       "resolve-conflict-handoff with the last-writing agent, have them
+        re-edit the files"
+     - Reads .feature-context.json lockfile for lastWritingAgent
+     - Re-dispatches that agent with retryContext:
+       feature-graph.ts:2210: errorMessage:
+         "Conflict on files: ${parsed.conflictingFiles.join(', ')}"
+
+  4. Retry counter integration
+     - Max 3 conflict-resolution attempts per feature (retry-counters.ts)
+     - After exhaustion: emergency-abort + tasks.yaml marked failed
+
+  5. Worktree state preservation
+     - On conflict: merge --abort (keeps worktree + main clean)
+     - .feature-context.json updated with conflict_files +
+       conflict_detected_at timestamp + status: "merge-conflict"
+     - Allows operator-driven recovery if orchestrator retries fail
+
+Test coverage:
+  - feature-graph.test.ts: 71 tests; includes conflict handoff routing
+  - invoke-agent.test.ts: 134 tests; close-feature variants
+
+Status: PASS — phase2-step-016 (conflict-resolution handoff) empirically
+validated. Discriminated payload + last-writing-agent routing + retry
+counter + worktree state preservation all live.
+
+Row flips to passes: true.

@@ -1,0 +1,48 @@
+phase2-step-014 — worktree machinery wired
+==============================================
+
+Run: 2026-05-29
+Predecessor: phase2-step-004 (git-agent ops)
+
+Deliverables verified:
+
+  1. Worktree creation (lazy)
+     - git-agent checkout-feature op creates .claude/worktrees/<featureId>/
+     - Branch: feat/<featureId> forked from origin/main
+     - Worktree contains the project's git checkout at the branch HEAD
+     - Test coverage in feature-graph.test.ts (worktree-aware dispatch)
+
+  2. Worktree removal with Windows file-lock resilience (bug-072)
+     - invoke-agent.ts:1122 removeWorktreeWithBackoff helper
+     - Called from invoke-agent.ts:1490 (close-feature cleanup)
+     - 5-retry exponential backoff on EBUSY (Windows file-lock from
+       child processes still holding worktree files)
+     - Returns success even on final failure (merge already landed;
+       worktree removal is best-effort)
+
+  3. --keep-worktrees flag (debug aid)
+     - Skips removal during close-feature so operator can inspect
+     - Wired in cli.ts + propagated through feature-graph ctx
+
+  4. Per-worktree lockfile (bug-091)
+     - .feature-context.json written at checkout-feature
+     - Hidden from git via .git/info/exclude (per feat-008 Phase 4 fix)
+     - Tracks: feature_id, agent_history, last_writing_agent, status
+
+  5. Stale worktree detection
+     - On checkout: if existing worktree's .feature-context.json
+       feature_id mismatches → reject with "stale-worktree" reason
+     - bug-061 unconditional teardown on next open recreates worktree
+       from clean base for fix-loop dispatches
+
+Test coverage:
+  - invoke-agent.test.ts: 134 tests; includes the 2 Windows file-lock
+    edge cases tagged in earlier verification (3018ms + 15047ms cases)
+  - feature-graph.test.ts: 71 tests; covers worktree open/close
+    happy paths + stale-worktree rejection paths
+
+Status: PASS — phase2-step-014 (worktree machinery) empirically validated.
+Lazy creation + Windows file-lock resilient removal + lockfile +
+stale detection all live.
+
+Row flips to passes: true.

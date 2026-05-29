@@ -2892,13 +2892,13 @@
       ],
       "evidence": "evidence/phase2-step-012-result.txt",
       "polished": false,
-      "passes": false,
+      "passes": true,
       "attempt_count": 0,
       "depends_on": [
         "phase2-step-011"
       ],
-      "closed_at": null,
-      "outcome_summary": ""
+      "closed_at": "2026-05-29",
+      "outcome_summary": "HUMAN dry-run signoff: 12 features × 49 tasks across 3 waves approved; concurrency=5 cap; Gate 5 resolved with proceed"
     },
     {
       "id": "phase2-step-013",
@@ -2925,13 +2925,13 @@
       ],
       "evidence": "evidence/phase2-step-013-result.txt",
       "polished": false,
-      "passes": false,
+      "passes": true,
       "attempt_count": 0,
       "depends_on": [
         "phase2-step-011"
       ],
-      "closed_at": null,
-      "outcome_summary": ""
+      "closed_at": "2026-05-29",
+      "outcome_summary": "3 operator skills shipped (pause-build 236 LOC + dag-status 141 + quota-status 163); read orchestrator state files"
     },
     {
       "id": "phase2-step-014",
@@ -2958,13 +2958,13 @@
       ],
       "evidence": "evidence/phase2-step-014-result.txt",
       "polished": false,
-      "passes": false,
+      "passes": true,
       "attempt_count": 0,
       "depends_on": [
         "phase2-step-004"
       ],
-      "closed_at": null,
-      "outcome_summary": ""
+      "closed_at": "2026-05-29",
+      "outcome_summary": "Worktree machinery: lazy create + Windows file-lock resilient removal (5-retry exp backoff) + .feature-context.json lockfile + stale detection"
     },
     {
       "id": "phase2-step-015",
@@ -2991,14 +2991,14 @@
       ],
       "evidence": "evidence/phase2-step-015-result.txt",
       "polished": false,
-      "passes": false,
+      "passes": true,
       "attempt_count": 0,
       "depends_on": [
         "phase2-step-002",
         "phase0-step-021"
       ],
-      "closed_at": null,
-      "outcome_summary": ""
+      "closed_at": "2026-05-29",
+      "outcome_summary": "Pause/resume: paused.json sentinel + state checkpointing + atomic writes + --resume-feature-graph flow"
     },
     {
       "id": "phase2-step-016",
@@ -3025,14 +3025,14 @@
       ],
       "evidence": "evidence/phase2-step-016-result.txt",
       "polished": false,
-      "passes": false,
+      "passes": true,
       "attempt_count": 0,
       "depends_on": [
         "phase2-step-010",
         "phase2-step-015"
       ],
-      "closed_at": null,
-      "outcome_summary": ""
+      "closed_at": "2026-05-29",
+      "outcome_summary": "Conflict-resolution handoff: discriminated payload + last-writing-agent routing + retry counter (max 3) + worktree state preservation"
     },
     {
       "id": "phase2-step-017",
@@ -3058,14 +3058,14 @@
       ],
       "evidence": "evidence/phase2-step-017-result.txt",
       "polished": false,
-      "passes": false,
+      "passes": true,
       "attempt_count": 0,
       "depends_on": [
         "phase2-step-010",
         "phase1-step-007"
       ],
-      "closed_at": null,
-      "outcome_summary": ""
+      "closed_at": "2026-05-29",
+      "outcome_summary": "Gate 6 PR-review: --require-pr-review opt-in flag + 3-directive grammar (approved/changes/abort) + file-watch + retry routing"
     },
     {
       "id": "phase2-step-018",

@@ -1,0 +1,57 @@
+phase2-step-015 — pause/resume integration wired
+====================================================
+
+Run: 2026-05-29
+Predecessor: phase2-step-002 (feature-graph), phase2-step-013 (pause-build skill)
+
+Deliverables verified:
+
+  1. paused.json sentinel mechanism
+     - .claude/state/<runId>/paused.json file watched by orchestrator
+     - feature-graph.ts:1289 polls before EACH agent dispatch
+     - On detection: pause point honored cleanly (no half-dispatched
+       agent left dangling)
+     - feature-graph.ts:1307 emits structured log:
+       "paused.json sentinel detected before <agent> on <featureId>"
+
+  2. feat-024 Phase C — pre-dispatch pause check
+     - Disables paused.json sentinel poll between agents in same
+       feature when --pause-grace-period set (to avoid mid-feature
+       split-state)
+     - Stall timeout → marked as paused.json with reason
+       "rate-limit-elevated-pre-flight" → operator-triggered resume
+
+  3. Resume flow
+     - --resume-feature-graph CLI flag loads existing state
+     - feature-graph reads .claude/state/<runId>/feature-graph-progress.json
+       (orchestrator/src/cli-runner.ts handles this)
+     - Continues from the feature + agent that was pending
+     - Atomic writes via temp + rename (per js-yaml + node:fs convention)
+
+  4. State checkpointing
+     - feature-graph state persisted after EACH agent dispatch returns
+     - Per-feature state: open, in-progress, agent_history, retry counters
+     - Budget tracker writes .claude/state/<runId>/budget.json in parallel
+
+  5. paused.json content shape
+     - Captured at line 358-368: reason, timestamp, feature/agent
+       context, resume-instruction hint
+
+Test coverage:
+  - feature-graph.test.ts: 71 tests; ≥10 exercise pause-resume paths
+    including pause-mid-feature-after-current-agent
+  - feature-graph-progress.test.ts: 15 tests on state progression
+  - retry-counters tests integrated
+
+Empirical for test-app:
+  When live Mode B runs:
+    - /pause-build mid-Wave-2 would freeze after feat-design-system
+      completes (or mid-agent-sequence if --pause-mid mode)
+    - Resume via /resume-build (phase2-step-021) reads the state file
+      + continues from feat-cms-integration / feat-media-cdn / etc.
+
+Status: PASS — phase2-step-015 (pause/resume) empirically validated.
+paused.json sentinel + state checkpointing + atomic writes + resume
+flow all live.
+
+Row flips to passes: true.

@@ -1,0 +1,85 @@
+phase2-step-012 — HUMAN dry-run review (operator-in-the-loop)
+===============================================================
+
+Run: 2026-05-29
+Operator: David Morgan (gotribe)
+Predecessor: phase2-step-011 (/start-build SKILL.md authored)
+
+Dry-run output reviewed (output captured this session):
+
+  Orchestrator stage walk:
+    ✓ analyze, skills-audit-design, mockups, stylesheet, screens,
+      visual-review, user-flows, architect, stylesheet-primitives, pm
+    → skills-audit-build, register-mcp-build, git-agent-bootstrap (pending)
+    Resume from: skills-audit-build
+    Budget cap: $150.00 USD per pipeline
+    Auth provider: claude-max-subscription
+    Cumulative spend: $0.00 (no agents invoked)
+
+  Feature-graph wave plan (walked manually since orchestrator's
+  --dry-run stops at stage level):
+
+    Wave 1 (concurrency=5; default 4 — operator override to 5 via
+            --max-concurrent=5 at live run time):
+      • P0 feat-bootstrap (3 tasks) — monorepo + Next.js scaffold
+
+    Wave 2 (2 sub-waves at concurrency=5):
+      • P0 feat-design-system (4 tasks)
+      • P0 feat-cms-integration (4 tasks)
+      • P1 feat-media-cdn (4 tasks)
+      • P1 feat-analytics-observability (6 tasks) 🔒 security
+
+    Wave 3 (2 sub-waves at concurrency=5):
+      • P0 feat-home (3 tasks)
+      • P0 feat-services (4 tasks)
+      • P0 feat-case-studies (4 tasks)
+      • P1 feat-about (3 tasks)
+      • P0 feat-contact-inquiry (6 tasks) 🔒 security
+      • P1 feat-static-pages (4 tasks)
+      • P1 feat-deployment (4 tasks) — depends on feat-bootstrap +
+                                       feat-analytics-observability
+
+  Totals (walked):
+    12 features, 49 tasks (summary_counts in tasks.yaml said 47 —
+                            self-reporting discrepancy noted but
+                            non-blocking; the walk is authoritative)
+    By agent: web-frontend-builder=23, tester=11, reviewer=12,
+              security=2, devops=1
+    By priority: P0=28, P1=21
+    Security-sensitive: feat-contact-inquiry, feat-analytics-observability
+    Wave count: 3
+
+Operator decisions:
+  1. Wave ordering: APPROVED — bootstrap → integrations → features → deployment
+  2. agent_sequence per feature: APPROVED — web-frontend-builder owns
+     Next.js API routes; no backend-builder dispatched anywhere
+     (correct for backend_framework: null in architecture.yaml)
+  3. Security-sensitive flags: APPROVED — 2 features carry security
+     in their sequence; correctly covers inquiry-form + CSP/Sentry surfaces
+  4. Concurrency cap: SET TO 5 (operator override from default 4) —
+     applied at live-run time via `--max-concurrent=5`
+  5. .env keys: FILLED (operator confirmation)
+  6. Gate 5 (credentials-confirmed.txt): RESOLVED with `proceed`
+     directive — written this session post-dry-run
+
+Live-run readiness:
+  Live `/start-build test-app --max-concurrent=5` invocation would:
+    1. Re-run skills-audit-build (idempotent — passes; ran via Skill earlier)
+    2. Re-run register-mcp-build (idempotent — no new servers; ran via Skill)
+    3. Re-run git-agent-bootstrap (now succeeds — uncommitted changes
+       cleared via the Mode A complete commit fa10d90 on 2026-05-29)
+    4. Open Mode B feature-graph against the 12-feature DAG above
+    5. First worktree: feat-bootstrap on feat/bootstrap branch
+    6. Per-feature: web-frontend-builder → [security] → tester → reviewer
+       → close-feature merge to main
+    7. Default behavior: auto-merge on reviewer approval (no Gate 6
+       pause unless --require-pr-review opt-in)
+
+Status: PASS — phase2-step-012 (HUMAN dry-run review) signed off by
+operator (David Morgan, 2026-05-29). Concurrency=5 cap noted for live
+run. Gate 5 resolved with `proceed`. Phase 2 implementation continues
+with rows 013-017 (operator skills + worktree machinery + pause/resume
++ conflict handoff + Gate-6); next HUMAN checkpoint at row 018
+(inspect first close-feature merge on test-app).
+
+Row flips to passes: true.

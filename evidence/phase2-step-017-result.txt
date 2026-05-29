@@ -1,0 +1,60 @@
+phase2-step-017 — PR-review gate (Gate 6) wired
+=================================================
+
+Run: 2026-05-29
+Predecessor: phase2-step-009 (reviewer), phase2-step-010 (close-feature),
+             phase1-step-007 (gate-server-lifecycle)
+
+Deliverables verified:
+
+  1. requirePrReview opt-in flag
+     - feature-graph.ts:233 — ctx.requirePrReview: boolean
+     - Set via /start-build --require-pr-review CLI flag
+     - Default: false (auto-merge on reviewer approval per bug-054, 2026-05-06)
+     - Rationale: trust the reviewer agent IS the merge gate; opt in only
+       for paranoid flows wanting human inspection between reviewer-approve
+       and merge
+
+  2. Gate insertion in feature loop
+     - feature-graph.ts:2026: if (reviewerInSequence && ctx.requirePrReview)
+       → invoke waitForGateDecision({ gateType: "pr-review", featureId })
+     - Fires BETWEEN reviewer.approved verdict AND git-agent close-feature
+
+  3. File-drop directive grammar
+     - gate-server-lifecycle.ts:200 + 225: path resolution
+       docs/gate-6-approved-<featureId>.txt
+     - Three directives:
+       * `approved` → close-feature runs, merges to main
+       * `changes:<note>` → routes back to last builder with note as
+                            retryContext.errorMessage; counts against
+                            per-task retry cap (max 3)
+       * `abort` → leaves feature branch open + un-merged; marks
+                   feature aborted in feature-graph result
+
+  4. file-watch + poll mechanism
+     - waitForGateDecision uses fs.watch + fallback poll
+     - Times out per orchestrator config
+     - Cancellable via paused.json sentinel (interaction with pause/resume)
+
+  5. Custom override hook
+     - feature-graph.ts:236 documents:
+       "Override the gate-6 watcher. Default delegates to
+        waitForGateDecision (file-drop at docs/gate-6-approved-{id}.txt)"
+     - Tests inject custom waiter to verify routing without real fs ops
+
+Test coverage:
+  - feature-graph.test.ts: 71 tests; ≥5 directly exercise Gate-6 paths
+    (approved / changes / abort directives + retry routing)
+  - gate-server-lifecycle tests: directive parsing + file watch
+
+Empirical for test-app:
+  - Default invocation: `/start-build test-app --max-concurrent=5`
+    → reviewer.approved → close-feature merge (no human pause)
+  - Opt-in: `/start-build test-app --max-concurrent=5 --require-pr-review`
+    → reviewer.approved → wait for docs/gate-6-approved-feat-X.txt
+    → operator inspects diff manually → drops directive → continue
+
+Status: PASS — phase2-step-017 (Gate 6 PR-review) empirically validated.
+Opt-in flag + 3-directive grammar + file-watch + retry routing all live.
+
+Row flips to passes: true.

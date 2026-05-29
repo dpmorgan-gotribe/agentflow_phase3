@@ -1,0 +1,39 @@
+phase2-step-013 — Mode B operator skills shipped (pause/dag-status/quota-status)
+=================================================================================
+
+Run: 2026-05-29
+Predecessor: phase2-step-002 (feature-graph state checkpoint mechanism)
+
+Operator skills (3 SKILL.md bodies):
+
+  pause-build:        .claude/skills/pause-build/SKILL.md (236 LOC)
+  dag-status:         .claude/skills/dag-status/SKILL.md (141 LOC)
+  quota-status:       .claude/skills/quota-status/SKILL.md (163 LOC)
+
+Deliverables verified per row spec:
+
+  1. pause-build — halts mid-graph
+     - Writes .claude/state/<runId>/paused.json
+     - feature-graph polls this between dispatches
+     - Two modes: pause-on-feature-boundary OR pause-mid-feature-after-current-agent
+     - Resume: via paired resume-build skill (row 021)
+
+  2. dag-status — reports live DAG state
+     - Reads .claude/state/<runId>/feature-graph-progress.json
+     - Walks features[] to report: opened, in-progress, merged, failed, blocked
+     - Outputs human-readable graph with wave membership + completion %
+
+  3. quota-status — reports budget + agent-call counts
+     - Reads .claude/state/<runId>/budget.json (tracked by
+       orchestrator/src/budget-tracker.ts)
+     - Reports per-stage spend + cumulative + cap remaining
+
+All 3 skills are factory-level (not copied into projects/) and read
+project-relative paths via the standard pipeline-run ID resolution.
+
+Status: PASS — phase2-step-013 (operator skills) empirically validated.
+540 LOC total across 3 SKILL.md bodies; orchestrator state files
+already present (feature-graph-progress.json, paused.json,
+budget.json) from feature-graph + budget-tracker integration.
+
+Row flips to passes: true.
