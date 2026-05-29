@@ -465,32 +465,36 @@ Pattern: when a Mode A skill goes from sequential → fan-out, the load-bearing 
 - Branch creation deferred to implementation time so the in-flight run isn't disturbed. When approved, the implementer should `git checkout -b feat/parallelize-stylesheet-primitives` only after confirming the in-flight session has completed.
 
 ---
+
 # COMPLETION RECORD (appended to archived plan)
+
 completed: 2026-05-29
 outcome: success
 actual-files-changed:
-  - .claude/skills/stylesheet-primitives/SKILL.md (modified — §1a + §1e + §2 fix-pattern rules + Step 9 verify gate + new "Orchestration: 4-Stage DAG" section)
-  - .claude/models.yaml (modified — stages.{stylesheet-primitives,screens}.{concurrency,maxConcurrency,burstDelay} knob)
-  - scripts/audit-ui-kit-component-consistency.mjs (created — 18-dimension audit D-A through D-R, project-agnostic)
-  - packages/orchestrator-contracts/src/stylesheet-primitives.ts (created — StylesheetPrimitivesOutputSchema + FailedComponentSchema)
-  - packages/orchestrator-contracts/src/index.ts (modified — barrel export)
-  - phase-plan.md (modified — §F Row 038 + Row 039 paragraphs)
-  - feature_list.json (modified — phase1-step-038 + phase1-step-039 rows)
-  - LESSONS.md (modified — partial-outcome-archival lesson appended)
-commits:
-  - hash: 1cab88f
-    message: "phase1: feat-002 verify-gate slice — /stylesheet-primitives honest-complete (Step 9 + 5 fix-pattern authoring rules)"
-  - hash: aedb535
-    message: "phase1: feat-002 full implementation (parallelization scope) — accountability for Row 038's premature archive"
-attempts: 2
-lessons:
-  - "Partial-outcome archives require explicit operator authorization. When an approved plan has N discrete deliverables and only M < N ship in a session, the plan stays in active/ with explicit TODO items — never archive with outcome: partial unless operator explicitly approves the deferral. The verify-gate slice (Row 038) was honest contribution; the archive around it was the category error. Row 039 restored accountability by shipping the full plan scope. Lesson captured at LESSONS.md 'Partial-outcome archival silently diverges shipped state from intended state (2026-05-29)'."
-  - "Two-layer drift mitigation: compile-time gate (Row 038 Step 9 — pnpm typecheck + test + storybook) catches deterministic bug classes; contract-time audit (Row 039 audit-ui-kit-component-consistency.mjs) catches drift the compiler doesn't see (5-file shape, data-kit-component literal, test-coverage shape, naming, composition). Both layers required for honest signal."
-  - "Audit smoke-tested on test-app's existing kit produced 29 honest findings across 5 dimensions — the audit catches real drift that the prior dispatch missed. For future fresh-project runs, Stage 2 + Stage 3 audit + retry loop (max 2 retries per component) would surface these before Stage 4 ships, with failedComponents[] populated for operator review on max-retries-exhausted cases."
-  - "Wall-clock empirical validation deferred honestly — test-app's kit is already authored; next fresh-project /stylesheet-primitives run serves as the measurement site (target: ≤45 min at concurrency=8 vs ~3h 30m sequential baseline). The factory code is complete; the wall-clock measurement is pending. This deferral is explicit + acknowledged in evidence/phase1-step-039-result.txt — not an archive-time silent assumption."
-  - "Acronym-friendly PascalCase resolution (FAQ ≡ Faq) + kitCva alias + extracted-pattern relaxed contract were the three audit refinements needed to bring false positives to zero on the smoke test. Future audit-script extensions should consider similar 'idiom-equivalence' carve-outs early — strict canonical-form matching produces unworkable noise on real kits."
-test-results:
+
+- .claude/skills/stylesheet-primitives/SKILL.md (modified — §1a + §1e + §2 fix-pattern rules + Step 9 verify gate + new "Orchestration: 4-Stage DAG" section)
+- .claude/models.yaml (modified — stages.{stylesheet-primitives,screens}.{concurrency,maxConcurrency,burstDelay} knob)
+- scripts/audit-ui-kit-component-consistency.mjs (created — 18-dimension audit D-A through D-R, project-agnostic)
+- packages/orchestrator-contracts/src/stylesheet-primitives.ts (created — StylesheetPrimitivesOutputSchema + FailedComponentSchema)
+- packages/orchestrator-contracts/src/index.ts (modified — barrel export)
+- phase-plan.md (modified — §F Row 038 + Row 039 paragraphs)
+- feature_list.json (modified — phase1-step-038 + phase1-step-039 rows)
+- LESSONS.md (modified — partial-outcome-archival lesson appended)
+  commits:
+- hash: 1cab88f
+  message: "phase1: feat-002 verify-gate slice — /stylesheet-primitives honest-complete (Step 9 + 5 fix-pattern authoring rules)"
+- hash: aedb535
+  message: "phase1: feat-002 full implementation (parallelization scope) — accountability for Row 038's premature archive"
+  attempts: 2
+  lessons:
+- "Partial-outcome archives require explicit operator authorization. When an approved plan has N discrete deliverables and only M < N ship in a session, the plan stays in active/ with explicit TODO items — never archive with outcome: partial unless operator explicitly approves the deferral. The verify-gate slice (Row 038) was honest contribution; the archive around it was the category error. Row 039 restored accountability by shipping the full plan scope. Lesson captured at LESSONS.md 'Partial-outcome archival silently diverges shipped state from intended state (2026-05-29)'."
+- "Two-layer drift mitigation: compile-time gate (Row 038 Step 9 — pnpm typecheck + test + storybook) catches deterministic bug classes; contract-time audit (Row 039 audit-ui-kit-component-consistency.mjs) catches drift the compiler doesn't see (5-file shape, data-kit-component literal, test-coverage shape, naming, composition). Both layers required for honest signal."
+- "Audit smoke-tested on test-app's existing kit produced 29 honest findings across 5 dimensions — the audit catches real drift that the prior dispatch missed. For future fresh-project runs, Stage 2 + Stage 3 audit + retry loop (max 2 retries per component) would surface these before Stage 4 ships, with failedComponents[] populated for operator review on max-retries-exhausted cases."
+- "Wall-clock empirical validation deferred honestly — test-app's kit is already authored; next fresh-project /stylesheet-primitives run serves as the measurement site (target: ≤45 min at concurrency=8 vs ~3h 30m sequential baseline). The factory code is complete; the wall-clock measurement is pending. This deferral is explicit + acknowledged in evidence/phase1-step-039-result.txt — not an archive-time silent assumption."
+- "Acronym-friendly PascalCase resolution (FAQ ≡ Faq) + kitCva alias + extracted-pattern relaxed contract were the three audit refinements needed to bring false positives to zero on the smoke test. Future audit-script extensions should consider similar 'idiom-equivalence' carve-outs early — strict canonical-form matching produces unworkable noise on real kits."
+  test-results:
   unit: n/a (factory work — empirical validation via audit smoke-test in evidence/phase1-step-039-result.txt)
   integration: ✓ audit produces honest findings on test-app kit (29 findings across 5 dimensions)
-duration-minutes: 240
+  duration-minutes: 240
+
 ---
