@@ -1,0 +1,53 @@
+phase2-step-007 — security dispatch wired conditionally on agent_sequence
+==========================================================================
+
+Run: 2026-05-29
+Predecessor: phase0-step-038 (security agent authoring), phase2-step-003
+
+Deliverables verified:
+
+  1. Security agent in unified dispatch path
+     - "security" enum member at AgentSequenceMember:34
+     - Dispatch via runAgentDispatch when task.agent === "security"
+     - No special-case dispatcher needed — uniform with builder/tester/reviewer
+
+  2. Security agent definition
+     - .claude/agents/security.md (tier: security; specialist for OWASP +
+       CWE Top 25 + ASVS L1)
+     - Reads worktree diff post-builder
+     - Returns structured findings with P0/P1/P2 severity tiers
+
+  3. Conditional dispatch driven by tasks.yaml
+     - PM emits "security" in agent_sequence ONLY for security-sensitive
+       features (per PM SKILL.md heuristic)
+     - test-app empirical: 2 features carry security
+       * feat-contact-inquiry agent_sequence:
+         [web-frontend-builder, security, tester, reviewer]
+       * feat-analytics-observability agent_sequence:
+         [web-frontend-builder, security, tester, reviewer]
+     - Other 10 features skip security (not security_sensitive)
+
+  4. Per-finding routing
+     - P0 findings → bug-fixer dispatch in same iteration (retry cap=2)
+     - P1/P2 findings → docs/bugs.yaml entries (Phase 3 fix-loop consumes)
+     - The routing is shared with reviewer agent's verdict routing in
+       feature-graph (uniform retry/abort discipline)
+
+Test coverage:
+  - feature-graph.test.ts: tests cover the unified retry/routing logic;
+    security tasks exercise the same paths as builder/reviewer tasks
+  - .claude/agents/security.md frontmatter declares its allowedTools
+    + read-first contract enforced at dispatch time
+
+Empirical test-app trace:
+  test-app's tasks.yaml has 2 security tasks
+  (feat-contact-inquiry inquiry-security-review +
+   feat-analytics-observability analytics-security-review).
+  When start-build dry-run dispatches against this tasks.yaml, security
+  fires for these 2 features only — the other 10 skip security per
+  agent_sequence omission.
+
+Status: PASS — phase2-step-007 (security dispatch) empirically validated.
+Conditional dispatch via agent_sequence; per-finding routing matches
+reviewer's verdict routing.
+Row flips to passes: true.

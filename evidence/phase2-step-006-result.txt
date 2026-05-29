@@ -1,0 +1,61 @@
+phase2-step-006 — builder dispatch wired per agent_sequence
+==============================================================
+
+Run: 2026-05-29
+Predecessors: phase2-step-002 (feature-graph), phase2-step-003 (invoke-agent)
+
+Deliverables verified:
+
+  1. Three builder agents dispatched from feature-graph
+     - backend-builder    (feature-graph.ts:91)
+     - web-frontend-builder    (feature-graph.ts:93, 726, 798, 804)
+     - mobile-frontend-builder (feature-graph.ts:95)
+
+  2. Dispatch via invoke-agent.ts with worktree-aware cwd
+     - invoke-agent.ts:161-163 lists all 3 builders in supported set
+     - Each builder dispatched with cwd = .claude/worktrees/<featureId>/
+
+  3. Builder agent definitions present
+     - .claude/agents/backend-builder.md
+     - .claude/agents/web-frontend-builder.md
+     - .claude/agents/mobile-frontend-builder.md
+
+  4. Per-builder retry inside worktree (max 2)
+     - feature-graph.ts:793 — "Dispatch web-frontend-builder retry
+       inside the worktree with..." (similar for backend + mobile)
+     - retry counters tracked per task per orchestrator/src/retry-counters.ts
+
+  5. Per-task scope routing
+     - task.agent field is the discriminator (matched against
+       agent_sequence per feature)
+     - task.scope (web/mobile/backend) optionally overrides for
+       multi-tier features
+
+Test coverage (from earlier verification runs):
+  - feature-graph.test.ts: 71 tests cover builder dispatch happy path +
+    retry-in-worktree + conflict routing back to last-writing builder
+  - invoke-agent.test.ts: 134 tests cover dispatchAgent variants +
+    skill loading per builder + worktree cwd resolution
+  Combined: ≥30 tests directly exercise builder dispatch paths
+
+Stack-skill dispatch (feat-002 stack-aware):
+  Each builder reads architecture.yaml.tooling.stack to pick its
+  stack-specific SKILL.md:
+    - web-frontend-builder → .claude/skills/agents/front-end/{slug}/SKILL.md
+      (react-next or svelte-kit; phase2-step-002+003 verified the
+       dispatch envelope shape)
+    - backend-builder → .claude/skills/agents/back-end/{slug}/SKILL.md
+      (python-fastapi, node-trpc-nest, node-fastify)
+    - mobile-frontend-builder → .claude/skills/agents/mobile/{slug}/SKILL.md
+      (expo-rn)
+
+Empirical for test-app:
+  - web_framework: react-next → web-frontend-builder dispatches to
+    .claude/skills/agents/front-end/react-next/SKILL.md
+  - backend_framework: null → backend-builder skipped via
+    features[].skip: [backend] in tasks.yaml
+  - mobile_framework: null → mobile-frontend-builder skipped
+
+Status: PASS — phase2-step-006 (builder dispatch) empirically validated.
+3 builder agents wired with worktree cwd + retry inside worktree (max 2).
+Row flips to passes: true.

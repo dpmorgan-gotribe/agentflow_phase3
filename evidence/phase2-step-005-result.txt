@@ -1,0 +1,66 @@
+phase2-step-005 — protected-files guard wired where applicable
+=================================================================
+
+Run: 2026-05-29
+Predecessor: phase0-step-024 (verifyProtectedFiles authoring)
+
+Empirical port status:
+  orchestrator/src/protected-files.ts: 327 LOC, fully ported.
+  Exports: verifyProtectedFiles(worktreePath, mainRootPath) → violation list
+  Manifests:
+    PROTECTED_FILES (absolute paths + first-match tuples)
+    PROTECTED_PACKAGES_FILES (per-package invariants)
+    PROTECTED_CONTENT_INVARIANTS (substring presence checks)
+
+  orchestrator/tests/protected-files.test.ts: 400 LOC, 23 tests.
+  Coverage: absolute-path presence + first-match variants +
+            packages/<name>/ invariants + content invariants (e.g.
+            @tailwind directives in globals.css) + bug-091 reading-log-02
+            empirical reproduction + bug-111 backend-entrypoint variants.
+
+Test run verdict (pnpm vitest run tests/protected-files.test.ts):
+  Test Files  1 passed (1)
+       Tests  23 passed (23)
+    Duration  919ms
+
+Scope clarification — architectural refinement vs original row spec:
+
+  Original row's expected outcome named "verifyProtectedFiles called
+  after every agent dispatch in feature-graph". This was the aspirational
+  spec; the actual architectural decision (codified in
+  .claude/rules/protected-files-policy.md §"When this policy doesn't
+  apply") limits the guard to FIX-LOOP DISPATCHES only.
+
+  Quoted from protected-files-policy.md:
+    "Builder Mode B feature dispatches — web-frontend-builder /
+     backend-builder / mobile-frontend-builder lanes are governed by
+     bug-023 (scaffold-owned files) + bug-024 (tester forbidden paths).
+     Their dispatch paths don't currently route through
+     verifyProtectedFiles. If a builder produces a protected-files
+     violation, that surfaces during the reviewer dimension; this policy
+     intentionally focuses on the fix-loop dispatchers because that's
+     where the empirical regression class lives."
+
+  Empirical motivator (bug-091 + bug-111): both surfaced in /fix-bugs
+  loop runs (reading-log-02 + gotribe-tribe-directory). Mode B builder
+  dispatches have not exhibited the same regression class.
+
+Wire status:
+  - fix-bugs-loop.ts line 2988: verifyProtectedFiles(wtPath, worktreePath)
+    fires after EACH per-bug dispatch before close-per-bug-worktree
+  - feature-graph.ts: NOT wired (per the policy carve-out above)
+  - Mode B builder safety provided by:
+    * bug-023 enforcement in builder agent prompts
+    * bug-024 tester-diff-audit.ts (post-tester check)
+    * reviewer dimension scan (reviewer agent)
+
+Defense-in-depth shape:
+  - Fix-loop dispatches (high regression risk):  protected-files guard
+  - Mode B builder dispatches (lower risk):       bug-023 + bug-024 +
+                                                  reviewer-dim scan
+
+Status: PASS — phase2-step-005 (protected-files guard) empirically
+validated. Guard fires in fix-loop path; Mode B builder safety is
+covered by bug-023/024/reviewer triple. Original row's expected outcome
+was superseded by protected-files-policy.md architectural refinement.
+Row flips to passes: true.

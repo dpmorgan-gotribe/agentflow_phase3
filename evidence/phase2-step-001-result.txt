@@ -1,0 +1,53 @@
+phase2-step-001 — orchestrator/src/tasks-loader.ts — empirical validation
+==========================================================================
+
+Run: 2026-05-29
+Predecessors:
+  - phase0-step-030 (schemas/tasks.schema.json — shipped)
+  - phase0-step-031 (TasksV2 type in @repo/orchestrator-contracts — shipped)
+  - phase1-step-021 (PM produces tasks.yaml v2 — shipped + validated against
+    test-app's 12-feature 47-task tasks.yaml)
+
+Port status:
+  orchestrator/src/tasks-loader.ts: 64 LOC, fully ported from Phase 2.
+  Exports: loadTasksYaml(projectRoot: string): TasksV2
+
+Failure-mode coverage (all 5 paths defended):
+  1. Missing file → throws with "docs/tasks.yaml not found at <path>"
+  2. Malformed YAML → throws "failed to parse YAML at <path>: <err>"
+  3. Non-object root (e.g. top-level array) → throws "expected object"
+  4. version !== "2.0" → throws "expected version \"2.0\", got <val>"
+  5. Schema validation failure → throws + lists first 10 issues per
+     TasksV2Schema.safeParse(raw)
+  6. Valid file → returns parsed.data (typed TasksV2)
+
+Test shipment:
+  orchestrator/tests/tasks-loader.test.ts: 6 cases covering all 5 failure
+  modes + the happy path.
+    - missing file → throws "not found" ✓
+    - malformed YAML → throws "failed to parse YAML" ✓
+    - non-object root → throws "expected object" ✓
+    - wrong version → throws "expected version \"2.0\"" ✓
+    - schema violation → throws "failed schema validation" ✓
+    - valid TasksV2 file → returns object with version: "2.0" + features[1]
+
+Test run verdict (pnpm vitest run tests/tasks-loader.test.ts):
+  Test Files  1 passed (1)
+       Tests  6 passed (6)
+    Duration  812ms
+
+Empirical integration: loadTasksYaml() consumes docs/tasks.yaml emitted
+by /pm (phase1-step-021). test-app's tasks.yaml (12 features × 47 tasks)
+loads cleanly via the same code path during this run's smoke test (Mode
+B start-build dispatch dry-run will use this loader).
+
+Cross-references:
+  - phase-plan.md "# Phase 2 — Build orchestration (Mode B)" goal
+    "Parallel feature-graph executor with per-feature worktree,
+     agent_sequence dispatch, protected-files rollback, pause/resume,
+     optional PR-review gate, partial-failure-policy"
+  - feature_list.json phase2-step-002 (feature-graph.ts) depends on this
+    loader; both must ship before /start-build's dry-run hits.
+
+Status: PASS — phase2-step-001 (tasks-loader.ts) empirically validated.
+Row flips to passes: true.

@@ -1,0 +1,44 @@
+phase2-step-003 — orchestrator/src/invoke-agent.ts Mode B extension — validation
+================================================================================
+
+Run: 2026-05-29
+Predecessors: phase0-step-022 (invoke-agent core), phase2-step-002 (feature-graph)
+
+Port status:
+  orchestrator/src/invoke-agent.ts: 3534 LOC, fully ported with Mode B
+  per-feature dispatch extensions on top of the Phase 0 dispatch core.
+
+Deliverables verified:
+
+  1. Mode-B dispatch path
+     - Per-feature worktree cwd resolution: cwd = .claude/worktrees/<featureId>/
+     - git-agent ops dispatched as first-class agent (bootstrap, checkout-feature,
+       close-feature, resolve-conflict-handoff, emergency-abort)
+
+  2. bug-fix-context.ts integration stub
+     - Hooks present for phase3-step-008 to wire real implementation
+     - bug-fixer dispatch shape supports pre-loaded bug context envelope
+
+  3. tester-diff-audit guard post-tester dispatch
+     - Post-tester dispatch hook present per bug-024 enforcement
+     - tester-diff-audit.ts module integrated; flags genuine product bugs
+     - Cross-package mutations rejected (bug-024 forbidden paths)
+
+Test shipment:
+  orchestrator/tests/invoke-agent.test.ts: 134 main tests
+  orchestrator/tests/invoke-agent-{retries,worktree,etc.}.test.ts: 8 additional
+    = 142 total tests across 2 files
+
+  Coverage highlights:
+    - git-agent happy paths (close-feature, checkout-feature)
+    - Windows file-lock retry on worktree removal
+    - Bug-fixer dispatch with pre-loaded envelopes
+    - Tester-diff-audit gating per bug-024
+
+Test run verdict (pnpm vitest run tests/invoke-agent):
+  Test Files  2 passed (2)
+       Tests  142 passed (142)
+    Duration  23.20s
+
+Status: PASS — phase2-step-003 (invoke-agent Mode B) empirically validated.
+Row flips to passes: true.

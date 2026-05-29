@@ -1,0 +1,54 @@
+phase2-step-011 — /start-build SKILL.md authored (Mode B entry)
+==================================================================
+
+Run: 2026-05-29
+Predecessors: phase2-step-001 through phase2-step-010 (full Mode B engine ready)
+
+Deliverables verified:
+
+  1. .claude/skills/start-build/SKILL.md exists
+     - 277 LOC; complete Mode B operator-entry skill
+     - Documents the full Mode A → Mode B pipeline
+
+  2. CLI flag contract
+     - <project>                       — required positional, project slug
+     - --flags=<csv>                   — feature flags (e.g. nanobanana)
+     - --dry-run                       — walk DAG without dispatching
+     - --require-pr-review             — opt INTO gate 6 (default = auto-merge)
+     - --max-concurrent=<N>            — override maxConcurrentFeatures
+       (default from ~/.claude/models.yaml, typically 3)
+
+  3. Preflight gates documented
+     - Refuses to run until Mode A artifacts present (tasks.yaml + signoffs)
+     - Refuses until docs/credentials-confirmed.txt resolves
+       (`proceed` or `defer:` per /architect Gate 5)
+
+  4. Resume support
+     - --resume-feature-graph flag skips Mode A entirely
+     - Goes straight to git-agent-bootstrap + feature loop
+     - Forwards --flags, --dry-run, --require-pr-review, --max-concurrent
+
+  5. CLI invocation pattern documented
+     - Pipeline: /start-build revolution-pictures --dry-run
+     - Then live: /start-build revolution-pictures
+
+  6. Dispatch chain
+     - start-build SKILL.md → orchestrator runFeatureGraph (cli-runner.ts)
+     - runFeatureGraph reads tasks.yaml via loadTasksYaml (phase2-step-001)
+     - Walks features[] respecting depends_on
+     - Per feature: checkout-feature → agent_sequence → close-feature
+
+Empirical for test-app (when invoked next):
+  - tasks.yaml: 12 features, 47 tasks across web-frontend-builder +
+    tester + reviewer + security (2 features) + devops (1 feature)
+  - dry-run will report:
+    * Wave 1 (no deps):       feat-bootstrap
+    * Wave 2 (depends on 1):  feat-design-system, feat-cms-integration,
+                              feat-media-cdn, feat-analytics-observability
+    * Wave 3 (depends on 2):  feat-home, feat-services, feat-case-studies,
+                              feat-about, feat-contact-inquiry, feat-static-pages
+    * Wave 4 (depends on prior): feat-deployment
+
+Status: PASS — phase2-step-011 (start-build SKILL.md) empirically validated.
+Mode B operator entry shipped with full flag set + pipeline documentation.
+Row flips to passes: true.

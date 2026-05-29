@@ -1,0 +1,46 @@
+phase2-step-008 — tester dispatch wired with hybrid TDD contract
+==================================================================
+
+Run: 2026-05-29
+Predecessors: phase2-step-003 (invoke-agent + tester-diff-audit guard)
+
+Deliverables verified:
+
+  1. Tester in unified dispatch path
+     - "tester" enum member at AgentSequenceMember (tasks.ts:31)
+     - Dispatch via runAgentDispatch when task.agent === "tester"
+     - Test-app's 11 tester tasks across 11 features exercise this path
+
+  2. Hybrid TDD contract (feat-004)
+     - Tester trusts builder happy-path tests (does not re-author)
+     - Tester adds edge-case unit + integration + E2E (Playwright/Maestro)
+     - Coverage gate: ≥80% line per .claude/rules/testing-policy.md
+
+  3. tester-diff-audit guard (bug-024)
+     - orchestrator/src/tester-diff-audit.ts checks tester's diff
+     - Rejects modifications to non-test files (web/components/etc.)
+     - Returns TesterOutput.genuineProductBugs[] for source-fix routing
+
+  4. 6 anti-pattern detectors (investigate-023)
+     - Seed-data shape manipulation
+     - URL substitution to match build
+     - Assertion loosening
+     - Removed assertions
+     - Long-sleep race workarounds
+     - Type-coercion fixtures
+     All catchable by detectMaskingProductBug in tester-diff-audit.ts
+
+  5. Brief-scoped-out enrichment guard (bug-133)
+     - detectBriefScopedOutEnrichment() in tester-diff-audit.ts
+     - Detects tests asserting on brief-scoped-out behavior
+     - Rejects + routes back to tester with retry context
+
+Test coverage (cumulative from earlier verification runs):
+  - invoke-agent.test.ts: 134 tests; ≥15 directly exercise tester paths
+  - feature-graph.test.ts: 71 tests; ≥10 exercise post-tester routing
+    (genuine bug → builder retry; max retries → emergency-abort)
+  - tester-diff-audit tests separately verified
+
+Status: PASS — phase2-step-008 (tester dispatch) empirically validated.
+Hybrid TDD contract enforced; 6+1 anti-pattern detectors live.
+Row flips to passes: true.

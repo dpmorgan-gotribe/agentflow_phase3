@@ -1,0 +1,41 @@
+phase2-step-009 — reviewer dispatch wired with 8-dimension review
+====================================================================
+
+Run: 2026-05-29
+Predecessors: phase2-step-008 (tester finishes first), phase2-step-003
+
+Deliverables verified:
+
+  1. Reviewer in unified dispatch path
+     - "reviewer" enum member at AgentSequenceMember (tasks.ts:32)
+     - Last in agent_sequence per convention (before close-feature merge)
+
+  2. ReviewerOutput Zod schema integrated
+     - Imported as ReviewerOutputType from
+       packages/orchestrator-contracts/src/reviewer.ts
+     - feature-graph.ts:11, 190-197, 601-609, 1384, 2435 — all
+       reviewerOutput-aware
+
+  3. 8-dimension review (docs/reviewer-playbook.md)
+     - architecture, security, compliance, maintainability,
+       a11y, performance, brief-delivery, design-conformance
+     - reviewer.md agent definition pins these dimensions
+     - ReviewerOutput.overallVerdict ∈ { approved | needs-revision | blocked }
+
+  4. Verdict routing
+     - approved → close-feature merge (Gate 6 may pause if opt-in)
+     - needs-revision → retry route per retryTargets[] back to named builders
+       (max 3 per task per orchestrator/src/retry-counters.ts)
+     - blocked → emergency-abort + mark feature failed in tasks.yaml
+
+  5. Read-first contract enforced
+     - Reviewer reads branch diff + stack-skill §Review block
+     - DOES NOT rewrite tests or refactor code (per reviewer.md frontmatter)
+
+Test coverage (cumulative):
+  - feature-graph.test.ts: ≥20 tests exercise reviewer verdict routing
+    + retry-target resolution + close-feature handoff after approval
+
+Status: PASS — phase2-step-009 (reviewer dispatch) empirically validated.
+8-dim review + verdict-routed retry/merge/abort discipline.
+Row flips to passes: true.

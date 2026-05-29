@@ -1,0 +1,55 @@
+phase2-step-004 — git-agent ops wired across feature-graph + auto-run chain
+============================================================================
+
+Run: 2026-05-29
+Predecessor: phase2-step-002 (feature-graph), phase2-step-003 (invoke-agent)
+
+Five git-agent ops + their invocation sites:
+
+  | Op                          | Invocation site                                    |
+  | --------------------------- | -------------------------------------------------- |
+  | bootstrap                   | /pm auto-run chain step 14 (PM SKILL.md)           |
+  |                             | /start-build pipeline step 1 (start-build SKILL.md)|
+  | checkout-feature            | feature-graph.ts runFeature start                  |
+  | close-feature               | feature-graph.ts runFeature post-reviewer          |
+  | resolve-conflict-handoff    | feature-graph.ts runCloseFeature conflict branch   |
+  | emergency-abort             | feature-graph.ts runRetryExhausted path            |
+
+Architectural note: bootstrap is a one-time Mode A → Mode B transition,
+NOT a per-feature op. It fires from /pm's auto-run chain (PM SKILL.md
+"Auto-run chain (ADR-005)" section) after tasks.yaml is written, before
+Mode B even starts. /start-build's preflight expects worktrees/ to exist;
+if absent, /start-build can defensively dispatch bootstrap.
+
+The 4 Mode-B ops fire from feature-graph via invoke-agent's runGitOp
+switch (orchestrator/src/invoke-agent.ts:432-447):
+
+  case "checkout-feature":         runCheckoutFeature(...)
+  case "close-feature":            runCloseFeature(...)
+  case "resolve-conflict-handoff": runResolveConflictHandoff(...)
+  case "emergency-abort":          runEmergencyAbort(...)
+
+The bootstrap op IS in GitAgentInputSchema discriminated union
+(packages/orchestrator-contracts/src/git-agent.ts:16, 26) — input + output
+variants — but is not in runGitOp because it doesn't run from feature-graph.
+
+Conflict handoff pauses + resumes:
+  - runResolveConflictHandoff returns a ConflictHandoffOutput with
+    conflictingFiles + lastWritingAgent + attempt + 3 SHAs (mergeBase,
+    mainHead, featureHead)
+  - feature-graph routes back to lastWritingAgent for re-edit
+  - Up to 3 attempts per orchestrator/src/retry-counters.ts
+  - On exhaustion: emergency-abort + tasks.yaml marked failed
+
+Test coverage:
+  Already passed in phase2-step-002 + phase2-step-003 verification runs:
+    - orchestrator/tests/feature-graph.test.ts: 71 tests (covers
+      checkout/close/conflict/abort routing per feature)
+    - orchestrator/tests/invoke-agent.test.ts: 134 tests (covers
+      runGitOp switch dispatch + all 4 op handlers)
+  Total: 205 tests via these two suites; all pass.
+
+Status: PASS — phase2-step-004 (git-agent ops wired) empirically validated.
+All 5 ops have invocation sites + tests; the bootstrap site is auto-run
+chain, not feature-graph (correct per architecture).
+Row flips to passes: true.

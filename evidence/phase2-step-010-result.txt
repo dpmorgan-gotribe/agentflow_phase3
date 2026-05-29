@@ -1,0 +1,48 @@
+phase2-step-010 — close-feature merge wired post-reviewer
+============================================================
+
+Run: 2026-05-29
+Predecessors: phase2-step-009 (reviewer approval triggers close), phase2-step-004
+
+Deliverables verified:
+
+  1. close-feature op invoked after reviewer approval
+     - feature-graph.ts runs after agent_sequence completes
+     - Gate-6 pause may intervene if --require-pr-review opt-in
+     - Then dispatches git-agent close-feature via invoke-agent runGitOp
+
+  2. Pre-merge checks
+     - git-agent close-feature op:
+       * git push origin <branch>     (preserve at origin)
+       * git checkout main
+       * git merge --no-ff <branch>   (capture mergeSha)
+       * pnpm typecheck + lint + test (per orchestrator config)
+     - On any check failure → resolve-conflict-handoff path
+
+  3. Merge commit format
+     - --no-ff message per orchestrator convention
+     - Includes feature id + summary
+
+  4. Conflict routing
+     - resolve-conflict-handoff: parses git diff --name-only --diff-filter=U
+       → conflictingFiles[] surfaced to lastWritingAgent
+     - Max 3 attempts per retry counter
+     - On exhaustion → emergency-abort with --force worktree removal
+
+  5. Windows file-lock resilience (bug-072)
+     - close-feature post-merge worktree-remove retries on EBUSY
+     - Up to 5 retries with exponential backoff
+     - Even on final failure: returns success (merge already landed)
+
+Test coverage:
+  - invoke-agent.test.ts: 134 tests include
+    "close-feature post-merge cleanup retries on Windows file-lock then
+     succeeds" (3018ms) and
+    "close-feature stays success even when worktree-remove fails after 5
+     retries" (15047ms)
+  - feature-graph.test.ts: 71 tests exercise close-feature handoff
+    after reviewer-approval + Gate-6 wait
+
+Status: PASS — phase2-step-010 (close-feature merge) empirically validated.
+Pre-merge gates + conflict routing + Windows file-lock resilience.
+Row flips to passes: true.

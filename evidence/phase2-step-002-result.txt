@@ -1,0 +1,54 @@
+phase2-step-002 — orchestrator/src/feature-graph.ts — empirical validation
+============================================================================
+
+Run: 2026-05-29
+Predecessor: phase2-step-001 (tasks-loader ships TasksV2 to this driver)
+
+Port status:
+  orchestrator/src/feature-graph.ts: 2961 LOC, fully ported from Phase 2
+  with substantial additions for fine-grained pause, perceptual integration,
+  gate-6 PR review, parity-smoke checks, bug-052/054/055 wiring.
+
+Deliverables verified:
+
+  1. Perceptual-review integration (line 2731+)
+     - feat-052 per-feature parity-smoke fires after agent_sequence
+     - Divergences route to perceptual-reviewer agent (Tier 4)
+     - Findings hand off to bug-fixer / systemic-fixer dispatches
+     - Empirical motivator quoted at line 2731: "gotribe-event-calendar
+       2026-05-22 — 38 perceptual divergences"
+
+  2. Fine-grained pause (multiple sites)
+     - Pause-on-feature-boundary: checkpoints feature-graph progress
+     - Pause-mid-feature-after-current-agent: respected by runFeature loop
+     - Resume via .claude/state/{pipelineId}/paused.json read
+
+  3. Gate-6 PR-review (lines 51-54, 228-238, 1993-2049)
+     - waitForGateDecision({ gateType: "pr-review", featureId }) wired
+     - File-drop at docs/gate-6-approved-{featureId}.txt
+     - Directive grammar: approved | changes:<note> | abort
+     - bug-054 opt-in flag (default = auto-merge after reviewer)
+
+  4. Tests:
+     - orchestrator/tests/feature-graph.test.ts: 71 tests covering
+       happy path + retry loops + per-feature parity-smoke + pause-resume +
+       PR-review gate + conflict handoff routing + bug-fixer dispatches +
+       systemic-fixer dispatches
+     - orchestrator/tests/feature-graph-progress.test.ts: 15 tests covering
+       progress checkpoint + resume semantics
+
+Test run verdict (pnpm vitest run on both test files):
+  Test Files  2 passed (2)
+       Tests  86 passed (86)
+    Duration  2.75s
+
+Cross-references:
+  - phase-plan.md Phase 2 §Goal — "Parallel feature-graph executor"
+  - bug-052 (per-feature parity smoke), bug-054 (gate-6 opt-in),
+    bug-055 (gate-6-rejected routing)
+  - investigate-022 (parity-smoke design), investigate-002 (Mode B
+    Phase-2-to-3 ports)
+  - phase2-step-003+ rely on this feature-graph as the dispatch core
+
+Status: PASS — phase2-step-002 (feature-graph.ts) empirically validated.
+Row flips to passes: true.
