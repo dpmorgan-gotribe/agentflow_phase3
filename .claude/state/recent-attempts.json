@@ -1,10 +1,5 @@
 [
   {
-    "hash": "ef4e3689c164",
-    "timestamp": 1780021751588,
-    "tool": "Read"
-  },
-  {
     "hash": "38f0a50ed1fa",
     "timestamp": 1780021772258,
     "tool": "Read"
@@ -248,5 +243,10 @@
     "hash": "bdc13df0cc75",
     "timestamp": 1780023087704,
     "tool": "TaskUpdate"
+  },
+  {
+    "hash": "4e7e08c5f41e",
+    "timestamp": 1780060244305,
+    "tool": "Bash"
   }
 ]
