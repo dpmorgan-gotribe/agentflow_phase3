@@ -1,65 +1,5 @@
 [
   {
-    "hash": "e4f72a6a10d6",
-    "timestamp": 1780101300423,
-    "tool": "TaskUpdate"
-  },
-  {
-    "hash": "8e3b4813fb8e",
-    "timestamp": 1780101305500,
-    "tool": "TaskUpdate"
-  },
-  {
-    "hash": "c0256524ba3d",
-    "timestamp": 1780101308167,
-    "tool": "Monitor"
-  },
-  {
-    "hash": "38b7d7c16efe",
-    "timestamp": 1780101319075,
-    "tool": "Bash"
-  },
-  {
-    "hash": "3be1d2b50300",
-    "timestamp": 1780101332374,
-    "tool": "Bash"
-  },
-  {
-    "hash": "1f4617a5e945",
-    "timestamp": 1780101339108,
-    "tool": "Read"
-  },
-  {
-    "hash": "a30ceb317c95",
-    "timestamp": 1780101378374,
-    "tool": "Edit"
-  },
-  {
-    "hash": "25cda187c4b6",
-    "timestamp": 1780101476404,
-    "tool": "Bash"
-  },
-  {
-    "hash": "a8309b266e28",
-    "timestamp": 1780101505736,
-    "tool": "Write"
-  },
-  {
-    "hash": "31329e2184a1",
-    "timestamp": 1780101582825,
-    "tool": "Bash"
-  },
-  {
-    "hash": "e4f72a6a10d6",
-    "timestamp": 1780101589483,
-    "tool": "TaskUpdate"
-  },
-  {
-    "hash": "f8702cf296fc",
-    "timestamp": 1780102921862,
-    "tool": "Bash"
-  },
-  {
     "hash": "8f7d8a26badb",
     "timestamp": 1780102958001,
     "tool": "Bash"
@@ -248,5 +188,65 @@
     "hash": "a3ee28a96c37",
     "timestamp": 1780104525758,
     "tool": "Bash"
+  },
+  {
+    "hash": "7f688b61ccaa",
+    "timestamp": 1780104862870,
+    "tool": "Bash"
+  },
+  {
+    "hash": "fca27d5013b5",
+    "timestamp": 1780104882811,
+    "tool": "Bash"
+  },
+  {
+    "hash": "070bdef18b27",
+    "timestamp": 1780104904576,
+    "tool": "Bash"
+  },
+  {
+    "hash": "9b4e900aafd3",
+    "timestamp": 1780104925172,
+    "tool": "Bash"
+  },
+  {
+    "hash": "c1113f8926eb",
+    "timestamp": 1780104940061,
+    "tool": "Bash"
+  },
+  {
+    "hash": "c6f3513f77bb",
+    "timestamp": 1780104950266,
+    "tool": "Bash"
+  },
+  {
+    "hash": "48c2b632feea",
+    "timestamp": 1780104976243,
+    "tool": "Bash"
+  },
+  {
+    "hash": "ec0db497319f",
+    "timestamp": 1780104985612,
+    "tool": "Bash"
+  },
+  {
+    "hash": "d95d710f7ad1",
+    "timestamp": 1780105015131,
+    "tool": "Bash"
+  },
+  {
+    "hash": "fe0def28d37e",
+    "timestamp": 1780105098530,
+    "tool": "Bash"
+  },
+  {
+    "hash": "c11c4a75bc65",
+    "timestamp": 1780105108177,
+    "tool": "Bash"
+  },
+  {
+    "hash": "ac010b580ffb",
+    "timestamp": 1780105110072,
+    "tool": "Monitor"
   }
 ]
