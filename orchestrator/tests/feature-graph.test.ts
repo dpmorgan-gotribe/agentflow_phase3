@@ -3359,3 +3359,373 @@ describe("runFeature — feat-052 per-feature parity-smoke", () => {
     expect(result.status).toBe("completed");
   });
 });
+
+describe("runFeature — security-driven retry routing (bug-007)", () => {
+  // Empirical anchor: test-app feat-contact-inquiry 2026-05-30 had
+  // 1× web-frontend-builder + 3× security dispatches (zero builder retries
+  // despite findings[].retryTarget = web-frontend-builder named every time).
+  // The per-task retry loop re-dispatched the same agent (security) against
+  // unchanged code. bug-007 routes findings[].retryTarget to the NAMED
+  // BUILDERS — mirroring bug-109's reviewer routing.
+
+  it("routes needs-revision verdict to named builder + re-runs security until approved", async () => {
+    const feature = buildFeature({
+      agent_sequence: ["web-frontend-builder", "security"],
+      tasks: [
+        {
+          id: "inquiry-route",
+          agent: "web-frontend-builder",
+          depends_on: [],
+          skills: [],
+          status: "pending",
+          screens: [],
+        },
+        {
+          id: "inquiry-security-review",
+          agent: "security",
+          depends_on: [],
+          skills: [],
+          status: "pending",
+          screens: [],
+        },
+      ],
+    });
+    let builderInvocations = 0;
+    let securityInvocations = 0;
+    const invokeAgent: InvokeAgentFn = async (args) => {
+      if (args.agent === "git-agent") {
+        return {
+          taskStatus: {},
+          errors: {},
+          gitAgentOutput:
+            args.gitOp?.op === "checkout-feature" ? checkoutOk : closeOk,
+          costUsd: 0.001,
+        };
+      }
+      if (args.agent === "web-frontend-builder") {
+        builderInvocations += 1;
+        if (builderInvocations > 1) {
+          // After 1st builder, security flags issues; orchestrator should
+          // re-dispatch builder with HARD CONSTRAINT bug-007 framing.
+          expect(args.retryContext).toBeDefined();
+          expect(args.retryContext!.errorMessage).toMatch(/HARD CONSTRAINT/);
+          expect(args.retryContext!.errorMessage).toMatch(
+            /SECURITY AGENT REJECTED/,
+          );
+          expect(args.retryContext!.errorMessage).toMatch(/x-forwarded-for/);
+        }
+        return {
+          taskStatus: Object.fromEntries(
+            args.tasks.map((t) => [t.id, "completed"] as const),
+          ),
+          errors: {},
+          costUsd: 0.1,
+        };
+      }
+      if (args.agent === "security") {
+        securityInvocations += 1;
+        // 1st security: needs-revision pointing at web-frontend-builder.
+        // 2nd security (after builder retry): approved.
+        if (securityInvocations === 1) {
+          return {
+            taskStatus: { "inquiry-security-review": "failed" },
+            errors: { "inquiry-security-review": "needs-revision" },
+            securityOutput: {
+              tier: "security",
+              featureId: "feat-auth",
+              tasksCompleted: [],
+              tasksFailed: [
+                {
+                  taskId: "inquiry-security-review",
+                  status: "failed",
+                  findingsCount: 1,
+                },
+              ],
+              tasksSkipped: [],
+              findings: [
+                {
+                  id: "F-001",
+                  severity: "P1",
+                  owaspCategory: "A04:2021-Insecure-Design",
+                  cweId: "CWE-345",
+                  file: "apps/web/app/api/inquiry/route.ts",
+                  line: 48,
+                  title: "x-forwarded-for trusted without proxy validation",
+                  description:
+                    "Attacker can spoof IP via x-forwarded-for header to bypass rate limit.",
+                  suggestedFix:
+                    "Validate x-forwarded-for against trusted-proxy IPs or use x-real-ip from Vercel.",
+                  retryTarget: "web-frontend-builder",
+                },
+              ],
+              checklistCoverage: {
+                covered: ["A04:2021-Insecure-Design"],
+                skipped: [],
+              },
+              overallVerdict: "needs-revision",
+              summary:
+                "1 P1 finding on inquiry route — IP spoofing via x-forwarded-for.",
+            },
+            costUsd: 0.1,
+          };
+        }
+        // 2nd security: approved.
+        return {
+          taskStatus: { "inquiry-security-review": "completed" },
+          errors: {},
+          securityOutput: {
+            tier: "security",
+            featureId: "feat-auth",
+            tasksCompleted: [
+              {
+                taskId: "inquiry-security-review",
+                status: "completed",
+                findingsCount: 0,
+              },
+            ],
+            tasksFailed: [],
+            tasksSkipped: [],
+            findings: [],
+            checklistCoverage: {
+              covered: ["A04:2021-Insecure-Design"],
+              skipped: [],
+            },
+            overallVerdict: "approved",
+            summary: "No P0/P1 findings after builder fix applied.",
+          },
+          costUsd: 0.05,
+        };
+      }
+      return { taskStatus: {}, errors: {}, costUsd: 0 };
+    };
+    const ctx = makeCtx(invokeAgent);
+    const result = await runFeature(feature, ctx);
+    expect(result.status).toBe("completed");
+    // Builder dispatched 1× initial + 1× retry from security routing.
+    expect(builderInvocations).toBe(2);
+    // Security dispatched 1× initial (needs-revision) + 1× re-validate (approved).
+    expect(securityInvocations).toBe(2);
+  });
+
+  it("fails feature on blocked verdict without re-dispatching builder", async () => {
+    const feature = buildFeature({
+      agent_sequence: ["web-frontend-builder", "security"],
+      tasks: [
+        {
+          id: "auth-flow",
+          agent: "web-frontend-builder",
+          depends_on: [],
+          skills: [],
+          status: "pending",
+          screens: [],
+        },
+        {
+          id: "auth-security",
+          agent: "security",
+          depends_on: [],
+          skills: [],
+          status: "pending",
+          screens: [],
+        },
+      ],
+    });
+    let builderInvocations = 0;
+    const invokeAgent: InvokeAgentFn = async (args) => {
+      if (args.agent === "git-agent") {
+        return {
+          taskStatus: {},
+          errors: {},
+          gitAgentOutput:
+            args.gitOp?.op === "checkout-feature" ? checkoutOk : closeOk,
+          costUsd: 0.001,
+        };
+      }
+      if (args.agent === "web-frontend-builder") {
+        builderInvocations += 1;
+        return {
+          taskStatus: Object.fromEntries(
+            args.tasks.map((t) => [t.id, "completed"] as const),
+          ),
+          errors: {},
+          costUsd: 0.1,
+        };
+      }
+      if (args.agent === "security") {
+        return {
+          taskStatus: { "auth-security": "failed" },
+          errors: { "auth-security": "blocked" },
+          securityOutput: {
+            tier: "security",
+            featureId: "feat-auth",
+            tasksCompleted: [],
+            tasksFailed: [
+              {
+                taskId: "auth-security",
+                status: "failed",
+                findingsCount: 1,
+              },
+            ],
+            tasksSkipped: [],
+            findings: [
+              {
+                id: "F-001",
+                severity: "P0",
+                owaspCategory:
+                  "A07:2021-Identification-and-Authentication-Failures",
+                cweId: "CWE-287",
+                file: "apps/web/lib/auth.ts",
+                line: 12,
+                title: "Hardcoded secret in auth module",
+                description: "JWT secret committed to source code.",
+                suggestedFix: "Move to env var; rotate compromised secret.",
+                retryTarget: "web-frontend-builder",
+              },
+            ],
+            checklistCoverage: { covered: [], skipped: [] },
+            overallVerdict: "blocked",
+            summary: "P0 secret exposure — blocked merge.",
+          },
+          costUsd: 0.1,
+        };
+      }
+      return { taskStatus: {}, errors: {}, costUsd: 0 };
+    };
+    const ctx = makeCtx(invokeAgent);
+    const result = await runFeature(feature, ctx);
+    expect(result.status).toBe("failed");
+    expect(result.abortReason).toMatch(/security-blocked/);
+    expect(result.abortReason).toMatch(/Hardcoded secret/);
+    // Builder fired exactly once (initial); routing did NOT fire after blocked.
+    expect(builderInvocations).toBe(1);
+  });
+
+  it("aggregates findings by retryTarget agent (multiple findings → single builder dispatch)", async () => {
+    const feature = buildFeature({
+      agent_sequence: ["web-frontend-builder", "security"],
+      tasks: [
+        {
+          id: "form-handler",
+          agent: "web-frontend-builder",
+          depends_on: [],
+          skills: [],
+          status: "pending",
+          screens: [],
+        },
+        {
+          id: "form-security",
+          agent: "security",
+          depends_on: [],
+          skills: [],
+          status: "pending",
+          screens: [],
+        },
+      ],
+    });
+    let builderInvocations = 0;
+    let securityInvocations = 0;
+    let capturedRetryContext: string | undefined;
+    const invokeAgent: InvokeAgentFn = async (args) => {
+      if (args.agent === "git-agent") {
+        return {
+          taskStatus: {},
+          errors: {},
+          gitAgentOutput:
+            args.gitOp?.op === "checkout-feature" ? checkoutOk : closeOk,
+          costUsd: 0.001,
+        };
+      }
+      if (args.agent === "web-frontend-builder") {
+        builderInvocations += 1;
+        if (builderInvocations > 1 && args.retryContext) {
+          capturedRetryContext = args.retryContext.errorMessage;
+        }
+        return {
+          taskStatus: Object.fromEntries(
+            args.tasks.map((t) => [t.id, "completed"] as const),
+          ),
+          errors: {},
+          costUsd: 0.1,
+        };
+      }
+      if (args.agent === "security") {
+        securityInvocations += 1;
+        if (securityInvocations === 1) {
+          // Multiple findings, all targeting web-frontend-builder.
+          return {
+            taskStatus: { "form-security": "failed" },
+            errors: { "form-security": "needs-revision" },
+            securityOutput: {
+              tier: "security",
+              featureId: "feat-auth",
+              tasksCompleted: [],
+              tasksFailed: [],
+              tasksSkipped: [],
+              findings: [
+                {
+                  id: "F-001",
+                  severity: "P1",
+                  owaspCategory: "A04:2021-Insecure-Design",
+                  cweId: "CWE-345",
+                  file: "apps/web/route.ts",
+                  line: 48,
+                  title: "IP spoofing via x-forwarded-for",
+                  description: "Rate-limit bypassable.",
+                  suggestedFix: "Validate against trusted-proxy IPs.",
+                  retryTarget: "web-frontend-builder",
+                },
+                {
+                  id: "F-002",
+                  severity: "P1",
+                  owaspCategory: "A05:2021-Security-Misconfiguration",
+                  cweId: "CWE-1021",
+                  file: "apps/web/middleware.ts",
+                  title: "Missing CSP form-action header",
+                  description: "Form-action enables redirect attacks.",
+                  suggestedFix: "Add CSP form-action 'self' header.",
+                  retryTarget: "web-frontend-builder",
+                },
+              ],
+              checklistCoverage: { covered: [], skipped: [] },
+              overallVerdict: "needs-revision",
+              summary: "2 P1 findings — both targeting builder.",
+            },
+            costUsd: 0.1,
+          };
+        }
+        // After builder retry: approved.
+        return {
+          taskStatus: { "form-security": "completed" },
+          errors: {},
+          securityOutput: {
+            tier: "security",
+            featureId: "feat-auth",
+            tasksCompleted: [
+              {
+                taskId: "form-security",
+                status: "completed",
+                findingsCount: 0,
+              },
+            ],
+            tasksFailed: [],
+            tasksSkipped: [],
+            findings: [],
+            checklistCoverage: { covered: [], skipped: [] },
+            overallVerdict: "approved",
+            summary: "Clean.",
+          },
+          costUsd: 0.05,
+        };
+      }
+      return { taskStatus: {}, errors: {}, costUsd: 0 };
+    };
+    const ctx = makeCtx(invokeAgent);
+    const result = await runFeature(feature, ctx);
+    expect(result.status).toBe("completed");
+    // Both findings target builder → SINGLE builder dispatch with BOTH findings.
+    expect(builderInvocations).toBe(2);
+    expect(capturedRetryContext).toBeDefined();
+    expect(capturedRetryContext!).toMatch(/x-forwarded-for/);
+    expect(capturedRetryContext!).toMatch(/CSP form-action/);
+    expect(securityInvocations).toBe(2);
+  });
+});

@@ -9,6 +9,7 @@ import type {
   InFlightFeature,
   ParityDivergence,
   ReviewerOutput as ReviewerOutputType,
+  SecurityAgentOutput as SecurityAgentOutputType,
   Task,
   TasksV2,
   BugsYaml,
@@ -195,6 +196,13 @@ export interface InvokeAgentResult {
    * when the reviewer's JSON failed schema validation.
    */
   reviewerOutput?: ReviewerOutputType;
+  /**
+   * bug-007 — when agent === "security" + the security agent emitted a
+   * valid `SecurityAgentOutput`, feature-graph routes findings[].retryTarget
+   * back to the named builders. undefined for non-security agents or when
+   * the security agent's JSON failed schema validation.
+   */
+  securityOutput?: SecurityAgentOutputType;
   /** Cost recorded for this invocation — summed into Mode B totals. */
   costUsd: number;
   /**
@@ -1623,6 +1631,204 @@ export async function runFeature(
 
       // Routing resolved → reviewer is now "approved". Skip the per-task
       // retry loop below (it would re-dispatch the reviewer needlessly).
+      continue;
+    }
+
+    // bug-007 (2026-05-30): security-driven retry routing — mirrors the
+    // reviewer-driven routing above (bug-109) for the security agent. When
+    // the dispatched agent is the security agent + its SecurityAgentOutput
+    // has overallVerdict !== "approved", route retries to the NAMED
+    // BUILDERS in findings[].retryTarget rather than re-running the
+    // security agent against unchanged code (the empirical latent bug
+    // surfaced in feat-contact-inquiry's 3-attempt security loop on
+    // pipelineRunId 15a61239 — bug-007 §Empirical observation).
+    //
+    // Algorithm:
+    //   1. Group findings by retryTarget (the SecurityFinding schema's
+    //      retryTarget is a single agent string per finding; aggregate
+    //      across findings into a Map<agent, findings[]>).
+    //   2. For each named agent, re-dispatch with the relevant findings
+    //      formatted as a HARD CONSTRAINT block in retryContext.
+    //   3. After ALL retry-target dispatches, re-run security to
+    //      re-validate. If verdict is "approved", continue with the
+    //      agent_sequence (next agent fires). If still needs-revision,
+    //      loop (bounded by TASK_RETRY_CAP). If "blocked", fail the
+    //      feature immediately.
+    if (
+      agentName === "security" &&
+      result.securityOutput &&
+      result.securityOutput.overallVerdict !== "approved"
+    ) {
+      const verdict = result.securityOutput.overallVerdict;
+      if (verdict === "blocked") {
+        tracker.onFeatureFailed({ featureId: feature.id });
+        const firstFinding = result.securityOutput.findings[0];
+        const blockedDetail = firstFinding
+          ? `${firstFinding.severity} ${firstFinding.owaspCategory}: ${firstFinding.title}`
+          : "security reported blocked verdict without a finding";
+        return finish(
+          feature.id,
+          "failed",
+          startedAt,
+          attempts,
+          totalCostUsd,
+          taskOutcomes,
+          `security-blocked: ${blockedDetail}`,
+          commitWarnings,
+        );
+      }
+
+      // verdict === "needs-revision": route to named builders.
+      const securityCounterKey = `${feature.id}/security-routing`;
+      let securityRoutingResolved = false;
+      while (!ctx.retryCounters.isExhausted("task-retry", securityCounterKey)) {
+        const counterValue = ctx.retryCounters.increment(
+          "task-retry",
+          securityCounterKey,
+        );
+        saveState(
+          ctx.projectRoot,
+          ctx.pipelineRunId,
+          ctx.retryCounters,
+          ctx.budget,
+        );
+        if (counterValue > TASK_RETRY_CAP) break;
+
+        // 1. Group findings by retryTarget agent.
+        const findingsByAgent = new Map<AgentSequenceMember, string[]>();
+        for (const finding of result.securityOutput.findings) {
+          const targetAgent = finding.retryTarget as AgentSequenceMember;
+          const existing = findingsByAgent.get(targetAgent) ?? [];
+          existing.push(
+            `[${finding.severity} ${finding.owaspCategory} ${finding.cweId}] ` +
+              `${finding.file}${finding.line ? `:${finding.line}` : ""} — ` +
+              `${finding.title}\n  ${finding.description}\n  Fix: ${finding.suggestedFix}`,
+          );
+          findingsByAgent.set(targetAgent, existing);
+        }
+
+        // 2. For each named agent, re-dispatch with findings as retry context.
+        for (const [targetAgent, findingMessages] of findingsByAgent) {
+          // Find tasks assigned to this agent in the feature.
+          const targetTasks = feature.tasks.filter(
+            (t) => t.agent === targetAgent,
+          );
+          if (targetTasks.length === 0) {
+            // No tasks for this agent on this feature — skip (the agent isn't
+            // in agent_sequence or has no tasks). Security findings should
+            // generally target an agent that authored code in this feature.
+            continue;
+          }
+
+          const hardConstraint =
+            `HARD CONSTRAINT — SECURITY AGENT REJECTED A PRIOR ATTEMPT (bug-007)\n` +
+            `The security agent flagged the following finding(s) on this feature:\n` +
+            findingMessages.map((s) => `  - ${s}`).join("\n") +
+            `\n\nYou MUST apply these exact fixes. Do not re-implement from ` +
+            `the task spec — extend the existing implementation with the ` +
+            `named changes. Run lint+typecheck+test, then report completed.\n` +
+            `Note: the security agent re-runs after your fix to verify ` +
+            `resolution. Findings that persist will fail the feature.`;
+
+          attempts += 1;
+          const retryResult = await ctx.invokeAgent({
+            agent: targetAgent,
+            cwd: worktreeCwd,
+            featureContext,
+            tasks: targetTasks,
+            retryContext: {
+              taskId: targetTasks[0]!.id,
+              errorMessage: hardConstraint,
+            },
+          });
+          totalCostUsd += retryResult.costUsd;
+          lastWritingAgent = retryResult.lastWritingAgent ?? targetAgent;
+          for (const t of targetTasks) {
+            taskOutcomes[t.id] = retryResult.taskStatus[t.id] ?? "failed";
+          }
+
+          // Commit after the retry-target so subsequent security re-run
+          // sees the new code.
+          const retryCompletedIds = targetTasks
+            .filter((t) => taskOutcomes[t.id] === "completed")
+            .map((t) => t.id);
+          if (retryCompletedIds.length > 0) {
+            try {
+              await commitChanges(
+                worktreeCwd,
+                `${targetAgent}: security-driven retry (bug-007) — ${retryCompletedIds.join(", ")}\n\n[via orchestrator Mode B; feature: ${feature.id}]`,
+              );
+            } catch {
+              /* commit warning swallowed; same shape as the reviewer-driven branch */
+            }
+          }
+        }
+
+        // 3. Re-dispatch the security agent to re-validate.
+        attempts += 1;
+        const reSecurity = await ctx.invokeAgent({
+          agent: "security",
+          cwd: worktreeCwd,
+          featureContext,
+          tasks: agentTasks,
+        });
+        totalCostUsd += reSecurity.costUsd;
+        for (const t of agentTasks) {
+          taskOutcomes[t.id] = reSecurity.taskStatus[t.id] ?? "failed";
+        }
+
+        if (
+          reSecurity.securityOutput &&
+          reSecurity.securityOutput.overallVerdict === "approved"
+        ) {
+          securityRoutingResolved = true;
+          break;
+        }
+        if (
+          reSecurity.securityOutput &&
+          reSecurity.securityOutput.overallVerdict === "blocked"
+        ) {
+          tracker.onFeatureFailed({ featureId: feature.id });
+          const firstFinding = reSecurity.securityOutput.findings[0];
+          const blockedDetail = firstFinding
+            ? `${firstFinding.severity} ${firstFinding.owaspCategory}: ${firstFinding.title}`
+            : "security reported blocked verdict on re-review";
+          return finish(
+            feature.id,
+            "failed",
+            startedAt,
+            attempts,
+            totalCostUsd,
+            taskOutcomes,
+            `security-blocked: ${blockedDetail}`,
+            commitWarnings,
+          );
+        }
+        // verdict === "needs-revision" still → continue loop
+        result.securityOutput =
+          reSecurity.securityOutput ?? result.securityOutput;
+      }
+
+      if (!securityRoutingResolved) {
+        tracker.onFeatureFailed({ featureId: feature.id });
+        const lastFinding = result.securityOutput.findings[0];
+        const detail = lastFinding
+          ? `${lastFinding.severity} ${lastFinding.owaspCategory}: ${lastFinding.title}`
+          : "needs-revision retry cap exhausted";
+        return finish(
+          feature.id,
+          "failed",
+          startedAt,
+          attempts,
+          totalCostUsd,
+          taskOutcomes,
+          `security-cap-exhausted (bug-007): ${detail}`,
+          commitWarnings,
+        );
+      }
+
+      // Routing resolved → security is now "approved". Skip the per-task
+      // retry loop below (it would re-dispatch security needlessly).
       continue;
     }
 

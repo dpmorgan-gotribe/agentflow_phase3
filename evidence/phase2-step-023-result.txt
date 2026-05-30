@@ -1,0 +1,133 @@
+phase2-step-023 — security agent retryTarget routing (bug-007) — empirical validation
+======================================================================================
+
+Run: 2026-05-30
+Parent plan: plans/active/bug-007-security-retry-targets-ignored.md
+Predecessors: phase2-step-002 (feature-graph), phase2-step-009 (reviewer dispatch)
+
+Empirical motivator:
+  2026-05-30 live Mode B run on projects/test-app (resumed after bug-006
+  parallel-conflict fix unblocked the cascade). feat-contact-inquiry
+  security agent correctly flagged 2 findings with
+  retryTarget: web-frontend-builder:
+
+    P1: x-forwarded-for trusted without proxy validation —
+        attacker spoofs IPs to bypass rate limit (route.ts:48)
+    P2: no CSP form-action header configured
+
+  Orchestrator re-dispatched SECURITY 3 times instead of routing back to
+  web-frontend-builder. Security can't fix code; builder never saw the
+  findings + never got a chance to fix.
+
+Why this hid (until now):
+  In Run 1, feat-contact-inquiry was in aborted[] set (transitive
+  consequence of feat-design-system's parallel-conflict failure per
+  bug-006). Security never dispatched. After bug-006 unblocked the path,
+  Run 2 surfaced this as the next failure layer.
+
+Mode B failure-handling worked correctly:
+  - Conflict-handoff fired
+  - Last-writing-agent retry cap exhausted (max-3)
+  - Emergency-abort fired cleanly
+  - Partial-failure-policy continued the graph + computed blast-radius
+    (per row 022 / feat-081)
+  - Exit 0 (clean shutdown despite failures)
+
+Root cause:
+  feature-graph.ts had reviewer-driven retry routing (bug-109 at
+  lines 1383-1627) but NO security-analog. The dispatch loop's per-task
+  retry fallback re-dispatched the same agent against unchanged code.
+
+Three-part fix shipped (mirrors bug-109 shape):
+
+  Part A — packages/orchestrator-contracts/src/security.ts
+    No schema change needed. SecurityAgentOutput.findings[].retryTarget
+    already exists as SecurityRetryAgent enum (backend-builder |
+    web-frontend-builder | mobile-frontend-builder | tester). The schema
+    was correct; only orchestrator routing was missing.
+
+  Part B — orchestrator/src/invoke-agent.ts
+    - Added SecurityAgentOutputType import (alongside ReviewerOutputType)
+    - Added securityOutput? field on InvokeAgentResult interface
+    - Added parse block: when agent === "security", run
+      SecurityAgentOutputSchema.safeParse on extracted JSON +
+      capture into securityOutput for feature-graph to consume
+    - Returns securityOutput in captureReturn shape when defined
+
+  Part C — orchestrator/src/feature-graph.ts
+    - Added SecurityAgentOutputType import (alongside ReviewerOutputType)
+    - Added securityOutput? to InvokeAgentResult interface (with bug-007
+      doc comment mirroring bug-109's reviewerOutput doc)
+    - Added security-driven routing block (~lines 1631-1830) AFTER the
+      existing reviewer routing block + BEFORE the bug-121 tester block.
+      Algorithm:
+        1. On agent==="security" && securityOutput && verdict !== "approved":
+           - "blocked" → fail feature immediately (P0 finding present)
+           - "needs-revision" → routing loop bounded by TASK_RETRY_CAP:
+             a. Group findings[] by retryTarget agent name
+             b. For each named agent: re-dispatch with HARD CONSTRAINT
+                bug-007 envelope inlining the findings (severity +
+                OWASP + CWE + file + line + title + description + fix)
+             c. Commit retry-target's work so security re-run sees
+                fresh code
+             d. Re-dispatch security to re-validate
+             e. "approved" → break + continue agent_sequence
+             f. "blocked" → fail feature
+             g. else loop
+        2. On retry-cap exhaustion → security-cap-exhausted (bug-007)
+           abort reason
+
+  Part D — orchestrator/tests/feature-graph.test.ts
+    3 new test cases appended in describe("runFeature — security-driven
+    retry routing (bug-007)") block:
+      1. routes needs-revision → builder retry with HARD CONSTRAINT →
+         re-runs security → approved
+      2. fails feature on blocked verdict WITHOUT re-dispatching builder
+         (P0 secret-exposure case)
+      3. aggregates findings by retryTarget agent (multiple findings →
+         single builder dispatch carrying all findings in one retry
+         envelope)
+
+Test run verdict (pnpm vitest run tests/feature-graph.test.ts):
+  Test Files  1 passed (1)
+       Tests  74 passed (74)
+                — 71 existing tests still pass (no regression)
+                — 3 new bug-007 tests pass
+    Duration  4.67s
+
+Empirical observation — current live Mode B run impact:
+  feat-contact-inquiry on the live Mode B run was on track to hit
+  emergency-abort soon (security flagged P1 unresolved 3 times). The
+  current Mode B run continues to use the OLD code (this orchestrator
+  fix applies to subsequent runs only — the in-flight orchestrator
+  process was started before the fix landed). The next operator-side
+  Mode B re-run after this fix lands will exercise the new routing.
+
+Operator-side workaround used during the live run: feat-contact-inquiry
+will likely emergency-abort. Manual fixes for apps/web/app/api/inquiry/
+route.ts deferred to operator (validate x-forwarded-for against
+trusted-proxy IPs + add CSP form-action via apps/web/middleware.ts or
+next.config.ts).
+
+Cross-references:
+  - bug-006 (PM affects_files overlap audit) — sibling Mode B failure
+    finding from the same 2026-05-30 run; bug-006 unblocked the cascade
+    that revealed bug-007
+  - bug-109 (reviewer-driven retry routing) — template this routing
+    mirrors
+  - bug-121 (tester genuineProductBugs routing) — analogous routing for
+    tester findings; preserved without regression
+  - LESSONS.md candidate entry on close: "The retry-target routing for
+    reviewer + tester (bug-121) was fully wired but security's analog
+    was overlooked — same retryTarget shape needed the same plumbing.
+    Any new agent type that emits retry-routing requests must be
+    explicitly threaded through feature-graph's routing dispatch table;
+    the default fallback (re-dispatch self) is silently wrong + only
+    surfaces when a project's Mode B dispatch actually reaches the
+    missed-routing agent class."
+
+Status: PASS — phase2-step-023 (bug-007 security retryTarget routing)
+empirically validated via 74/74 feature-graph tests. Live empirical
+re-validation against test-app's feat-contact-inquiry deferred to next
+operator session.
+Row passes:true on this commit.

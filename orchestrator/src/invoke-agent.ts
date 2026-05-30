@@ -30,6 +30,7 @@ import type {
   AgentSequenceMember,
   GitAgentOutput,
   ReviewerOutput as ReviewerOutputType,
+  SecurityAgentOutput as SecurityAgentOutputType,
   Task,
 } from "@repo/orchestrator-contracts";
 import {
@@ -38,6 +39,7 @@ import {
   GenuineProductBug as GenuineProductBugSchema,
   GitAgentOutput as GitAgentOutputSchema,
   ReviewerOutput as ReviewerOutputSchema,
+  SecurityAgentOutput as SecurityAgentOutputSchema,
 } from "@repo/orchestrator-contracts";
 import type { GenuineProductBug as GenuineProductBugType } from "@repo/orchestrator-contracts";
 import { buildAgentMcpServersOption } from "./agent-mcp-config.js";
@@ -236,6 +238,7 @@ export interface DispatchTranscript {
     errors?: Record<string, string>;
     genuineProductBugs?: GenuineProductBugType[];
     reviewerOutput?: ReviewerOutputType;
+    securityOutput?: SecurityAgentOutputType;
     lastWritingAgent?: AgentSequenceMember;
     skippedReason?: string;
     abortReason?: string;
@@ -2115,6 +2118,17 @@ async function runLlmAgent(
       if (parsed.success) reviewerOutput = parsed.data;
     }
 
+    // bug-007: when the dispatched agent is the security agent, parse its
+    // full SecurityAgentOutput so feature-graph can route retries to the
+    // named builders (mirrors the reviewer routing for security agent).
+    // Falls through silently when the JSON doesn't validate (legacy
+    // security agents / hand-stubbed agents in tests).
+    let securityOutput: SecurityAgentOutputType | undefined;
+    if (agent === "security") {
+      const parsed = SecurityAgentOutputSchema.safeParse(extracted.parsed);
+      if (parsed.success) securityOutput = parsed.data;
+    }
+
     // investigate-023 M-D: run the tester-diff audit on the normal-completion
     // path. baseRef=HEAD~5 → diffs the last 5 commits + uncommitted state
     // (typical tester emits 1-3 commits; 5 gives headroom without picking up
@@ -2181,6 +2195,7 @@ async function runLlmAgent(
       errors: translated.errors,
       costUsd: result.total_cost_usd,
       ...(reviewerOutput !== undefined ? { reviewerOutput } : {}),
+      ...(securityOutput !== undefined ? { securityOutput } : {}),
       ...(genuineProductBugs && genuineProductBugs.length > 0
         ? { genuineProductBugs }
         : {}),

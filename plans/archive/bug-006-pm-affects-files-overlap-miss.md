@@ -1,10 +1,12 @@
 ---
 id: bug-006-pm-affects-files-overlap-miss
 type: bug
-status: draft
+status: archived
+outcome: success
 author-agent: Claude (Phase 2 build, post-Mode-B run)
 created: 2026-05-30
 updated: 2026-05-30
+closed-at: 2026-05-30
 parent-plan: null
 supersedes: null
 superseded-by: null
@@ -145,3 +147,52 @@ Track durable behavior + capture the lesson.
 ## Attempt Log
 
 <!-- Populated automatically by agents. -->
+---
+
+## Completion Record (2026-05-30)
+
+**Outcome: SUCCESS** — bug-006 PM affects_files three-tier overlap audit shipped + empirically validated.
+
+### Ship summary
+
+- **PM SKILL.md §4b** already documented the three-tier check (Tier 1 literal-equal + Tier 2 glob/glob + Tier 3 glob/literal). Bug-006's investigation surfaced that test-app's tasks.yaml was emitted BEFORE bug-124's enforcement landed in the canonical SKILL — multiple features (feat-design-system + feat-media-cdn + feat-analytics-observability) literally listed apps/web/package.json + apps/web/app/layout.tsx in affects_files[] but PM emitted the file-affinity-no-overlaps sentinel anyway.
+- **Mechanical audit script**: `scripts/audit-tasks-yaml-affects-files-overlap.mjs` — independent verifier that walks every project's tasks.yaml, runs the three-tier overlap check, reports missing depends_on edges. Catches the same class regardless of which PM version generated the yaml.
+- **test-app tasks.yaml patched**: 3 corrective depends_on edges added (the audit script's recommendations):
+  - feat-design-system depends_on: feat-bootstrap (newly added)
+  - feat-media-cdn depends_on: feat-design-system (newly added)
+  - feat-analytics-observability depends_on: feat-media-cdn (newly added)
+
+### Empirical validation
+
+Live Mode B re-run on 2026-05-30 after the patch:
+
+- **Run 1 (pre-patch)**: feat-design-system + feat-media-cdn dispatched IN PARALLEL with feat-bootstrap. Both hit `CONFLICT (add/add): apps/web/app/layout.tsx` at close-feature. 3-attempt resolve-conflict-handoff exhausted. Emergency-abort fired. Cascade-aborted 7 downstream features. Pipeline halted with exit 0 but 0 of 12 features merged.
+- **Run 2 (post-patch)**: same dispatch order with corrective depends_on edges. feat-bootstrap merged. feat-cms-integration + feat-design-system fired in next wave and both merged cleanly (no parallel-write to layout.tsx). feat-media-cdn merged after feat-design-system. The parallel-conflict failure class did not recur.
+
+Run 2 then surfaced bug-007 (security retryTarget routing) on feat-contact-inquiry — a different failure layer that bug-006's cascade had previously masked.
+
+### Lessons
+
+1. **Sentinel emission MUST be paired with a mechanical audit.** PM emitting `file-affinity-no-overlaps` is prose; the audit script that walks the same overlap rules is mechanical truth. When the two diverge, the audit wins. This is the same prose-only-consumer-rule drift class as bug-002/003/004/005 — a sentinel that the consumer reads without independently re-computing what the sentinel claims.
+2. **affects_files completeness is load-bearing for parallel-feature safety.** A missing entry doesn't surface in PM's output validation (Zod default `[]` is well-formed); it surfaces 30+ minutes later at close-feature when two worktrees both committed to the same file. Defense in depth needs the audit script AS WELL AS the PM SKILL prose, because PM may run against a stale or hand-edited tasks.yaml.
+3. **Cascade-masking hides downstream bugs.** bug-007 was undiscoverable while bug-006 cascade-aborted feat-contact-inquiry. Once bug-006 cleared the path, the next failure layer surfaced cleanly. Mode B runs that hit emergency-abort early should be re-run after the upstream fix to discover the next layer — don't assume the only bug is the visible one.
+
+### Cross-references
+
+- Empirical motivator: test-app Mode B Run 1 (2026-05-30) — 9 features cascade-aborted
+- Sibling bug discovered after fix: bug-007 (security retryTarget routing)
+- LESSONS.md candidate entry: "PM sentinel emission + audit script must be paired; sentinel is prose, audit is truth"
+- feature_list: phase1-step-040 (parent row)
+- ADR: none (no architectural decision; mechanical audit + corrective tasks.yaml edit only)
+
+### Commits
+
+- Audit script + PM SKILL §4b enforcement update (pre-Mode-B):
+  - `scripts/audit-tasks-yaml-affects-files-overlap.mjs` added
+  - `.claude/skills/pm/SKILL.md` §4b enforcement language strengthened
+- test-app tasks.yaml corrective edit (commit during Run 2 prep):
+  - `projects/test-app/docs/tasks.yaml` — 3 depends_on edges added
+- Phase-plan + feature_list updates landing in this commit (Row 040 + phase1-step-040)
+- Archive: this plan moves to `plans/archive/`
+
+Closed by Phase 2 build operator (David Morgan / Claude opus-4-7) 2026-05-30.
