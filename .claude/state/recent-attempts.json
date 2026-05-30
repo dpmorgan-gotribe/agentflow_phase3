@@ -1,45 +1,5 @@
 [
   {
-    "hash": "192d82ce7939",
-    "timestamp": 1780114620840,
-    "tool": "Read"
-  },
-  {
-    "hash": "47b8ecceb767",
-    "timestamp": 1780114620847,
-    "tool": "Read"
-  },
-  {
-    "hash": "3db38da892ba",
-    "timestamp": 1780114630161,
-    "tool": "Edit"
-  },
-  {
-    "hash": "f83908c21d4f",
-    "timestamp": 1780114715914,
-    "tool": "Bash"
-  },
-  {
-    "hash": "0896b008d282",
-    "timestamp": 1780114732062,
-    "tool": "Bash"
-  },
-  {
-    "hash": "5c613c707c2b",
-    "timestamp": 1780115068378,
-    "tool": "Read"
-  },
-  {
-    "hash": "5edc45f4450f",
-    "timestamp": 1780115074947,
-    "tool": "Bash"
-  },
-  {
-    "hash": "a06832f473cf",
-    "timestamp": 1780115082388,
-    "tool": "Read"
-  },
-  {
     "hash": "26328dd866d2",
     "timestamp": 1780115091958,
     "tool": "Edit"
@@ -247,6 +207,46 @@
   {
     "hash": "efe78d031645",
     "timestamp": 1780116542457,
+    "tool": "Bash"
+  },
+  {
+    "hash": "8c4b5c5a7843",
+    "timestamp": 1780119250260,
+    "tool": "Bash"
+  },
+  {
+    "hash": "b8c5f06e3a65",
+    "timestamp": 1780119254785,
+    "tool": "Bash"
+  },
+  {
+    "hash": "ef165d68b380",
+    "timestamp": 1780119259417,
+    "tool": "ToolSearch"
+  },
+  {
+    "hash": "5657f345309a",
+    "timestamp": 1780119267482,
+    "tool": "Bash"
+  },
+  {
+    "hash": "64446f1a9ffa",
+    "timestamp": 1780119272029,
+    "tool": "Bash"
+  },
+  {
+    "hash": "59e8d27e3cbc",
+    "timestamp": 1780119276943,
+    "tool": "Bash"
+  },
+  {
+    "hash": "8bfc28ba153c",
+    "timestamp": 1780119281588,
+    "tool": "Bash"
+  },
+  {
+    "hash": "0c8d8ce191e1",
+    "timestamp": 1780119289172,
     "tool": "Bash"
   }
 ]
