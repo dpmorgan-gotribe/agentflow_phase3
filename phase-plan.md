@@ -503,6 +503,46 @@ Meta-lesson reinforced (LESSONS.md):
 
 The rebuild guarantee for rows 032 + 033 + 034 + 035 + 036 + 037 + 038 + 039 combined: a clean rebuild from `phase-1-start` + this §F section should land all SKILL.md additions + 3 audit scripts (preview-coverage + screen-pattern-consumption + ui-kit-component-consistency) + Step 9 verify gate + 5 fix-pattern authoring rules + 4-stage DAG description + concurrency knob + StylesheetPrimitivesOutput Zod schema with failedComponents[]; empirical validation of the parallelization wall-clock awaits the next fresh-project run.
 
+### Row 040 — /pm affects_files overlap mechanical audit (bug-006) — phase1-step-040
+
+Operator caught a real Mode B failure on 2026-05-30: live `/start-build test-app --max-concurrent=5` run hit merge-conflict-exhaust on 3 of 12 features (feat-design-system, feat-media-cdn, feat-analytics-observability) + cascade-aborted 7 downstream features. Total spend on the failed run: ~$17. Root cause traced to PM (Claude in /pm step) emitting `file-affinity-no-overlaps` warning despite 7 Tier-1 literal-equal overlaps existing across the 12-feature DAG. The PM's prose-only enforcement of bug-018 + bug-124 was insufficient — same drift class as bug-002 / bug-003 / bug-004 / bug-005.
+
+**Empirical overlap matrix on test-app's PM-emitted tasks.yaml (mechanical audit found):**
+
+| Feature A            | Feature B                    | Shared files                                                                          |
+| -------------------- | ---------------------------- | ------------------------------------------------------------------------------------- |
+| feat-bootstrap       | feat-design-system           | apps/web/app/layout.tsx + globals.css + packages/ui-kit/{package.json, tsconfig.json} |
+| feat-bootstrap       | feat-cms-integration         | apps/web/package.json                                                                 |
+| feat-bootstrap       | feat-media-cdn               | apps/web/package.json                                                                 |
+| feat-bootstrap       | feat-home                    | apps/web/app/page.tsx                                                                 |
+| feat-bootstrap       | feat-analytics-observability | apps/web/next.config.ts + app/layout.tsx                                              |
+| feat-design-system   | feat-analytics-observability | apps/web/app/layout.tsx                                                               |
+| feat-cms-integration | feat-media-cdn               | apps/web/package.json                                                                 |
+
+7 overlaps; 4 already covered (feat-bootstrap → various via existing depends_on); 3 uncovered (feat-cms-integration ⇄ feat-media-cdn + feat-design-system ⇄ feat-analytics-observability + feat-bootstrap ⇄ feat-home indirect). 3 uncovered → 3 parallel close-feature merge conflicts in Mode B → 3 emergency-aborts → 7 cascade-aborts. The Mode B mechanism handled the failure correctly (per row 022 partial-failure-policy); the failure root cause was upstream in PM.
+
+**Mode B failure modes worked as designed (positive evidence for Phase 2 closure):**
+
+- Conflict-handoff fired on each parallel merge collision (row 016)
+- Last-writing-agent retry max-3-attempt cap exhausted cleanly (row 010)
+- Emergency-abort fired per row 010 contract; orchestrator did NOT crash
+- Partial-failure-policy correctly continued the graph + computed reachable-failure blast-radius (row 022 / feat-081)
+- Orchestrator returned exit 0 (clean shutdown despite failures)
+
+Three-part fix (project-agnostic):
+
+- **`scripts/audit-tasks-yaml-affects-files-overlap.mjs`** — new factory-level Node script. Reads each project's `docs/tasks.yaml`, walks `features[].affects_files[]`, computes pairwise overlap via bug-124's 3-tier rule (literal-equal + glob⇄glob + glob⇄literal), cross-checks the `file-affinity-no-overlaps` sentinel against empirical reality. Reports: overlapsTotal + overlapsCovered + overlapsUncovered + sentinelMismatch (PM emitted clean-sentinel when overlaps exist) + auto-recommendation for each uncovered overlap (which depends_on edge to add). Flags: `--json` / `--strict`. Idempotent — re-running on clean tasks.yaml is no-op (exit 0). Inline glob-to-regex implementation (no minimatch dep) — keeps the factory deps-light. (added 2026-05-30 after phase1-step-040)
+- **`.claude/skills/pm/SKILL.md` step 6 extension** — new self-verify sub-step 6 (after the existing bug-119 tsconfig completeness check). PM cannot return until the audit exits 0. Two failure modes named explicitly: SENTINEL MISMATCH (PM emitted clean-sentinel + real overlaps exist) and uncovered overlaps (real overlaps without depends_on edges). Empirical motivator (bug-006 2026-05-30 test-app Mode B run) inlined verbatim. Same sibling pattern call-out as bug-002/003/004/005 (consumer-side rules in skill bodies need mechanical audits when shipped, not retroactively). (added 2026-05-30 after phase1-step-040)
+- **`feature_list.json` row `phase1-step-040`** + this §F paragraph + `plans/active/bug-006-pm-affects-files-overlap-miss.md`. (added 2026-05-30 after phase1-step-040)
+- **Empirical test-app patch** — projects/test-app/docs/tasks.yaml's wrong `file-affinity-no-overlaps` sentinel removed + 3 corrective depends_on edges added (feat-media-cdn → feat-cms-integration + feat-analytics-observability → feat-design-system + feat-home → feat-bootstrap). Audit re-verified clean post-patch. (added 2026-05-30 after phase1-step-040)
+- **Validation status:** passes:false in feature_list.json pending empirical re-run of Mode B on test-app's patched tasks.yaml + clean close-feature merges of the 10 remaining features without conflict-exhaust (next /start-build session). (added 2026-05-30 after phase1-step-040)
+
+Meta-lesson (now n=6 instances of the prose-only-consumer-rule drift class — extends the row-039 capture): _"PM's file-affinity-no-overlaps sentinel was the SECOND instance of the same authoring-time pattern from bug-005's D11 vocab-empty silent-pass — both emitted a 'I ran the check' signal without actually running the check. The mechanical fix shape is identical: pair the consumer-side rule with a hardcoded independent fallback audit. Both layers required for honest signal."_
+
+Concrete empirical rate now: PM step 4b (bug-018 + bug-124 overlap detection) emitted the wrong clean-sentinel on n=1 PM run despite 7 real overlaps — that's 100% miss-rate on the only opportunity to test it. Same as bug-002's empirical 100% miss-rate. Forward-looking rule (now n=6 confirmed): any SKILL.md step that prescribes a "compute X then emit sentinel Y" pattern ships paired with a mechanical audit that verifies X was actually computed.
+
+The rebuild guarantee for rows 032 + 033 + 034 + 035 + 036 + 037 + 038 + 039 + 040 combined: a clean rebuild from `phase-1-start` + this §F section should land all SKILL.md additions + 4 audit scripts (preview-coverage + screen-pattern-consumption + ui-kit-component-consistency + tasks-yaml-affects-files-overlap) + Step 9 verify gate + 5 fix-pattern authoring rules + 4-stage DAG description + concurrency knob + StylesheetPrimitivesOutput Zod schema with failedComponents[]; empirical validation of the parallelization wall-clock + Mode B re-run after PM-fix awaits the next operator sessions.
+
 ---
 
 # Phase 2 — Build orchestration (Mode B)

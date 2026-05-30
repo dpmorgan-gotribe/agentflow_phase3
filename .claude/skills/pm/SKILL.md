@@ -414,6 +414,22 @@ Where `<screen-id>` is `task.screens[0]` (the primary screen this task renders).
 4. Every feature's worktree + branch name follows the `feat-{slug}` / `feat/{slug}` convention.
 5. **Per-package tsconfig completeness (bug-119).** For each feature, grep `affects_files[]` for every distinct `packages/<name>/` prefix. Assert both `packages/<name>/tsconfig.json` and `packages/<name>/package.json` appear as literal entries. If a prefix appears (via any glob OR via `@repo/<name>` in task summaries) without both companions, abort with `affects-files-missing-package-tsconfig: feat-X claims packages/<name>/ but doesn't list tsconfig.json` — fix step 4b authoring + retry. This invariant is load-bearing: missing per-package tsconfig.json silently triggers the workspace-recursive-typecheck-jsx-cascade failure (TS17004 across every `.tsx` reachable) that motivated bug-119.
 
+6. **Affects-files overlap mechanical audit (bug-006 — MANDATORY).** Invoke from the project cwd AFTER tasks.yaml is written:
+
+   ```bash
+   node $FACTORY_ROOT/scripts/audit-tasks-yaml-affects-files-overlap.mjs --strict
+   ```
+
+   The audit computes the bug-124 three-tier overlap rule across all feature pairs + cross-checks the `file-affinity-no-overlaps` sentinel against the empirical overlap count.
+
+   **PM cannot return until** the audit exits 0. Two failure modes:
+   - **`SENTINEL MISMATCH`**: PM emitted `file-affinity-no-overlaps` in `warnings[]` but real overlaps exist. Fix: add `depends_on` edges to serialize the uncovered overlaps (per audit's recommendations) AND remove the sentinel.
+   - **`uncovered overlaps`**: real overlaps not covered by `depends_on` edges. Fix: auto-add edges per the audit's recommendations.
+
+   Empirical motivator (bug-006, 2026-05-30): PM (Claude) emitted `file-affinity-no-overlaps` for test-app's tasks.yaml. Live Mode B then hit merge-conflict-exhaust on 3 of 12 features (feat-design-system, feat-media-cdn, feat-analytics-observability) that shared `apps/web/package.json` + `apps/web/app/layout.tsx` with concurrent features. Audit script catches this class mechanically; PM's prose-only enforcement of bug-018 + bug-124 was insufficient.
+
+   This is the **sibling pattern to bug-002 / bug-003 / bug-004 / bug-005** — consumer-side rules in skill bodies need mechanical audits when shipped, not retroactively.
+
 ### 7. Emit PmTasksOutput JSON
 
 ```json
