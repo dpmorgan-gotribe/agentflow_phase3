@@ -1,25 +1,5 @@
 [
   {
-    "hash": "2f0bcca05b0d",
-    "timestamp": 1780103696072,
-    "tool": "Read"
-  },
-  {
-    "hash": "c712d0034729",
-    "timestamp": 1780103715034,
-    "tool": "Edit"
-  },
-  {
-    "hash": "8e3b4813fb8e",
-    "timestamp": 1780103807858,
-    "tool": "TaskUpdate"
-  },
-  {
-    "hash": "6102514d32f7",
-    "timestamp": 1780103809928,
-    "tool": "Bash"
-  },
-  {
     "hash": "8e5ddece78c4",
     "timestamp": 1780103817550,
     "tool": "Read"
@@ -248,5 +228,25 @@
     "hash": "abae381d7f42",
     "timestamp": 1780112716423,
     "tool": "Monitor"
+  },
+  {
+    "hash": "600d72e9111d",
+    "timestamp": 1780113024848,
+    "tool": "Bash"
+  },
+  {
+    "hash": "0f5578204837",
+    "timestamp": 1780113040150,
+    "tool": "Bash"
+  },
+  {
+    "hash": "a458fa30e9c2",
+    "timestamp": 1780113124155,
+    "tool": "Write"
+  },
+  {
+    "hash": "dcf85f316642",
+    "timestamp": 1780113280936,
+    "tool": "Bash"
   }
 ]
