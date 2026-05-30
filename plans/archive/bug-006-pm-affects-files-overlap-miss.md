@@ -146,8 +146,7 @@ Track durable behavior + capture the lesson.
 
 ## Attempt Log
 
-<!-- Populated automatically by agents. -->
----
+## <!-- Populated automatically by agents. -->
 
 ## Completion Record (2026-05-30)
 

@@ -145,8 +145,7 @@ Same patches required for feat-analytics-observability's csp-headers task (likel
 
 ## Attempt Log
 
-<!-- Populated automatically by agents. -->
----
+## <!-- Populated automatically by agents. -->
 
 ## Completion Record (2026-05-30)
 
