@@ -1,25 +1,5 @@
 [
   {
-    "hash": "881ba3e97479",
-    "timestamp": 1780127680029,
-    "tool": "Bash"
-  },
-  {
-    "hash": "c1771d970917",
-    "timestamp": 1780127687728,
-    "tool": "Bash"
-  },
-  {
-    "hash": "a0f215b023c3",
-    "timestamp": 1780127689188,
-    "tool": "Bash"
-  },
-  {
-    "hash": "495bedd7f4ba",
-    "timestamp": 1780127717045,
-    "tool": "Write"
-  },
-  {
     "hash": "71d64148dd76",
     "timestamp": 1780127801165,
     "tool": "Bash"
@@ -247,6 +227,26 @@
   {
     "hash": "14de6bcd74d2",
     "timestamp": 1780128749165,
+    "tool": "ScheduleWakeup"
+  },
+  {
+    "hash": "f8fd523cf651",
+    "timestamp": 1780129025036,
+    "tool": "Bash"
+  },
+  {
+    "hash": "a0469472ee87",
+    "timestamp": 1780129026859,
+    "tool": "Bash"
+  },
+  {
+    "hash": "215e8292f31a",
+    "timestamp": 1780129045968,
+    "tool": "Bash"
+  },
+  {
+    "hash": "14de6bcd74d2",
+    "timestamp": 1780129053836,
     "tool": "ScheduleWakeup"
   }
 ]
