@@ -251,8 +251,7 @@ Refactor lines 1853-1983 into a private `routeBug121ToBuilder()` helper so the f
 
 ## Attempt Log
 
-<!-- Populated automatically by agents. -->
----
+## <!-- Populated automatically by agents. -->
 
 ## Completion Record (2026-05-30)
 

@@ -183,8 +183,7 @@ shipped via Part D) asserts no `<img src=external>` survives in production HTML.
 
 ## Attempt Log
 
-<!-- Populated automatically by agents. -->
----
+## <!-- Populated automatically by agents. -->
 
 ## Completion Record (2026-05-30)
 
