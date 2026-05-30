@@ -1,20 +1,5 @@
 [
   {
-    "hash": "8f7d8a26badb",
-    "timestamp": 1780102958001,
-    "tool": "Bash"
-  },
-  {
-    "hash": "bf82da206ae5",
-    "timestamp": 1780103415685,
-    "tool": "Bash"
-  },
-  {
-    "hash": "326683dc7cc4",
-    "timestamp": 1780103423965,
-    "tool": "TaskCreate"
-  },
-  {
     "hash": "de3f740ebd5a",
     "timestamp": 1780103425042,
     "tool": "TaskUpdate"
@@ -247,6 +232,21 @@
   {
     "hash": "ac010b580ffb",
     "timestamp": 1780105110072,
+    "tool": "Monitor"
+  },
+  {
+    "hash": "872040105ebe",
+    "timestamp": 1780108726755,
+    "tool": "Bash"
+  },
+  {
+    "hash": "f36c518e2a33",
+    "timestamp": 1780108727276,
+    "tool": "TaskOutput"
+  },
+  {
+    "hash": "3c033bfcb074",
+    "timestamp": 1780108743197,
     "tool": "Monitor"
   }
 ]
