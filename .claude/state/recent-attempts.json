@@ -1,35 +1,5 @@
 [
   {
-    "hash": "86e54d7e7cde",
-    "timestamp": 1780128265226,
-    "tool": "Bash"
-  },
-  {
-    "hash": "c7e85c640c3c",
-    "timestamp": 1780128283886,
-    "tool": "Grep"
-  },
-  {
-    "hash": "0fb80eff43f9",
-    "timestamp": 1780128307668,
-    "tool": "Bash"
-  },
-  {
-    "hash": "b87a13ff8e7b",
-    "timestamp": 1780128317993,
-    "tool": "Bash"
-  },
-  {
-    "hash": "83bafca09cbb",
-    "timestamp": 1780128330327,
-    "tool": "Bash"
-  },
-  {
-    "hash": "0287425f0ae7",
-    "timestamp": 1780128331785,
-    "tool": "Bash"
-  },
-  {
     "hash": "5beaabd220f2",
     "timestamp": 1780128343032,
     "tool": "Bash"
@@ -247,6 +217,36 @@
   {
     "hash": "e3c1c1ab190e",
     "timestamp": 1780130843546,
+    "tool": "ScheduleWakeup"
+  },
+  {
+    "hash": "7ad509027115",
+    "timestamp": 1780132127299,
+    "tool": "Bash"
+  },
+  {
+    "hash": "764651b1c4ad",
+    "timestamp": 1780132147733,
+    "tool": "Bash"
+  },
+  {
+    "hash": "32aede54c74e",
+    "timestamp": 1780132212499,
+    "tool": "Read"
+  },
+  {
+    "hash": "12192d1b53ef",
+    "timestamp": 1780132223208,
+    "tool": "Bash"
+  },
+  {
+    "hash": "2c41dc5e1de2",
+    "timestamp": 1780132237059,
+    "tool": "Bash"
+  },
+  {
+    "hash": "93999ad4e221",
+    "timestamp": 1780132261434,
     "tool": "ScheduleWakeup"
   }
 ]
