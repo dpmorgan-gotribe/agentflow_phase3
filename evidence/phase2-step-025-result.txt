@@ -1,0 +1,132 @@
+phase2-step-025 — bug-008 screens preamble external CDN URLs — empirical validation
+====================================================================================
+
+Run: 2026-05-30
+Parent plan: plans/active/bug-008-screens-preamble-external-cdn-urls.md
+Predecessor: phase2-step-024 (bug-009 routing fix — must ship together for empirical recovery)
+
+Empirical motivator:
+  investigate-004 Q1 + test-app Mode B Run 2 feat-home tester-attempt-3
+  diagnosis:
+
+    "All 17 E2E tests timeout at page.goto('/') because
+    apps/web/app/page.tsx loads external CDN images (picsum.photos,
+    unsplash.com) that block window.load in the Playwright test
+    environment"
+
+  Source-of-truth trace: projects/test-app/docs/screens/.shared-preamble.md
+    line 76: "Hero / content imagery: https://images.unsplash.com/photo-{id}
+              ?w={w}&h={h}&fit=crop (real Unsplash IDs) OR
+              https://picsum.photos/seed/hatch-{descriptive-slug}/{w}/{h}"
+    lines 705-723: prescribes EXACT Unsplash photo IDs for 4 named
+      avatars + EXACT picsum seeds for 6 case-study clients with
+      directive "NO substitutions. NO different Unsplash photo IDs."
+
+  Propagation: 68 hits across 10 docs/screens/webapp/*.html files
+  carrying these URLs verbatim. 221 hits across 30 files in failed
+  .claude/worktrees/ (where the builder ported them into
+  apps/web/app/page.tsx for fidelity per the preamble's "NO substitutions"
+  directive).
+
+Root cause (per investigate-004 Q1 findings):
+  /screens SKILL.md §"Imagery seed convention" + §"Cross-screen
+  consistency contract" prescribed external CDN URLs as MANDATED
+  format. Conflated mockup-time visual-review (legitimate external)
+  with production-time asset references (must be local). No mechanical
+  audit existed to catch the leak.
+
+Fix shipped (4 parts):
+
+  Part A — .claude/skills/screens/SKILL.md
+    - §5 "Imagery convention" rewritten:
+      Hero / content imagery: /placeholders/hero-{noun-phrase-kebab}.jpg
+      Avatars: /placeholders/avatar-{first-name-lower}.jpg
+      Case-study imagery: /placeholders/case-study-{client-slug}-{aspect}.jpg
+      Generic content: /placeholders/content-{noun-phrase-kebab}.jpg
+    - Hard prohibition on picsum.photos / images.unsplash.com /
+      googleusercontent.com / gravatar.com etc.
+    - Empirical motivator (test-app Mode B Run 2) inline
+    - §3.5.2 "Cross-screen consistency contract" updated to require
+      LOCAL /placeholders/avatar-*.jpg + /placeholders/case-study-*.jpg
+      paths for canonical avatars + case-study imagery
+
+  Part B — .claude/skills/mockups/SKILL.md
+    - Note added clarifying mockups MAY use external CDN URLs
+      (legitimate for design-time visual review) but /screens REWRITES
+      them downstream — mockup authors should NOT pre-emptively switch
+
+  Part C — .claude/skills/agents/front-end/react-next/SKILL.md
+    - New reviewer dimension under §Review:
+      "performance — external CDN image URLs forbidden (bug-008)"
+    - Grep-based threshold: zero hits in apps/web/app + components + src
+      for picsum.photos / images.unsplash.com / etc.
+    - Retry target: web-frontend-builder
+    - Empirical motivator inline + Playbook augmentation note
+    - Serves as defense-in-depth catch when upstream fix hasnt reached
+      a particular project
+
+  Part D — scripts/audit-screens-external-cdn-urls.mjs (139 LOC)
+    - Cross-project agnostic — reads cwd's docs/screens/.shared-preamble.md
+      + docs/screens/**/*.html
+    - 9 forbidden host patterns: picsum.photos, images.unsplash.com,
+      unsplash.com, googleusercontent.com, gravatar.com,
+      placeholder.com, placekitten.com, placebear.com, placedog.net,
+      loremflickr.com, dummyimage.com
+    - Exit 0 = clean; exit 1 = JSON-structured violations + human
+      summary on stderr (file path + line + host + truncated text)
+    - Wired into /screens SKILL.md as new §8c (hard-abort contract
+      mirrors §8a — per-screen retry routing to ui-designer)
+
+Empirical validation:
+  Ran audit on test-app's existing (pre-fix) screens:
+
+    cd projects/test-app && node ../../scripts/audit-screens-external-cdn-urls.mjs
+    [audit-screens-external-cdn-urls] FAILED — 69 forbidden CDN URL
+    hit(s) across 10 file(s):
+      docs/screens/.shared-preamble.md (13 hits at lines 76+77+709-723)
+      docs/screens/webapp/about.html (5 hits)
+      docs/screens/webapp/case-study-detail.html (13 hits)
+      docs/screens/webapp/home.html (11 hits)
+      docs/screens/webapp/inquiry-confirmation.html (3 hits)
+      docs/screens/webapp/work-index.html (9 hits)
+      ...
+    exit 1
+
+  Confirms audit detects the class. After operator re-runs /screens (or
+  hand-edits the preamble to swap external URLs for local /placeholders
+  paths), the audit will exit 0.
+
+Limitation / operator next-step for test-app:
+  The 4-part fix affects NEW projects + future /screens re-runs. For
+  test-app empirical re-validation (next operator Mode B re-run),
+  the operator either:
+    (a) re-runs /screens to regenerate docs/screens/* with local
+        /placeholders paths (clean path),
+    OR
+    (b) hand-edits docs/screens/.shared-preamble.md + docs/screens/
+        webapp/*.html to swap URLs locally (quick path; preserves
+        existing screen layout work).
+  Then Mode B re-run on the 5 failed features produces builders that
+  emit local-path-only production code → Playwright E2E specs complete
+  page.goto in <5s → if any product bug remains, bug-009's tester→builder
+  routing (Row 042) catches it.
+
+Cross-references:
+  - investigate-004 (parent investigation; Q1 findings)
+  - bug-009 (sibling fix shipping in same commit — together they
+    recover the 5 failed test-app features)
+  - bug-002/003/004/005 (sibling prose-only-consumer-rule drift class —
+    sentinel-then-audit pattern)
+  - bug-006 (sibling shape: scaffold-emitting-wrong-thing + audit
+    script needed)
+  - LESSONS.md candidate: "Pipeline skills that prescribe assets must
+    distinguish design-time visual-review (external CDN OK) from
+    production-time references (local paths required). The same skill
+    can drive both stages but the asset-host policy MUST be enforced
+    by mechanical audit — prose-only directives propagate verbatim
+    through every downstream consumer."
+
+Status: PASS — phase2-step-025 (bug-008 screens external CDN fix)
+shipped. 4-part SKILL + audit-script surface validated. Audit
+empirically catches 69 hits on test-app pre-fix.
+Row passes:true on this commit.

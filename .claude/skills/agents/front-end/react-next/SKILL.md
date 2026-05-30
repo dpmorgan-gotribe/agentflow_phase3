@@ -797,6 +797,14 @@ Stack-specific checks the reviewer agent runs IN ADDITION to `docs/reviewer-play
 - **Retry target**: web-frontend-builder
 - **Playbook §**: augments §6 performance (LCP + bundle-budget sub-checks)
 
+#### performance — external CDN image URLs forbidden (bug-008)
+
+- **Invocation**: `grep -rnE "(picsum\.photos|images\.unsplash\.com|unsplash\.com|googleusercontent\.com|gravatar\.com|placeholder\.com|placekitten\.com|loremflickr\.com|dummyimage\.com)" apps/web/`
+- **Threshold**: zero hits in `apps/web/app/` + `apps/web/components/` + `apps/web/src/`. External CDN URLs (picsum.photos, unsplash.com, etc.) are FORBIDDEN in production code. They (a) break Playwright E2E because `waitUntil:"load"` blocks until external resources resolve, (b) make production depend on third-party uptime, (c) bypass the project's own image-CDN integration if one is wired per `architecture.yaml.tooling.image_cdn`. Local `/placeholders/*.jpg` paths or `next/image` referencing local assets are the only acceptable forms.
+- **Retry target**: web-frontend-builder
+- **Empirical motivator**: test-app Mode B Run 2 (2026-05-30) had 5 features cascade-fail E2E tester at `wall-clock-1800000ms` — `apps/web/app/page.tsx` embedded `picsum.photos` + `images.unsplash.com` URLs that blocked `window.load`. Builder ported them from the screens preamble verbatim (which bug-008 separately fixes on the upstream side). This reviewer dimension is the defense-in-depth catch when the upstream fix hasn't yet propagated to a particular project.
+- **Playbook §**: augments §6 performance (no-external-CDN sub-check)
+
 #### architecture — server vs client boundary
 
 - **Invocation**: `grep -rlE "useState|useEffect|useRef|onClick=|onChange=" apps/web/` → cross-reference against `grep -L "^\"use client\"" <file>`

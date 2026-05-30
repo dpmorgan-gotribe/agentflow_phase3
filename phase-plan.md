@@ -580,6 +580,59 @@ Meta-lesson captured (LESSONS.md candidate when bug-007 closes): _"The retry-tar
 
 The rebuild guarantee for rows 032 + 033 + 034 + 035 + 036 + 037 + 038 + 039 + 040 + 041 combined: a clean rebuild from `phase-1-start` + this §F section should land all SKILL.md additions + 4 audit scripts + Step 9 verify gate + 5 fix-pattern authoring rules + 4-stage DAG description + concurrency knob + StylesheetPrimitivesOutput Zod schema + the security retryTarget routing in feature-graph.ts + invoke-agent.ts; empirical validation via the bug-007 routing tests (3 cases) is locked in.
 
+### Row 042 — bug-121 routing miss in per-task retry loop (bug-009) — phase2-step-024
+
+Empirical motivator: test-app Mode B Run 2 (2026-05-30) — 5 features (feat-home, feat-about, feat-services, feat-case-studies, feat-static-pages) cascade-failed E2E tester at `wall-clock-1800000ms`. Tester-attempt-3 on feat-home correctly diagnosed via structured `genuineProductBugs[{builderAgent: web-frontend-builder, taskId: home-screen, ...}]` — but the orchestrator dropped the payload on the floor and marked the feature failed. Confirmed by absence of `web-frontend-builder-attempt-3.json` in dispatches/ even though builder retry-counter was at 1 (max-3 → 2 remaining).
+
+**Root cause (investigate-004 Q2)**: bug-121 routing block (feature-graph.ts:1849-1988) only inspects `result.genuineProductBugs` from the FIRST `invokeAgent` dispatch (line 1376). When attempt-1 stalls → no parseable JSON → routing skipped → fall through to per-task retry loop (line 1991-2029) which is **blind to `retryResult.genuineProductBugs`**. Same shape as bug-007 + bug-109 — routing surface schema present but secondary code path doesn't inspect it.
+
+**Fix shape**: in `orchestrator/src/feature-graph.ts`, inserted a bug-009 routing block inside the per-task retry loop AFTER `retryResult` is captured (line ~2020) and BEFORE the `taskStatus.completed` check. Algorithm:
+
+1. If `agentName === "tester"` && `retryResult.genuineProductBugs.length > 0` && retry not yet complete:
+2. Group bugs by originating task ID; for each task — check builder retry budget remaining; if so, dispatch with HARD CONSTRAINT envelope inlining the bug payload.
+3. Commit builder's work post-dispatch (so subsequent tester re-run sees fresh code).
+4. After all builder dispatches, re-run tester ONCE for the current task to verify.
+5. If verify passes → mark task completed, break out of while loop.
+6. Else → fall through to legacy failure path.
+
+**Tests appended** in new `describe("runFeature — bug-009 tester retry-loop routing")` block:
+
+1. "routes genuineProductBugs[] surfaced on tester attempt 3 (after attempts 1+2 stalled) to builder" — directly exercises the empirical case
+2. "no regression on first-dispatch bug-121 routing" — confirms the original bug-121 path still works
+
+All 76 feature-graph tests pass (74 existing + 2 new).
+
+- **`orchestrator/src/feature-graph.ts`** — bug-009 routing block added at line ~2020 (~140 LOC mirroring bug-121's shape). (added 2026-05-30 after phase2-step-024)
+- **`orchestrator/tests/feature-graph.test.ts`** — 2 new tests cover the retry-loop routing surface + first-dispatch no-regression. (added 2026-05-30 after phase2-step-024)
+- **phase-plan §F Row 042 + feature_list row `phase2-step-024` + plans/active/bug-009 plan** archived on success. (added 2026-05-30 after phase2-step-024)
+
+### Row 043 — Screens preamble mandates external CDN URLs that break E2E (bug-008) — phase2-step-025
+
+Empirical motivator: same test-app Mode B Run 2 (2026-05-30). The tester's diagnostic for the 5-feature stall cluster — `apps/web/app/page.tsx loads external CDN images (picsum.photos, unsplash.com) that block window.load in the Playwright test environment` — pointed at the UPSTREAM source, not the builder. `projects/test-app/docs/screens/.shared-preamble.md` line 76 + lines 705-723 explicitly prescribe external CDN URLs with directive "NO substitutions" — builder dutifully ports them into production code (221 hits in failed worktrees across 30 files).
+
+**Root cause (investigate-004 Q1)**: `/screens` SKILL.md §"Imagery seed convention" + §"Cross-screen consistency contract" prescribed `picsum.photos/seed/...` + `https://images.unsplash.com/photo-...` URLs verbatim. The skill design conflated mockup-time visual-review (legitimate external URLs) with production-time asset references (must be local). No mechanical audit caught the leak.
+
+**Fix shape**: four-part SKILL + script surface:
+
+- **Part A — `.claude/skills/screens/SKILL.md`**: §5 "Imagery convention" rewritten to prescribe `/placeholders/{semantic-slug}.jpg` local paths. Hard prohibition on `picsum.photos | images.unsplash.com | googleusercontent.com | gravatar.com` etc. with the bug-008 empirical anchor inline. §"Cross-screen consistency contract" (3.5.2) similarly updated to require local paths for canonical avatars + case-study imagery.
+- **Part B — `.claude/skills/mockups/SKILL.md`**: note added clarifying that mockups MAY use external URLs (legitimate for visual review) but `/screens` rewrites them downstream — mockup authors should NOT pre-emptively switch.
+- **Part C — `.claude/skills/agents/front-end/react-next/SKILL.md`**: new reviewer dimension `performance — external CDN image URLs forbidden (bug-008)` added under §Review. Grep-based threshold (`zero hits in apps/web/app + components + src`); retryTarget `web-frontend-builder`; serves as defense-in-depth when upstream fix hasn't reached a particular project.
+- **Part D — `scripts/audit-screens-external-cdn-urls.mjs`**: new mechanical audit (139 LOC). Greps `docs/screens/.shared-preamble.md` + `docs/screens/**/*.html` for 9 forbidden CDN host patterns. Exit 0 = clean; exit 1 = JSON-structured violations + human summary on stderr. Wired into `/screens` SKILL.md as new §8c (mirroring §8a's hard-abort contract).
+
+**Empirical validation**: ran the audit on test-app's existing (pre-fix) screens — caught 69 violations across 10 files, confirming the audit detects the class. After the upstream fix (operator re-runs `/screens` on test-app), the audit will exit 0 cleanly.
+
+**Limitation**: existing test-app screens were generated by the OLD `/screens` and remain unchanged on disk. The SKILL.md fix affects NEW projects + future `/screens` re-runs. For test-app empirical re-validation (next operator session), the operator either (a) re-runs `/screens` to regenerate the preamble + screens with local paths, OR (b) hand-edits `docs/screens/.shared-preamble.md` + `docs/screens/webapp/*.html` to swap URLs locally. Then Mode B re-run on the 5 failed features should produce builders that emit local-path-only production code, E2E specs complete page.goto in <5s, and bug-009's tester→builder routing (Row 042) catches any remaining edge-case product bugs that surface.
+
+- **`.claude/skills/screens/SKILL.md`** — §5 + §3.5.2 + new §8c added; ~70 LOC delta. (added 2026-05-30 after phase2-step-025)
+- **`.claude/skills/mockups/SKILL.md`** — bug-008 note added in §"Pass 2 imagery resolution" block; ~10 LOC delta. (added 2026-05-30 after phase2-step-025)
+- **`.claude/skills/agents/front-end/react-next/SKILL.md`** — new reviewer dimension under §Review; ~12 LOC delta. (added 2026-05-30 after phase2-step-025)
+- **`scripts/audit-screens-external-cdn-urls.mjs`** — 139 LOC, validates clean on no-screens projects + catches 69 hits on test-app. (added 2026-05-30 after phase2-step-025)
+- **phase-plan §F Row 043 + feature_list row `phase2-step-025` + plans/active/bug-008 plan** archived on success. (added 2026-05-30 after phase2-step-025)
+
+Meta-lesson candidate (LESSONS.md when bug-008 + bug-009 close): _"Two-bug pattern from the same investigation — a PRODUCT class (screens preamble prescribes wrong asset paths) + a ROUTING class (orchestrator's retry-loop is blind to a structured field the contract requires). The product-class fix unblocks the next operator run; the routing-class fix lets the tester→builder loop actually converge when product bugs surface. Both fixes ship together — neither alone is sufficient for the empirical 5-feature recovery."_
+
+The rebuild guarantee for rows 032-043 combined: a clean rebuild from `phase-1-start` + this §F section should land all the prior 9 rows' deliverables PLUS bug-009's per-task-retry routing in feature-graph.ts (2 new tests, 76/76 pass) PLUS bug-008's 4-part SKILL + audit-script surface (139-LOC audit script, ~92 LOC SKILL deltas).
+
 ---
 
 # Phase 2 — Build orchestration (Mode B)

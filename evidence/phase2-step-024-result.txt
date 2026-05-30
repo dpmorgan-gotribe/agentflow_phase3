@@ -1,0 +1,107 @@
+phase2-step-024 — bug-009 bug-121 routing miss in per-task retry loop — empirical validation
+=============================================================================================
+
+Run: 2026-05-30
+Parent plan: plans/active/bug-009-bug-121-routing-miss-per-task-retry-loop.md
+Predecessors: phase2-step-002 (feature-graph), phase2-step-023 (bug-007 security routing)
+
+Empirical motivator:
+  investigate-004 Q2 + test-app Mode B Run 2 (pipeline 15a61239) feat-home
+  dispatches. tester-attempt-3.json output:
+
+    "genuineProductBugs": [{
+      "taskId": "home-screen",
+      "builderAgent": "web-frontend-builder",
+      "testFile": "apps/web/e2e/home.spec.ts",
+      "failureMessage": "page.goto: Test timeout of 30000ms exceeded...",
+      "likelyCause": "external CDN images block window.load"
+    }]
+
+  But the dispatches/feat-home/ directory contained NO
+  web-frontend-builder-attempt-3.json. Builder retry-counter was at 1
+  (max-3 → 2 remaining) but never got dispatched. Feature marked failed
+  with abortReason "task home-e2e failed after 3 attempts" + the
+  structured payload dropped on the floor.
+
+Root cause (per investigate-004 Q2 findings):
+  bug-121 routing block in feature-graph.ts:1849-1988 only inspects
+  result.genuineProductBugs from the FIRST invokeAgent dispatch (line
+  1376). When attempt-1 stalls → no parseable JSON → routing skipped →
+  fall through to per-task retry loop (line 1991-2029). The retry loop
+  is BLIND to retryResult.genuineProductBugs — it reads ONLY
+  retryResult.taskStatus[t.id]:
+
+    if (retryResult.taskStatus[t.id] === "completed") { ... break; }
+    taskOutcomes[t.id] = "failed";
+    result.errors[t.id] = retryResult.errors[t.id] ?? ...
+    // retryResult.genuineProductBugs is NEVER READ
+
+Same class as bug-007 + bug-109: routing surface schema field correctly
+populated; orchestrator-side dispatch path missing.
+
+Fix shipped:
+  Inserted ~140 LOC routing block in feature-graph.ts at line ~2020
+  (between retryResult.lastWritingAgent assignment and the
+  taskStatus.completed check). Mirrors bug-121 first-dispatch algorithm:
+
+    1. Group genuineProductBugs by originating task ID
+    2. For each task: check builder retry budget; if available,
+       increment counter, dispatch with HARD CONSTRAINT envelope
+       inlining bug payload, commit on success
+    3. After all builder dispatches: re-run tester ONCE for current task
+    4. If tester verify passes → mark task completed, break while loop
+    5. Otherwise → fall through to legacy failure path
+
+  HARD CONSTRAINT envelope shape:
+    "HARD CONSTRAINT — TESTER FLAGGED GENUINE PRODUCT BUG(S)
+    Tester surfaced N bug(s) against your prior implementation
+    (post-bug-009 retry-loop routing). You MUST apply these exact fixes:
+    (1) <testFile>::<testName> — <failureMessage>
+        likely cause: <likelyCause>
+    ...
+    Do not re-implement from the task spec — extend the existing
+    implementation with the named changes."
+
+Tests appended (orchestrator/tests/feature-graph.test.ts):
+  describe("runFeature — bug-009 tester retry-loop routing")
+    1. "routes genuineProductBugs[] surfaced on tester attempt 3
+        (after attempts 1+2 stalled) to builder"
+        — directly exercises the test-app empirical case
+        — builder=2, tester=4 (3 dispatches + 1 verify)
+        — bug-009 envelope contains HARD CONSTRAINT + TESTER FLAGGED
+          GENUINE PRODUCT BUG + picsum.photos|unsplash.com substring
+
+    2. "no regression on first-dispatch bug-121 routing
+        (tester returns genuineProductBugs[] on attempt 1)"
+        — first-dispatch path still works
+        — builder=2, tester=2 (no per-task retry needed)
+
+Test verdict (cd orchestrator && pnpm vitest run tests/feature-graph.test.ts):
+  Test Files  1 passed (1)
+       Tests  76 passed (76)
+                — 74 existing tests still pass (bug-007 security routing
+                  + bug-109 reviewer routing + bug-121 first-dispatch
+                  preserved without regression)
+                — 2 new bug-009 tests pass
+    Duration  2.92s
+
+Cross-references:
+  - investigate-004 (parent investigation)
+  - bug-008 (sibling fix shipping in same commit — together they recover
+    the 5 failed test-app features)
+  - bug-007 (analogous routing fix — security agent)
+  - bug-109 (analogous routing fix — reviewer agent)
+  - bug-121 (the first-dispatch tester routing this extends)
+  - LESSONS.md candidate: "Retry-target routing must be checked at EVERY
+    dispatch surface (first dispatch + per-task retry + future surfaces).
+    When a structured-finding field is optional on InvokeAgentResult,
+    every code path that handles the result must explicitly inspect it.
+    The per-task retry default 'check only taskStatus' silently drops
+    valuable diagnostics."
+
+Status: PASS — phase2-step-024 (bug-009 per-task retry-loop routing)
+empirically validated via 76/76 feature-graph tests. Live empirical
+re-validation against test-app's 5 failed features deferred to next
+operator Mode B re-run after bug-008's upstream screens fix
+(or operator hand-edit of test-app's screens).
+Row passes:true on this commit.

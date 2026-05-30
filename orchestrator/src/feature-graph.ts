@@ -2019,6 +2019,153 @@ export async function runFeature(
         totalCostUsd += retryResult.costUsd;
         lastWritingAgent = retryResult.lastWritingAgent ?? agentName;
 
+        // bug-009 (post-investigate-004): if the tester's RETRY produced
+        // structured genuineProductBugs[], route to the originating builder
+        // before declaring the task irrecoverable. Mirrors the bug-121
+        // first-dispatch routing at line 1849, but on the retry-loop surface
+        // where the original routing was blind.
+        //
+        // Empirical motivator: test-app feat-home tester-attempt-3 returned
+        // genuineProductBugs[{builderAgent: "web-frontend-builder",
+        // taskId: "home-screen", ...}] but bug-121 only checked the FIRST
+        // dispatch's result. The per-task retry loop dropped the structured
+        // payload on the floor, marked the task failed, and cascade-aborted
+        // 5 features. Builder task-retry counters were at 1 (max-3 → 2
+        // remaining) but never got dispatched.
+        if (
+          agentName === "tester" &&
+          retryResult.genuineProductBugs &&
+          retryResult.genuineProductBugs.length > 0 &&
+          retryResult.taskStatus[t.id] !== "completed"
+        ) {
+          const bugsByTaskId = new Map<string, GenuineProductBugType[]>();
+          for (const bug of retryResult.genuineProductBugs) {
+            const list = bugsByTaskId.get(bug.taskId) ?? [];
+            list.push(bug);
+            bugsByTaskId.set(bug.taskId, list);
+          }
+
+          let routingFailed = false;
+          for (const [originatingTaskId, bugs] of bugsByTaskId) {
+            const originatingTask = feature.tasks.find(
+              (ft) => ft.id === originatingTaskId,
+            );
+            if (!originatingTask) {
+              commitWarnings.push(
+                `bug-009-routing: tester flagged genuineProductBug ` +
+                  `taskId='${originatingTaskId}' but no such task in feature ` +
+                  `${feature.id} — skipping builder re-dispatch`,
+              );
+              continue;
+            }
+            const builderCounterKey = `${feature.id}/${originatingTask.id}`;
+            if (
+              ctx.retryCounters.isExhausted("task-retry", builderCounterKey)
+            ) {
+              commitWarnings.push(
+                `bug-009-routing: builder ${originatingTask.agent} for task ` +
+                  `${originatingTaskId} has exhausted its retry budget; ` +
+                  `${bugs.length} genuineProductBug(s) remain unresolved`,
+              );
+              routingFailed = true;
+              continue;
+            }
+            const bCounterValue = ctx.retryCounters.increment(
+              "task-retry",
+              builderCounterKey,
+            );
+            saveState(
+              ctx.projectRoot,
+              ctx.pipelineRunId,
+              ctx.retryCounters,
+              ctx.budget,
+            );
+            if (bCounterValue > TASK_RETRY_CAP) {
+              routingFailed = true;
+              continue;
+            }
+
+            attempts += 1;
+            const retryMessage = bugs
+              .map(
+                (b, i) =>
+                  `(${i + 1}) ${b.testFile}::${b.testName} — ${b.failureMessage}` +
+                  (b.likelyCause ? `\n    likely cause: ${b.likelyCause}` : ""),
+              )
+              .join("\n");
+            const builderResult = await ctx.invokeAgent({
+              agent: originatingTask.agent,
+              cwd: worktreeCwd,
+              featureContext,
+              tasks: [originatingTask],
+              retryContext: {
+                taskId: originatingTask.id,
+                errorMessage:
+                  `HARD CONSTRAINT — TESTER FLAGGED GENUINE PRODUCT BUG(S)\n` +
+                  `Tester surfaced ${bugs.length} bug(s) against your prior ` +
+                  `implementation (post-bug-009 retry-loop routing). You MUST ` +
+                  `apply these exact fixes:\n` +
+                  retryMessage +
+                  `\n\nDo not re-implement from the task spec — extend the ` +
+                  `existing implementation with the named changes. Run ` +
+                  `lint+typecheck+test, then report completed.`,
+              },
+            });
+            totalCostUsd += builderResult.costUsd;
+            lastWritingAgent =
+              builderResult.lastWritingAgent ?? originatingTask.agent;
+            if (builderResult.taskStatus[originatingTask.id] !== "completed") {
+              taskOutcomes[originatingTask.id] = "failed";
+              result.errors[originatingTask.id] =
+                builderResult.errors[originatingTask.id] ??
+                `bug-009 builder re-dispatch failed: ${bugs.length} bug(s) unresolved`;
+              routingFailed = true;
+            } else {
+              taskOutcomes[originatingTask.id] = "completed";
+              // Commit builder's fix so subsequent tester re-run sees fresh code
+              try {
+                await commitChanges(
+                  worktreeCwd,
+                  `${originatingTask.agent}: bug-009 routing — ${originatingTask.id}\n\n[via orchestrator Mode B; feature: ${feature.id}]`,
+                );
+              } catch {
+                /* swallow same shape as bug-121 + bug-007 commit branches */
+              }
+            }
+          }
+
+          if (!routingFailed) {
+            // Re-run tester ONCE for the current task to verify the fix.
+            attempts += 1;
+            const testerRecheck = await ctx.invokeAgent({
+              agent: "tester",
+              cwd: worktreeCwd,
+              featureContext,
+              tasks: [t],
+              retryContext: {
+                taskId: t.id,
+                errorMessage:
+                  `bug-009 re-verify: builder re-dispatched per ` +
+                  `genuineProductBugs[]; re-running tester to confirm fix.`,
+              },
+            });
+            totalCostUsd += testerRecheck.costUsd;
+            lastWritingAgent =
+              testerRecheck.lastWritingAgent ?? lastWritingAgent;
+            if (testerRecheck.taskStatus[t.id] === "completed") {
+              taskOutcomes[t.id] = "completed";
+              result.taskStatus[t.id] = "completed";
+              break; // exit while loop for this task
+            }
+            // Recheck still failing — fall through to legacy failure path.
+            result.errors[t.id] =
+              testerRecheck.errors[t.id] ??
+              result.errors[t.id] ??
+              "tester recheck failed";
+          }
+          // Routing failed OR recheck failed → fall through to legacy path.
+        }
+
         if (retryResult.taskStatus[t.id] === "completed") {
           taskOutcomes[t.id] = "completed";
           break;

@@ -3729,3 +3729,204 @@ describe("runFeature — security-driven retry routing (bug-007)", () => {
     expect(securityInvocations).toBe(2);
   });
 });
+
+describe("runFeature — bug-009 tester retry-loop routing", () => {
+  // Empirical anchor: test-app feat-home Mode B Run 2 2026-05-30.
+  // tester-attempt-1 + attempt-2 stalled at wall-clock-1800000ms (no parseable
+  // genuineProductBugs); attempt-3 completed (15 min) and returned structured
+  // genuineProductBugs[{builderAgent: "web-frontend-builder",
+  // taskId: "home-screen", failureMessage: "page.goto load timeout", ...}].
+  // bug-121 only checked result.genuineProductBugs on the FIRST tester
+  // dispatch — the per-task retry loop's retryResult.genuineProductBugs
+  // was silently dropped, feature marked failed, builder never re-dispatched
+  // even though task-retry counter for home-screen was at 1 (max-3 → 2
+  // remaining). bug-009 mirrors the bug-121 routing inside the retry loop.
+
+  it("routes genuineProductBugs[] surfaced on tester attempt 3 (after attempts 1+2 stalled) to builder", async () => {
+    const feature = buildFeature({
+      agent_sequence: ["web-frontend-builder", "tester"],
+      tasks: [
+        {
+          id: "home-screen",
+          agent: "web-frontend-builder",
+          depends_on: [],
+          skills: [],
+          status: "pending",
+          screens: [],
+        },
+        {
+          id: "home-e2e",
+          agent: "tester",
+          depends_on: [],
+          skills: [],
+          status: "pending",
+          screens: [],
+        },
+      ],
+    });
+    let builderInvocations = 0;
+    let testerInvocations = 0;
+    let bug009RetryContext: string | undefined;
+    const invokeAgent: InvokeAgentFn = async (args) => {
+      if (args.agent === "git-agent") {
+        return {
+          taskStatus: {},
+          errors: {},
+          gitAgentOutput:
+            args.gitOp?.op === "checkout-feature" ? checkoutOk : closeOk,
+          costUsd: 0.001,
+        };
+      }
+      if (args.agent === "web-frontend-builder") {
+        builderInvocations += 1;
+        if (builderInvocations > 1) {
+          // bug-009 retry — should carry HARD CONSTRAINT framing inlining
+          // the tester's structured genuineProductBug.
+          bug009RetryContext = args.retryContext?.errorMessage;
+        }
+        return {
+          taskStatus: Object.fromEntries(
+            args.tasks.map((t) => [t.id, "completed"] as const),
+          ),
+          errors: {},
+          costUsd: 0.1,
+        };
+      }
+      if (args.agent === "tester") {
+        testerInvocations += 1;
+        if (testerInvocations < 3) {
+          // attempts 1 + 2 stall — no parseable structured payload
+          return {
+            taskStatus: { "home-e2e": "failed" },
+            errors: { "home-e2e": "error_stall_timeout: wall-clock-1800000ms" },
+            costUsd: 0.05,
+          };
+        }
+        if (testerInvocations === 3) {
+          // attempt 3 succeeds in producing the structured diagnostic
+          return {
+            taskStatus: { "home-e2e": "failed" },
+            errors: {
+              "home-e2e":
+                "All 17 E2E tests timeout at page.goto('/') because apps/web/app/page.tsx loads external CDN images",
+            },
+            genuineProductBugs: [
+              {
+                taskId: "home-screen",
+                builderAgent: "web-frontend-builder",
+                testFile: "apps/web/e2e/home.spec.ts",
+                testName: "home has hero headline",
+                failureMessage:
+                  "page.goto: Test timeout of 30000ms exceeded. navigating to '/'",
+                likelyCause:
+                  "apps/web/app/page.tsx embeds external CDN images (picsum.photos, unsplash.com) that block window.load in the Playwright test environment.",
+              },
+            ],
+            costUsd: 0.1,
+          };
+        }
+        // re-verify (post-builder bug-009 fix) → completed
+        return {
+          taskStatus: { "home-e2e": "completed" },
+          errors: {},
+          costUsd: 0.05,
+        };
+      }
+      return { taskStatus: {}, errors: {}, costUsd: 0 };
+    };
+    const ctx = makeCtx(invokeAgent);
+    const result = await runFeature(feature, ctx);
+    expect(result.status).toBe("completed");
+    // Builder: 1× initial + 1× bug-009 retry post-tester-attempt-3.
+    expect(builderInvocations).toBe(2);
+    // Tester: 3 attempts (initial + 2 retries) + 1 re-verify after bug-009 routing.
+    expect(testerInvocations).toBe(4);
+    // bug-009 retry envelope inlines the tester's structured diagnostic.
+    expect(bug009RetryContext).toBeDefined();
+    expect(bug009RetryContext!).toMatch(/HARD CONSTRAINT/);
+    expect(bug009RetryContext!).toMatch(/TESTER FLAGGED GENUINE PRODUCT BUG/);
+    expect(bug009RetryContext!).toMatch(/picsum\.photos|unsplash\.com/);
+  });
+
+  it("no regression on first-dispatch bug-121 routing (tester returns genuineProductBugs[] on attempt 1)", async () => {
+    const feature = buildFeature({
+      agent_sequence: ["web-frontend-builder", "tester"],
+      tasks: [
+        {
+          id: "home-screen",
+          agent: "web-frontend-builder",
+          depends_on: [],
+          skills: [],
+          status: "pending",
+          screens: [],
+        },
+        {
+          id: "home-e2e",
+          agent: "tester",
+          depends_on: [],
+          skills: [],
+          status: "pending",
+          screens: [],
+        },
+      ],
+    });
+    let builderInvocations = 0;
+    let testerInvocations = 0;
+    const invokeAgent: InvokeAgentFn = async (args) => {
+      if (args.agent === "git-agent") {
+        return {
+          taskStatus: {},
+          errors: {},
+          gitAgentOutput:
+            args.gitOp?.op === "checkout-feature" ? checkoutOk : closeOk,
+          costUsd: 0.001,
+        };
+      }
+      if (args.agent === "web-frontend-builder") {
+        builderInvocations += 1;
+        return {
+          taskStatus: Object.fromEntries(
+            args.tasks.map((t) => [t.id, "completed"] as const),
+          ),
+          errors: {},
+          costUsd: 0.1,
+        };
+      }
+      if (args.agent === "tester") {
+        testerInvocations += 1;
+        if (testerInvocations === 1) {
+          // attempt 1 returns failed + genuineProductBugs (first-dispatch path)
+          return {
+            taskStatus: { "home-e2e": "failed" },
+            errors: { "home-e2e": "page.goto load timeout" },
+            genuineProductBugs: [
+              {
+                taskId: "home-screen",
+                builderAgent: "web-frontend-builder",
+                testFile: "apps/web/e2e/home.spec.ts",
+                testName: "home has hero headline",
+                failureMessage: "page.goto: Test timeout",
+                likelyCause: "external CDN images block window.load",
+              },
+            ],
+            costUsd: 0.1,
+          };
+        }
+        // re-verify after first-dispatch bug-121 routing → completed
+        return {
+          taskStatus: { "home-e2e": "completed" },
+          errors: {},
+          costUsd: 0.05,
+        };
+      }
+      return { taskStatus: {}, errors: {}, costUsd: 0 };
+    };
+    const ctx = makeCtx(invokeAgent);
+    const result = await runFeature(feature, ctx);
+    expect(result.status).toBe("completed");
+    // Builder: 1× initial + 1× bug-121 first-dispatch retry.
+    expect(builderInvocations).toBe(2);
+    // Tester: 1 initial + 1 re-verify (no stalls + no per-task retry loop).
+    expect(testerInvocations).toBe(2);
+  });
+});

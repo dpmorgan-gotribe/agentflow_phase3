@@ -132,14 +132,39 @@ Before fanning out composition agents, assemble a single **shared-preamble** blo
    Never use clichés: no "Elevate", "Seamless", "Unleash", "Next-Gen", "Empower", "Transform your"
    ```
 
-5. **Imagery seed convention** — ONE explicit pattern for picsum seeds + one for avatar seeds so agents don't each invent their own naming:
+5. **Imagery convention** — local placeholder paths, NOT external CDN URLs (bug-008, post-investigate-004):
 
    ```
-   Hero / content imagery: picsum.photos/seed/{project}-{noun-phrase-kebab}/{w}/{h}
-     e.g. gotribe-tribe-findhorn, gotribe-event-harvest
-   Avatars: picsum.photos/seed/{project}-avatar-{slug}/{size}/{size}
-     e.g. gotribe-avatar-sarah-wei, gotribe-avatar-marcus-brennan
+   Hero / content imagery: /placeholders/hero-{noun-phrase-kebab}.jpg
+     e.g. /placeholders/hero-spark-work-bloom.jpg
+   Avatars: /placeholders/avatar-{first-name-lower}.jpg
+     e.g. /placeholders/avatar-sarah.jpg
+   Case-study imagery: /placeholders/case-study-{client-slug}-{aspect}.jpg
+     e.g. /placeholders/case-study-bloom-900x1100.jpg
+   Generic content: /placeholders/content-{noun-phrase-kebab}.jpg
    ```
+
+   **Hard prohibition**: NEVER emit `picsum.photos`, `images.unsplash.com`,
+   `googleusercontent.com`, `gravatar.com`, or any other external CDN URL into
+   screens HTML or the shared-preamble. Empirical motivator: 5 features on
+   test-app Mode B Run 2 (2026-05-30) cascade-failed E2E tester with
+   `wall-clock-1800000ms` stalls because the preamble prescribed
+   `https://picsum.photos/seed/...` + `https://images.unsplash.com/photo-...`
+   URLs and the builder ported them verbatim into `apps/web/app/page.tsx`.
+   Playwright's default `waitUntil: "load"` blocked until `window.load` fired,
+   which required every external `<img>` to resolve — all 17/17 E2E tests
+   timed out uniformly at 30s per page.goto.
+
+   **Mockup → screen URL rewriting**: if the selected mockup style used
+   external CDN URLs (legitimate for mockup-time visual review), this skill
+   REWRITES them into local paths at screens-generation time. See step 8c
+   below (`audit-screens-external-cdn-urls` self-verify).
+
+   **Build-time provisioning**: the builder + tester are responsible for
+   ensuring `apps/web/public/placeholders/*.jpg` files exist (per the
+   web-frontend-builder's stack-skill scaffold). A 1×1 SVG-data-URI fallback
+   for unknown paths is acceptable; the canonical avatars / hero / case-study
+   mappings should ship as real placeholder images via the stack scaffold.
 
 6. **Empty-state + error-state copy defaults** — short canonical pattern every agent falls back to:
 
@@ -190,8 +215,8 @@ This adds ~200-400 lines to the preamble (proportional to the number of patterns
 
 The preamble MUST include — under a `## Cross-screen consistency (canonical assets — REUSE across screens)` section — explicit named lists of:
 
-- **Canonical avatar URLs** (4-8 Unsplash URLs naming team members or recurring people). Format: one URL per line under a `### Avatars` heading. EVERY screen that renders an avatar MUST use exactly these URLs — no substitutions.
-- **Canonical case-study image seeds** (3-5 picsum or Unsplash seeds). Format: one seed per line under a `### Case-study seeds` heading. EVERY screen that references the same client uses the same seed.
+- **Canonical avatar paths** (4-8 LOCAL `/placeholders/avatar-{name}.jpg` paths naming team members or recurring people). Format: one path per line under a `### Avatars` heading. EVERY screen that renders an avatar MUST use exactly these paths — no substitutions. **External CDN URLs (unsplash.com, picsum.photos, etc.) are FORBIDDEN here per bug-008.**
+- **Canonical case-study image paths** (3-5 LOCAL `/placeholders/case-study-{client-slug}-{aspect}.jpg` paths). Format: one path per line under a `### Case-study paths` heading. EVERY screen that references the same client uses the same path. **External CDN URLs FORBIDDEN per bug-008.**
 - **Canonical nav position**: `fixed` (per `.components-shapes.json` Nav.position). EVERY screen's `<header>` / `<nav>` element MUST carry `fixed` (not `sticky`, not `absolute`).
 - **Canonical footer composition**: 4-column grid (`grid-cols-1 md:grid-cols-4`). EVERY screen's `<footer>` MUST use this layout.
 - **Canonical max-width**: `max-w-[1280px]`. EVERY content container MUST use this.
@@ -553,6 +578,31 @@ Cross-project agnostic: the script reads each project's own `_extracted/*.html` 
 **Empirical motivator (phase1-step-035 / bug-003):** n=12 dispatches on test-app at 2026-05-28T22:00Z surfaced 48 D1 drifts (out of 108 cells where patterns were referenced), 21 D4 hex leaks across 5 screens, 12 D8 layout violations, 8 D9 non-canonical keyframes. Drift rate ≥75% confirmed. The audit closes the prose-only enforcement gap.
 
 **Empirical motivator (phase1-step-036 / bug-004):** Same n=12 dispatch surfaced 6/12 screens (`case-study-detail`, `contact`, `inquiry-confirmation`, `not-found`, `privacy`, `work-index`) using `bg-surface-inverted` page-level footer when the design-system-preview committed `bg-surface-base` — 50% footer-bg drift rate. Inside those inverted footers (and other inverted CTA bands across screens), 5/12 screens mixed `text-text-secondary` (mid-grey #6B6B6B) into dark-band contexts where the preview's vocabulary was `text-text-inverted` / `text-white` / `text-white/85`. Fourth instance of the prose-only-consumer-rule drift class. The chrome-consistency contract closes the same shape mechanically.
+
+### 8c. Mechanical external-CDN-URL audit — bug-008
+
+After step 8a passes, invoke the additional audit script from the project cwd:
+
+```bash
+node $FACTORY_ROOT/scripts/audit-screens-external-cdn-urls.mjs
+```
+
+The script greps `docs/screens/**/*.html` + `docs/screens/.shared-preamble.md` for ANY occurrence of:
+
+- `picsum.photos`
+- `images.unsplash.com` / `unsplash.com`
+- `googleusercontent.com`
+- `gravatar.com`
+- `placeholder.com` / `via.placeholder.com`
+- `placekitten.com` / `placebear.com` / `placedog.net`
+- `loremflickr.com`
+- `dummyimage.com`
+
+Exit code != 0 means at least one external CDN URL leaked into screens or the preamble. Hard-abort with the same contract as step 8a — `success: false`, `failedScreens[]` populated, per-screen retry routing to ui-designer with the audit findings as retry context.
+
+**Why a separate audit script** (not folded into step 8a): step 8a verifies seven kit-pattern + chrome-consistency dimensions; step 8c verifies a single asset-host policy. Same prose-only-consumer-rule drift class as bug-002-005 but disjoint enforcement surface — keep them mechanically separable so a regression in either is debuggable in isolation.
+
+**Empirical motivator (bug-008):** test-app Mode B Run 2 (2026-05-30) had 5 features (feat-home, feat-about, feat-services, feat-case-studies, feat-static-pages) cascade-fail E2E tester at `wall-clock-1800000ms` because `apps/web/app/page.tsx` loaded external CDN images that blocked `window.load`. Tester-attempt-3 correctly diagnosed the bug. The screens preamble explicitly prescribed `picsum.photos` + `unsplash.com` URLs as MANDATED with "NO substitutions" — builder dutifully ported them into production code. Without this audit, the same class would re-surface on every new project.
 
 ### 9. Report (batch mode)
 

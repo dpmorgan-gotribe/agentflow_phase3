@@ -207,6 +207,8 @@ For every asset a mockup needs:
 
 Subagents getting this wrong is the default failure mode; explicit prompt-level forbidding is necessary.
 
+**External CDN URLs in mockups vs screens (bug-008).** Mockups MAY use external CDN URLs (picsum.photos, unsplash.com) — they're legitimate for design-time visual review where realistic photos help operator + designer judge style fit. These URLs are NOT carried into production. `/screens` rewrites them to local `/placeholders/*.jpg` paths at screens-generation time and runs an audit (`scripts/audit-screens-external-cdn-urls.mjs`) to mechanically reject any leak. Mockup authors should not pre-emptively switch to local placeholders; the rewrite happens downstream. See `.claude/skills/screens/SKILL.md §5 Imagery convention` + §8c for the downstream contract.
+
 ### 6. Anti-slop self-check (before each Write)
 
 Before writing any `*.html` file, grep the generated HTML against these banned patterns:

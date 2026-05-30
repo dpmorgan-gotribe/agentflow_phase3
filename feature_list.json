@@ -4750,6 +4750,91 @@
       "depends_on": ["phase2-step-002", "phase2-step-009"],
       "closed_at": "2026-05-30",
       "outcome_summary": "Security retryTarget routing wired in feature-graph.ts (mirrors bug-109); 74/74 feature-graph tests pass (71 existing + 3 new bug-007)"
+    },
+    {
+      "id": "phase2-step-024",
+      "category": "mode-b-build-orchestration",
+      "description": "Ship bug-009 — bug-121 tester→builder routing miss in per-task retry loop. Empirical motivator: investigate-004 Q2 + test-app Mode B Run 2 feat-home tester-attempt-3.json showed structured genuineProductBugs[{builderAgent: web-frontend-builder, taskId: home-screen}] but no web-frontend-builder-attempt-3.json was dispatched even though builder retry-counter was at 1 (max-3 → 2 remaining). Root cause: bug-121 only checks result.genuineProductBugs from FIRST dispatch; per-task retry loop is blind to retryResult.genuineProductBugs. Fix mirrors bug-007 + bug-109 routing shape. Parent: plans/active/bug-009-bug-121-routing-miss-per-task-retry-loop.md.",
+      "steps": [
+        "Insert bug-009 routing block in feature-graph.ts per-task retry loop (after retryResult captured, before taskStatus.completed check)",
+        "Mirror bug-121 algorithm: group bugs by originating task, dispatch builder with HARD CONSTRAINT envelope, commit, re-run tester ONCE for current task to verify",
+        "Append 2 routing tests to feature-graph.test.ts (3-stall + attempt-3 succeeds case + first-dispatch no-regression case)",
+        "Update phase-plan §F with Row 042",
+        "Commit + archive bug-009"
+      ],
+      "approach": "Inline duplicate of bug-121 routing shape in per-task retry loop. Conservative minimal-diff approach — extracting a shared helper deferred until a future refactor plan.",
+      "rejected_alternatives": [
+        {
+          "approach": "Loosen tester wall-clock cap",
+          "reason": "Symptom not cause; future testers could still produce genuineProductBugs[] inside retry loop after authoring errors on earlier attempts."
+        },
+        {
+          "approach": "Pre-compute genuineProductBugs across all attempts",
+          "reason": "Over-engineered; natural surface is right after retryResult is captured."
+        }
+      ],
+      "expected_outcomes": [
+        "orchestrator/src/feature-graph.ts has bug-009 routing block in per-task retry loop",
+        "2 new tests pass (retry-loop routing + first-dispatch no-regression)",
+        "phase-plan §F has Row 042 paragraph",
+        "bug-009 archived with success outcome"
+      ],
+      "evidence": "evidence/phase2-step-024-result.txt",
+      "polished": false,
+      "passes": true,
+      "attempt_count": 1,
+      "depends_on": ["phase2-step-002", "phase2-step-023"],
+      "closed_at": "2026-05-30",
+      "outcome_summary": "bug-009 per-task retry-loop routing wired in feature-graph.ts (~140 LOC mirroring bug-121); 76/76 feature-graph tests pass (74 existing + 2 new bug-009)"
+    },
+    {
+      "id": "phase2-step-025",
+      "category": "mode-a-design-pipeline",
+      "description": "Ship bug-008 — screens preamble + screens HTML prescribe external CDN URLs that break Playwright E2E. Empirical motivator: investigate-004 Q1 + test-app Mode B Run 2 feat-home tester-attempt-3 diagnosed picsum/unsplash CDN-image load-block as the 5-feature stall cluster root cause. 4-part fix: /screens SKILL.md imagery convention rewrite to local /placeholders paths + /mockups note + react-next reviewer dimension + mechanical audit script. Parent: plans/active/bug-008-screens-preamble-external-cdn-urls.md.",
+      "steps": [
+        "Rewrite .claude/skills/screens/SKILL.md §5 Imagery convention + §3.5.2 Cross-screen consistency to prescribe local /placeholders paths",
+        "Add new §8c mechanical external-CDN-URL audit step in /screens SKILL.md",
+        "Add bug-008 note to .claude/skills/mockups/SKILL.md clarifying mockups MAY use external URLs; /screens rewrites downstream",
+        "Add new reviewer dimension in .claude/skills/agents/front-end/react-next/SKILL.md under §Review (defense-in-depth catch)",
+        "Ship scripts/audit-screens-external-cdn-urls.mjs (139 LOC, validates on test-app catching 69 hits)",
+        "Update phase-plan §F with Row 043",
+        "Commit + archive bug-008"
+      ],
+      "approach": "Source-side fix at /screens (the spec-emitter) + downstream defense-in-depth at react-next reviewer dimension. Operator must re-run /screens on existing projects (e.g. test-app) to regenerate preambles with local paths; new projects get the fix automatically.",
+      "rejected_alternatives": [
+        {
+          "approach": "Change Playwright default waitUntil",
+          "reason": "Masks load-blocking; production users still try to load external CDNs."
+        },
+        {
+          "approach": "Builder-side URL rewriting",
+          "reason": "Breaks screens-fidelity contract; correct layer is /screens not builder."
+        },
+        {
+          "approach": "Bump tester wall-clock cap",
+          "reason": "Doesnt fix underlying production bug."
+        },
+        {
+          "approach": "Per-project operator hand-edit only",
+          "reason": "Doesnt prevent class re-surfacing on every new project."
+        }
+      ],
+      "expected_outcomes": [
+        "/screens SKILL.md prescribes local paths only; external CDN URLs forbidden with empirical motivator inline",
+        "/mockups SKILL.md notes the upstream→downstream rewrite contract",
+        "react-next SKILL.md has new reviewer dimension for external CDN URL hits",
+        "scripts/audit-screens-external-cdn-urls.mjs exits 0 on clean projects, exit 1 with structured findings on violations",
+        "Empirical: audit catches 69 hits on test-app pre-fix",
+        "phase-plan §F has Row 043 paragraph",
+        "bug-008 archived with success outcome"
+      ],
+      "evidence": "evidence/phase2-step-025-result.txt",
+      "polished": false,
+      "passes": true,
+      "attempt_count": 1,
+      "depends_on": ["phase2-step-024"],
+      "closed_at": "2026-05-30",
+      "outcome_summary": "bug-008 four-part screens external-CDN fix: SKILL.md amendments to /screens + /mockups + react-next + 139-LOC mechanical audit script; audit empirically catches 69 hits on test-app"
     }
   ]
 }
