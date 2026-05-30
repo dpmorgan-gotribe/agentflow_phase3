@@ -1,30 +1,5 @@
 [
   {
-    "hash": "6cb4aa87a8ec",
-    "timestamp": 1780103442079,
-    "tool": "Bash"
-  },
-  {
-    "hash": "386695f01a51",
-    "timestamp": 1780103506240,
-    "tool": "Write"
-  },
-  {
-    "hash": "2e5b248b8c38",
-    "timestamp": 1780103591452,
-    "tool": "Write"
-  },
-  {
-    "hash": "7e2f20f7499c",
-    "timestamp": 1780103676621,
-    "tool": "Bash"
-  },
-  {
-    "hash": "30c1088968b3",
-    "timestamp": 1780103689351,
-    "tool": "Bash"
-  },
-  {
     "hash": "2f0bcca05b0d",
     "timestamp": 1780103696072,
     "tool": "Read"
@@ -248,5 +223,30 @@
     "hash": "8cd821757e01",
     "timestamp": 1780111539954,
     "tool": "Bash"
+  },
+  {
+    "hash": "393393dbd3d9",
+    "timestamp": 1780112440678,
+    "tool": "Bash"
+  },
+  {
+    "hash": "1ec20b5e2370",
+    "timestamp": 1780112483344,
+    "tool": "Bash"
+  },
+  {
+    "hash": "c57ba8121f7a",
+    "timestamp": 1780112578681,
+    "tool": "Bash"
+  },
+  {
+    "hash": "a89f7f0a194b",
+    "timestamp": 1780112651471,
+    "tool": "Bash"
+  },
+  {
+    "hash": "abae381d7f42",
+    "timestamp": 1780112716423,
+    "tool": "Monitor"
   }
 ]
