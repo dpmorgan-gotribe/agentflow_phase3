@@ -518,6 +518,65 @@ pause/resume, optional PR-review gate, partial-failure-policy.
 - `phase2-step-020` HUMAN closure signed off
 - `git tag phase-2-done`
 
+## §F — Phase 2 ports + empirical validation (2026-05-29 / 2026-05-30)
+
+Phase 2 is a port-verification of Mode B from agentflow_phase2 → agentflow_phase3 harness. Each row verified via: (a) ported file exists, (b) deliverables present at named call sites, (c) tests run + pass, (d) where the row required empirical validation, live Mode B firing against `projects/test-app`.
+
+### Factory ports shipped (rows 001-019, 021-022)
+
+| Component                                                          | Status                       | Test count |
+| ------------------------------------------------------------------ | ---------------------------- | ---------- |
+| `orchestrator/src/tasks-loader.ts`                                 | 64 LOC                       | 6/6 ✓      |
+| `orchestrator/src/feature-graph.ts`                                | 2961 LOC                     | 86/86 ✓    |
+| `orchestrator/src/invoke-agent.ts`                                 | 3534 LOC                     | 142/142 ✓  |
+| `orchestrator/src/protected-files.ts`                              | 327 LOC (fix-loop scope)     | 23/23 ✓    |
+| `orchestrator/src/dev-server.ts`                                   | 796 LOC                      | 53/53 ✓    |
+| Builder dispatch (3 builders + stack-skill routing)                | invoke-agent.ts:161-163      | covered    |
+| Security dispatch (conditional via agent_sequence)                 | unified runAgentDispatch     | covered    |
+| Tester dispatch (hybrid TDD + 6+1 anti-patterns)                   | tester-diff-audit.ts wired   | covered    |
+| Reviewer dispatch (8-dim + verdict routing)                        | ReviewerOutput type imported | covered    |
+| close-feature merge (Windows file-lock 5-retry)                    | bug-072 wired                | covered    |
+| `/start-build` SKILL.md                                            | 277 LOC                      | (skill)    |
+| `/pause-build` + `/dag-status` + `/quota-status` + `/resume-build` | 4 operator skills            | covered    |
+| Worktree machinery + paused.json sentinel + Gate-6                 | All wired                    | covered    |
+| Conflict-handoff + last-writing-agent retry routing                | feature-graph.ts:163-2210    | covered    |
+| Partial-failure-policy (feat-081 stickiness)                       | feature-graph.ts:323-2874    | covered    |
+
+**Total ported: ~7700 LOC across orchestrator/src + ~1300 LOC operator skills.**
+**Cumulative test pass count: 257+ across the orchestrator suite.**
+
+### Architectural refinements captured honestly (not glossed)
+
+- **Row 005 (protected-files guard)** — scoped to fix-loop only per `.claude/rules/protected-files-policy.md` "When this policy doesn't apply" carve-out. Mode B builders use bug-023 (scaffold-owned files) + bug-024 (tester forbidden paths) + reviewer dimension scan as defense-in-depth.
+- **Row 004 (git-agent bootstrap)** — invoked from `/pm` auto-run chain (PM SKILL.md ADR-005 section), NOT from feature-graph. Bootstrap is a one-time Mode A → Mode B transition; the 4 in-loop ops (checkout-feature, close-feature, resolve-conflict-handoff, emergency-abort) fire from `runGitOp` switch in invoke-agent.ts:432-447.
+
+### Live Mode B empirical validation (2026-05-29 + 2026-05-30)
+
+**Operator (David Morgan) signed off `phase2-step-012` dry-run** with these decisions:
+
+- Wave ordering: APPROVED (bootstrap → integrations → features → deploy)
+- agent_sequence per feature: APPROVED
+- Security-sensitive flags on 2 features: APPROVED
+- Concurrency cap: SET TO 5 (operator override from default 4)
+- Gate 5 (credentials-confirmed.txt): RESOLVED with `proceed`
+
+**`phase2-step-018` empirical merge verdict: PASS** on `feat-bootstrap`:
+
+- Dispatch trace: web-frontend-builder ($0.64) → tester flagged genuine bug ($0.94) → web-frontend-builder retry with bug-121 context ($0.64) → tester pass → reviewer approved ($0.90) → git-agent close-feature merged commit `08c38b9` to main
+- Post-merge integrity: `pnpm install` (9.7s) + `pnpm typecheck` (exit 0) + `pnpm test` (7/7 in 3.3s) all clean
+- Merge integrity: `apps/web/*` files on main trace to worktree's checkpoint commits via `--no-ff` merge
+- Cosmetic Windows file-lock orphan dir under `.claude/worktrees/feat-bootstrap/` (per bug-072) — git's worktree tracking correctly registered as removed
+
+**Empirical pause/resume validation (rows 015 + 021)** — operator dropped `paused.json` at row-018 inspection checkpoint; orchestrator caught sentinel cleanly before next tester dispatch + emitted: `[cli] paused: user-request — paused.json sentinel detected before tester on feat-design-system` + the resume command. Operator deleted `paused.json` + re-fired orchestrator with `--resume-feature-graph --pipeline-run-id 15a61239-...`; full Mode B run resumed from exact pause point.
+
+### Row 020 closure — live Mode B end-to-end
+
+Row 020 closure depends on the resumed Mode B run completing through all 12 features (4 Wave 2 + 7 Wave 3) with reviewer-approved close-feature merges. Closure tags `phase-2-done` after final feature merges to main + the `docs/partial-failure-report.md` (if any failures occurred per row 022 partial-failure-policy) is reviewed.
+
+### Rebuild guarantee
+
+A clean rebuild from `phase-1-start` + this §F section should land all 22 Phase 2 row deliverables. Empirical validation requires a project that has completed Mode A (test-app is the canonical reference) + an operator running `/start-build <project> --max-concurrent=5` to trigger Mode B.
+
 [Scope sections filled by /sync-phase-plan]
 
 ---

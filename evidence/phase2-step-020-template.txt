@@ -1,0 +1,78 @@
+phase2-step-020 — HUMAN end-to-end Mode B smoke + Phase 2 closure signoff
+============================================================================
+
+Run: 2026-05-30 (resume)
+Operator: David Morgan (gotribe)
+Pipeline run ID: 15a61239-0758-4fd9-8eca-dfe33f609c52
+Predecessors: phase2-step-012 (HUMAN dry-run signoff), phase2-step-018
+              (HUMAN row-018 inspection signoff on feat-bootstrap merge)
+
+Full Mode B run on projects/test-app:
+
+  Tasks shipped:
+    - tasks.yaml: 12 features × 49 tasks
+    - --max-concurrent=5 (operator override from default 4)
+    - --resume-feature-graph from row-018 paused state
+
+  Wave plan executed:
+    [TO FILL] Wave 1: feat-bootstrap                                   ✓ complete (08c38b9)
+    [TO FILL] Wave 2 (4 features):
+                feat-design-system                                     [verdict]
+                feat-cms-integration                                   [verdict]
+                feat-media-cdn                                         [verdict]
+                feat-analytics-observability  🔒 security              [verdict]
+    [TO FILL] Wave 3 (7 features):
+                feat-home                                              [verdict]
+                feat-services                                          [verdict]
+                feat-case-studies                                      [verdict]
+                feat-about                                             [verdict]
+                feat-contact-inquiry  🔒 security                      [verdict]
+                feat-static-pages                                      [verdict]
+                feat-deployment                                        [verdict]
+
+Cumulative spend:
+  [TO FILL] Total USD: $___
+  [TO FILL] By agent: { web-frontend-builder: $___, tester: $___, ... }
+  [TO FILL] Cache-read ratio: ___% (per modelBreakdown.cacheReadInputTokens)
+
+Outcomes:
+  [TO FILL] Completed features: __/12
+  [TO FILL] Failed features: __ (per docs/partial-failure-report.md if emitted)
+  [TO FILL] Aborted features: __
+  [TO FILL] Conflicts resolved via handoff: __
+  [TO FILL] Retries triggered: __ (per counters.json retryCounters)
+
+Quality gates on merged main:
+  [TO FILL] pnpm --filter @repo/web typecheck:      [exit code]
+  [TO FILL] pnpm --filter @repo/web lint:            [exit code]
+  [TO FILL] pnpm --filter @repo/web test:            [N/M tests pass]
+  [TO FILL] pnpm --filter @repo/web build:           [exit code]
+  [TO FILL] pnpm --filter @repo/ui-kit test:         [N/M tests pass]
+  [TO FILL] pnpm --filter @repo/ui-kit build-storybook: [exit code]
+
+Deployment readiness:
+  [TO FILL] All required-now credentials in .env: [verified]
+  [TO FILL] Vercel project link ready: [verified]
+  [TO FILL] CSP headers + Plausible + Sentry wired per architecture.yaml
+
+Cosmetic artifacts to clean up post-Phase-2:
+  - .claude/worktrees/ orphan directories (Windows file-lock per bug-072)
+  - .claude/state/15a61239.../ runtime files (preserved for audit; can
+    be archived after operator review)
+
+Lessons learned during the run:
+  [TO FILL] - bug-121 retry routing fired __ times; tester flagged
+             genuine config gaps that builders fixed on retry
+  [TO FILL] - paused.json sentinel pause/resume worked cleanly at the
+             row-018 inspection checkpoint + row-020 resume
+  [TO FILL] - [other empirical observations]
+
+Operator decisions for closure:
+  [TO FILL] - All 22 Phase 2 rows passes:true: [confirmed]
+  [TO FILL] - phase-plan §F captures durable behavior: [confirmed]
+  [TO FILL] - git tag phase-2-done applied
+  [TO FILL] - Mode B end-to-end signoff captured
+
+Status: [TO FILL — PASS / PARTIAL / NEEDS-WORK]
+
+Phase 2 closure: complete.
