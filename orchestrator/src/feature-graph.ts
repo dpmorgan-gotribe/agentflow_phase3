@@ -1654,6 +1654,77 @@ export async function runFeature(
     //      agent_sequence (next agent fires). If still needs-revision,
     //      loop (bounded by TASK_RETRY_CAP). If "blocked", fail the
     //      feature immediately.
+
+    // bug-010 (post-Run-3 empirical, first-dispatch surface): if the security
+    // agent's FIRST dispatch returned taskStatus.failed AND securityOutput is
+    // undefined → agent emitted prose-only findings in errors[] instead of the
+    // structured SecurityAgentOutput JSON contract. Without securityOutput, the
+    // bug-007 routing condition below silently evaluates false; findings vanish.
+    //
+    // Empirical motivator: test-app feat-analytics-observability Run 3
+    // (2026-05-30 09:00Z) security-attempt-7/8/9 all returned
+    // securityOutput=undefined + prose. Builder never re-dispatched despite
+    // P2 CSP + P2 Privacy findings the builder could have fixed in one retry.
+    //
+    // Fix: retry the security agent ONCE with a HARD CONSTRAINT envelope
+    // reminding it of the SecurityAgentOutput schema; then fold the result so
+    // the bug-007 routing block below can act on the now-structured output.
+    if (
+      agentName === "security" &&
+      !result.securityOutput &&
+      agentTasks.some((t) => result.taskStatus[t.id] !== "completed")
+    ) {
+      const firstFailedTask =
+        agentTasks.find((t) => result.taskStatus[t.id] !== "completed") ??
+        agentTasks[0]!;
+      const proseErrorMessage =
+        result.errors[firstFailedTask.id] ?? "(no errors field)";
+      attempts += 1;
+      const strictSchemaResult = await ctx.invokeAgent({
+        agent: "security",
+        cwd: worktreeCwd,
+        featureContext,
+        tasks: agentTasks,
+        retryContext: {
+          taskId: firstFailedTask.id,
+          errorMessage:
+            `HARD CONSTRAINT — OUTPUT CONTRACT VIOLATION (bug-010)\n` +
+            `Your prior attempt emitted prose-only findings in errors[] ` +
+            `instead of the structured SecurityAgentOutput JSON. The ` +
+            `orchestrator cannot route findings[].retryTarget without the ` +
+            `JSON; bug-007 routing is silently skipped and findings vanish.\n\n` +
+            `Your prior prose was:\n${proseErrorMessage}\n\n` +
+            `You MUST emit a SecurityAgentOutput JSON wrapped in ` +
+            `<<<TASK_OUTCOME>>> and <<<END_TASK_OUTCOME>>> sentinels. ` +
+            `Each finding MUST have: id (F-NNN), severity (P0/P1/P2), ` +
+            `owaspCategory, cweId, file, line, title, description, ` +
+            `suggestedFix, retryTarget (one of: backend-builder | ` +
+            `web-frontend-builder | mobile-frontend-builder | tester). ` +
+            `overallVerdict must be: approved | needs-revision | blocked. ` +
+            `See .claude/agents/security.md §"Output contract" for the ` +
+            `schema example.`,
+        },
+      });
+      totalCostUsd += strictSchemaResult.costUsd;
+      lastWritingAgent = strictSchemaResult.lastWritingAgent ?? "security";
+      commitWarnings.push(
+        `bug-010-detect (first-dispatch): security emitted prose-only; ` +
+          `dispatched strict-schema retry. feature=${feature.id}`,
+      );
+      if (strictSchemaResult.securityOutput) {
+        result.securityOutput = strictSchemaResult.securityOutput;
+      }
+      result.taskStatus = {
+        ...result.taskStatus,
+        ...strictSchemaResult.taskStatus,
+      };
+      result.errors = { ...result.errors, ...strictSchemaResult.errors };
+      for (const t of agentTasks) {
+        const s = strictSchemaResult.taskStatus[t.id];
+        if (s !== undefined) taskOutcomes[t.id] = s;
+      }
+    }
+
     if (
       agentName === "security" &&
       result.securityOutput &&
@@ -2018,6 +2089,80 @@ export async function runFeature(
         });
         totalCostUsd += retryResult.costUsd;
         lastWritingAgent = retryResult.lastWritingAgent ?? agentName;
+
+        // bug-010 (post-Run-3 empirical): security agent returned taskStatus.failed
+        // AND securityOutput is undefined → agent emitted prose-only findings in
+        // errors[] instead of the structured SecurityAgentOutput JSON contract.
+        // Without securityOutput, bug-007 routing condition (`agentName ===
+        // "security" && result.securityOutput && verdict !== "approved"`) silently
+        // evaluates false; routing skipped; falls through to legacy per-task retry
+        // which re-dispatches SECURITY against unchanged code. Three identical
+        // dispatches, retry cap exhausted, feature failed.
+        //
+        // Empirical motivator: test-app feat-analytics-observability Run 3
+        // (2026-05-30 09:00Z) security-attempt-7/8/9 all returned
+        // securityOutput=undefined + prose narrative in errors[]. Builder never
+        // re-dispatched despite P2 CSP + P2 Privacy findings that the builder
+        // could have fixed in one retry.
+        //
+        // Fix: when this condition is detected, retry the security agent ONCE
+        // with a HARD CONSTRAINT envelope reminding it of the SecurityAgentOutput
+        // schema. Then fold the result so the subsequent bug-007 routing can
+        // act on whatever securityOutput is now populated.
+        if (
+          agentName === "security" &&
+          !retryResult.securityOutput &&
+          retryResult.taskStatus[t.id] !== "completed"
+        ) {
+          const proseErrorMessage =
+            retryResult.errors[t.id] ?? "(no errors field)";
+          attempts += 1;
+          const strictSchemaResult = await ctx.invokeAgent({
+            agent: "security",
+            cwd: worktreeCwd,
+            featureContext,
+            tasks: [t],
+            retryContext: {
+              taskId: t.id,
+              errorMessage:
+                `HARD CONSTRAINT — OUTPUT CONTRACT VIOLATION (bug-010)\n` +
+                `Your prior attempt emitted prose-only findings in errors[] ` +
+                `instead of the structured SecurityAgentOutput JSON. The ` +
+                `orchestrator cannot route findings[].retryTarget without the ` +
+                `JSON; bug-007 routing is silently skipped and findings vanish.\n\n` +
+                `Your prior prose was:\n${proseErrorMessage}\n\n` +
+                `You MUST emit a SecurityAgentOutput JSON wrapped in ` +
+                `<<<TASK_OUTCOME>>> and <<<END_TASK_OUTCOME>>> sentinels. ` +
+                `Each finding MUST have: id (F-NNN), severity (P0/P1/P2), ` +
+                `owaspCategory, cweId, file, line, title, description, ` +
+                `suggestedFix, retryTarget (one of: backend-builder | ` +
+                `web-frontend-builder | mobile-frontend-builder | tester). ` +
+                `overallVerdict must be: approved | needs-revision | blocked. ` +
+                `See .claude/agents/security.md §"Output contract" for the ` +
+                `schema example.`,
+            },
+          });
+          totalCostUsd += strictSchemaResult.costUsd;
+          lastWritingAgent = strictSchemaResult.lastWritingAgent ?? "security";
+          commitWarnings.push(
+            `bug-010-detect: security agent emitted prose-only on first attempt; ` +
+              `dispatched strict-schema retry. taskId=${t.id} feature=${feature.id}`,
+          );
+          // Fold the strict-schema retry's outcome into retryResult so subsequent
+          // bug-007 routing (further down the loop) can act on whatever
+          // securityOutput is now populated.
+          if (strictSchemaResult.securityOutput) {
+            retryResult.securityOutput = strictSchemaResult.securityOutput;
+          }
+          retryResult.taskStatus = {
+            ...retryResult.taskStatus,
+            ...strictSchemaResult.taskStatus,
+          };
+          retryResult.errors = {
+            ...retryResult.errors,
+            ...strictSchemaResult.errors,
+          };
+        }
 
         // bug-009 (post-investigate-004): if the tester's RETRY produced
         // structured genuineProductBugs[], route to the originating builder

@@ -1,0 +1,143 @@
+phase2-step-026 — bug-010 security agent prose-only output contract — empirical validation
+==========================================================================================
+
+Run: 2026-05-30
+Parent plan: plans/active/bug-010-security-agent-prose-only-output.md
+Predecessors: phase2-step-023 (bug-007 routing), phase2-step-024 (bug-009 routing)
+
+Empirical motivator:
+  test-app Mode B Run 3 (2026-05-30 09:00Z, pipelineRunId 15a61239 resumed)
+  feat-analytics-observability security-attempt-7/8/9.json dispatches:
+
+    ==security-attempt-7==
+      taskStatus: {"analytics-security-review":"failed"}
+      securityOutput is null? true
+      errors: "P2 CSP: style-src has 'unsafe-inline' without nonces
+              (middleware.ts:6). P2 Privacy: Plausible script.js ignores
+              DNT—no navigator.doNotTrack guard before load (layout.tsx).
+              SENTRY_AUTH_TOKEN clean."
+
+    ==security-attempt-8== (identical class, prose-only)
+    ==security-attempt-9== (identical class, prose-only)
+
+  All 3 attempts: securityOutput=undefined, taskStatus=failed,
+  errors=prose-narrative. bug-007 routing condition
+  (`agentName === "security" && result.securityOutput && verdict !== "approved"`)
+  evaluated FALSE because securityOutput was undefined → routing skipped →
+  fell through to legacy per-task retry loop which re-dispatched SECURITY
+  (not builder) against unchanged code → 3 identical dispatches → retry cap
+  exhausted → feature failed → feat-deployment cascade-aborted.
+
+Root cause (per investigate-004-style triage):
+  Same prose-only-consumer-rule drift class as bug-002/003/004/005/006/008.
+  Security agent has the SecurityAgentOutput schema contract documented in
+  .claude/agents/security.md §"Output contract", but on this dispatch
+  emitted prose-only narrative instead. The orchestrator silently tolerated
+  the malformed output and fell back to "re-dispatch self" default without
+  warning, detection, or logging.
+
+Three-part fix shipped:
+
+  Part A — .claude/agents/security.md
+    §"Output contract" reorganized to lead with a 2-paragraph emphasis on
+    the structured JSON contract:
+      - Bold lead: "The structured JSON inside <<<TASK_OUTCOME>>> sentinels
+        is your PRIMARY output. Without it, the orchestrator cannot route
+        findings[].retryTarget to the named builder — bug-007 routing is
+        silently skipped and your findings effectively vanish."
+      - Bug-010 anti-pattern callout: "returning the findings as prose in
+        errors[] only" + explicit note that bug-010 detection retries with
+        strict-schema reminder but agent should comply on first attempt.
+    §"Hard rules" reordered — sentinel rule promoted from #6 to #1 with
+    expanded language requiring findings[].retryTarget population (pick
+    most-likely-relevant builder when issue is broadly distributed).
+
+  Part B — orchestrator/src/feature-graph.ts
+    Two detection sites inserted, both BEFORE/INSIDE the bug-007 routing
+    block:
+
+    Site 1 — first-dispatch surface (line ~1657, BEFORE bug-007 routing
+    block at line 1730+):
+      Condition: agentName === "security" && !result.securityOutput &&
+                 agentTasks.some(t => result.taskStatus[t.id] !== "completed")
+      Action: dispatch security ONCE with HARD CONSTRAINT envelope inlining
+              prior prose + full SecurityAgentOutput schema reminder
+              (sentinel format, findings[].retryTarget enum, verdict enum,
+              schema example file pointer). Fold strict-schema retry result
+              into `result` so bug-007 routing immediately below can act on
+              now-structured securityOutput.
+
+    Site 2 — in-loop surface (line ~2042, BEFORE bug-009 routing in per-task
+    retry loop):
+      Condition: agentName === "security" && !retryResult.securityOutput &&
+                 retryResult.taskStatus[t.id] !== "completed"
+      Action: same shape — dispatch security with HARD CONSTRAINT, fold
+              result into retryResult so subsequent legacy bug-007 routing
+              in next loop iteration acts on structured output.
+
+    Both sites push commit warnings:
+      "bug-010-detect (first-dispatch): security emitted prose-only;
+       dispatched strict-schema retry. feature=<id>"
+      "bug-010-detect: security agent emitted prose-only on first attempt;
+       dispatched strict-schema retry. taskId=<id> feature=<id>"
+
+  Part C — orchestrator/tests/feature-graph.test.ts
+    1 new test in describe("runFeature — bug-010 security prose-only output
+    detection"):
+
+      "retries security with strict-schema reminder when first attempt is
+       prose-only, then routes per bug-007"
+
+    Mock flow:
+      - security attempt 1: prose-only (no securityOutput; errors[] narrative)
+      - bug-010 detection fires → security attempt 2 (strict-schema retry)
+      - security attempt 2: structured SecurityAgentOutput with
+        findings[0].retryTarget=web-frontend-builder, verdict=needs-revision
+      - bug-007 routing dispatches builder
+      - builder fixes CSP nonce gap
+      - bug-007 re-dispatches security
+      - security attempt 3: verdict=approved
+      - feature completes
+
+    Assertions:
+      expect(result.status).toBe("completed")
+      expect(securityInvocations).toBe(3)
+      expect(builderInvocations).toBe(2)
+      expect(bug010RetryContext).toMatch(/HARD CONSTRAINT/)
+      expect(bug010RetryContext).toMatch(/OUTPUT CONTRACT VIOLATION/)
+      expect(bug010RetryContext).toMatch(/SecurityAgentOutput/)
+      expect(bug010RetryContext).toMatch(/TASK_OUTCOME/)
+
+Test verdict (cd orchestrator && pnpm vitest run tests/feature-graph.test.ts):
+  Test Files  1 passed (1)
+       Tests  77 passed (77)
+                — 76 existing tests still pass (no regression on bug-007
+                  security routing, bug-109 reviewer routing, bug-121/bug-009
+                  tester routing)
+                — 1 new bug-010 test passes
+    Duration  2.70s
+
+Cross-references:
+  - bug-007 (analogous routing fix — handles structured securityOutput
+    correctly with findings[].retryTarget)
+  - bug-009 (analogous orchestrator-blind-spot detection — per-task retry
+    loop surface)
+  - bug-008 (sibling prose-only-consumer-rule drift class — screens preamble)
+  - bug-132 (bug-007 sentinel + strict-output requirement that landed for
+    tester — this extends the pattern to security)
+  - Empirical motivator: test-app pipelineRunId 15a61239 Run 3
+    feat-analytics-observability dispatches/security-attempt-{7,8,9}.json
+  - LESSONS.md candidate: "When an agent's output contract is silently
+    bypassable (orchestrator tolerates malformed output), the contract
+    isn't enforced — it's aspirational. Every structured-output agent
+    (security, tester, reviewer) needs a mechanical schema-validation gate
+    + 1-retry-with-strict-schema-reminder before falling through to legacy
+    retry. The fix shape — detect missing structured output + retry with
+    strict-schema HARD CONSTRAINT envelope — should be templated across
+    all three agents that emit structured contracts."
+
+Status: PASS — phase2-step-026 (bug-010 security prose-only output contract)
+empirically validated via 77/77 feature-graph tests. Live empirical
+re-validation against test-app's feat-analytics-observability deferred to
+next operator-driven Mode B re-run.
+Row passes:true on this commit.

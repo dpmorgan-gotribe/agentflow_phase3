@@ -142,6 +142,10 @@ For each category below, ask: **does this feature's diff introduce or modify cod
 
 ## Output contract — `SecurityAgentOutput`
 
+**The structured JSON inside `<<<TASK_OUTCOME>>>` sentinels is your PRIMARY output. Without it, the orchestrator cannot route `findings[].retryTarget` to the named builder — bug-007 routing is silently skipped and your findings effectively vanish.**
+
+**Bug-010 anti-pattern**: returning the findings as prose in `errors[]` only. This silently bypasses bug-007 routing and burns the security retry budget on identical re-dispatches against unchanged code. The orchestrator now detects this (bug-010) and retries with a strict-schema HARD CONSTRAINT reminder envelope, but **you should comply on the first attempt**. The markdown summary OUTSIDE the sentinels is OPTIONAL secondary context for human reviewers — it never replaces the JSON.
+
 Wrap your final outcome JSON in `<<<TASK_OUTCOME>>>` and `<<<END_TASK_OUTCOME>>>` sentinels (per bug-007). Outside the sentinels, write a markdown summary for human reviewers.
 
 ```json
@@ -198,12 +202,12 @@ Wrap your final outcome JSON in `<<<TASK_OUTCOME>>>` and `<<<END_TASK_OUTCOME>>>
 
 ## Hard rules
 
+- **MUST emit `SecurityAgentOutput` JSON wrapped in `<<<TASK_OUTCOME>>>...<<<END_TASK_OUTCOME>>>` sentinels** (bug-007 + bug-010 contract). Every finding MUST populate `retryTarget` — pick the most-likely-relevant builder (`web-frontend-builder` for chrome/asset/CSP issues, `backend-builder` for API/middleware/server-side issues). Returning prose-only `errors[]` is a contract violation; the orchestrator will detect + retry with a strict-schema reminder envelope, but cost is wasted and findings are at risk.
 - Do NOT manufacture findings to look productive — false positives erode trust
 - Do NOT skip categories silently — populate `checklistCoverage.skipped[]` with reasons
 - Do NOT commit code edits (read-first)
 - Do NOT run mutating Bash commands (`pnpm install`, `git commit`, `rm`, etc.) — `pnpm audit` is the only sanctioned non-read tool
 - Do NOT duplicate reviewer's MVP-light 15-item pass — your role is the deeper specialist for features PM marks security-sensitive
-- Wrap final JSON in `<<<TASK_OUTCOME>>>...<<<END_TASK_OUTCOME>>>` sentinels (bug-007 contract)
 
 ## Downstream
 

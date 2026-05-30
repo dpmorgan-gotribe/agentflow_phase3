@@ -4835,6 +4835,48 @@
       "depends_on": ["phase2-step-024"],
       "closed_at": "2026-05-30",
       "outcome_summary": "bug-008 four-part screens external-CDN fix: SKILL.md amendments to /screens + /mockups + react-next + 139-LOC mechanical audit script; audit empirically catches 69 hits on test-app"
+    },
+    {
+      "id": "phase2-step-026",
+      "category": "mode-b-build-orchestration",
+      "description": "Ship bug-010 — security agent prose-only output contract violation. Empirical motivator: test-app Run 3 (2026-05-30) feat-analytics-observability security-attempt-7/8/9 all returned securityOutput=undefined + prose-only narrative. bug-007 routing condition evaluated false; routing skipped; per-task retry re-dispatched SECURITY 3× against unchanged code; retry cap exhausted; feature failed → feat-deployment cascade-aborted. Root cause: same prose-only-consumer-rule drift class as bug-002-008. Fix: agent prompt tightening + 2 orchestrator-side detection sites (first-dispatch + in-loop) + 1 unit test. Parent: plans/active/bug-010-security-agent-prose-only-output.md.",
+      "steps": [
+        "Tighten .claude/agents/security.md §Output contract + §Hard rules (sentinel + structured JSON elevated to #1)",
+        "Insert bug-010 detection at feature-graph.ts line 1657 (BEFORE bug-007 routing)",
+        "Insert bug-010 detection at feature-graph.ts line 2042 (in per-task retry loop)",
+        "Append 1 routing test to feature-graph.test.ts",
+        "Update phase-plan §F Row 044",
+        "Commit + archive bug-010"
+      ],
+      "approach": "Detect missing structured output + retry with strict-schema HARD CONSTRAINT envelope inlining prior prose + full SecurityAgentOutput schema reminder. Fold strict-schema retry result so bug-007 routing acts on now-structured output.",
+      "rejected_alternatives": [
+        {
+          "approach": "Just strengthen agent prompt",
+          "reason": "Defense-in-depth via orchestrator validation is load-bearing; agent may still bypass under token pressure."
+        },
+        {
+          "approach": "Hard-fail prose-only without retry",
+          "reason": "Too brittle; 1 retry budget for strict-schema reminder is cheap insurance."
+        },
+        {
+          "approach": "Parse prose errors[] heuristically",
+          "reason": "Over-engineered + fragile."
+        }
+      ],
+      "expected_outcomes": [
+        ".claude/agents/security.md §Output contract + §Hard rules prioritize the JSON contract",
+        "orchestrator/src/feature-graph.ts has 2 bug-010 detection blocks",
+        "1 new test passes (prose-only → strict-schema retry → bug-007 routing)",
+        "phase-plan §F has Row 044 paragraph",
+        "bug-010 archived with success outcome"
+      ],
+      "evidence": "evidence/phase2-step-026-result.txt",
+      "polished": false,
+      "passes": true,
+      "attempt_count": 1,
+      "depends_on": ["phase2-step-023", "phase2-step-024"],
+      "closed_at": "2026-05-30",
+      "outcome_summary": "bug-010 prose-only output detection wired in feature-graph.ts (first-dispatch + in-loop); security.md output contract tightened; 77/77 feature-graph tests pass (76 existing + 1 new bug-010)"
     }
   ]
 }

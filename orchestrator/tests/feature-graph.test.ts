@@ -3930,3 +3930,167 @@ describe("runFeature — bug-009 tester retry-loop routing", () => {
     expect(testerInvocations).toBe(2);
   });
 });
+
+describe("runFeature — bug-010 security prose-only output detection", () => {
+  // Empirical anchor: test-app feat-analytics-observability Run 3 (2026-05-30
+  // 09:00Z) — security agent returned prose-only findings in errors[] across
+  // attempts 7+8+9. securityOutput was undefined every time. bug-007 routing
+  // condition `result.securityOutput && verdict !== "approved"` evaluated false;
+  // routing skipped; legacy per-task retry re-dispatched security against
+  // unchanged code 3× → retry cap exhausted → feature failed.
+  //
+  // bug-010 fix: when securityOutput is undefined AND taskStatus.failed, detect
+  // the output-contract violation and retry security ONCE with a HARD CONSTRAINT
+  // envelope reminding it of the SecurityAgentOutput schema. Then bug-007 can
+  // route findings to the builder on the now-structured retry output.
+
+  it("retries security with strict-schema reminder when first attempt is prose-only, then routes per bug-007", async () => {
+    const feature = buildFeature({
+      agent_sequence: ["web-frontend-builder", "security"],
+      tasks: [
+        {
+          id: "analytics-script",
+          agent: "web-frontend-builder",
+          depends_on: [],
+          skills: [],
+          status: "pending",
+          screens: [],
+        },
+        {
+          id: "analytics-security",
+          agent: "security",
+          depends_on: [],
+          skills: [],
+          status: "pending",
+          screens: [],
+        },
+      ],
+    });
+    let builderInvocations = 0;
+    let securityInvocations = 0;
+    let bug010RetryContext: string | undefined;
+    const invokeAgent: InvokeAgentFn = async (args) => {
+      if (args.agent === "git-agent") {
+        return {
+          taskStatus: {},
+          errors: {},
+          gitAgentOutput:
+            args.gitOp?.op === "checkout-feature" ? checkoutOk : closeOk,
+          costUsd: 0.001,
+        };
+      }
+      if (args.agent === "web-frontend-builder") {
+        builderInvocations += 1;
+        return {
+          taskStatus: Object.fromEntries(
+            args.tasks.map((t) => [t.id, "completed"] as const),
+          ),
+          errors: {},
+          costUsd: 0.1,
+        };
+      }
+      if (args.agent === "security") {
+        securityInvocations += 1;
+        if (securityInvocations === 1) {
+          // FIRST attempt: prose-only — no securityOutput, just errors[] narrative.
+          // This is the bug-010 case the orchestrator must detect.
+          return {
+            taskStatus: { "analytics-security": "failed" },
+            errors: {
+              "analytics-security":
+                "P2 CSP: style-src has 'unsafe-inline' without nonces (middleware.ts:7). P2 Privacy: Plausible loads without DNT guard (layout.tsx:40-46).",
+            },
+            costUsd: 0.05,
+          };
+        }
+        if (securityInvocations === 2) {
+          // bug-010 strict-schema retry — capture the HARD CONSTRAINT envelope
+          bug010RetryContext = args.retryContext?.errorMessage;
+          // Comply this time with structured SecurityAgentOutput + retryTarget
+          return {
+            taskStatus: { "analytics-security": "failed" },
+            errors: { "analytics-security": "needs-revision" },
+            securityOutput: {
+              tier: "security",
+              featureId: "feat-auth",
+              tasksCompleted: [],
+              tasksFailed: [
+                {
+                  taskId: "analytics-security",
+                  status: "failed",
+                  findingsCount: 1,
+                },
+              ],
+              tasksSkipped: [],
+              findings: [
+                {
+                  id: "F-001",
+                  severity: "P2",
+                  owaspCategory: "A05:2021-Security-Misconfiguration",
+                  cweId: "CWE-1021",
+                  file: "apps/web/middleware.ts",
+                  line: 7,
+                  title:
+                    "CSP style-src has unsafe-inline without nonces — XSS surface",
+                  description:
+                    "Style-src directive permits unsafe-inline without per-request nonces.",
+                  suggestedFix:
+                    "Generate per-request nonce in middleware + add to CSP + propagate to inline <style> + <link rel=stylesheet>.",
+                  retryTarget: "web-frontend-builder",
+                },
+              ],
+              checklistCoverage: {
+                covered: ["A05:2021-Security-Misconfiguration"],
+                skipped: [],
+              },
+              overallVerdict: "needs-revision",
+              summary: "1 P2 finding on CSP style-src nonce gap.",
+            },
+            costUsd: 0.1,
+          };
+        }
+        // Third + subsequent attempts: approved (after bug-007 routes to builder)
+        return {
+          taskStatus: { "analytics-security": "completed" },
+          errors: {},
+          securityOutput: {
+            tier: "security",
+            featureId: "feat-auth",
+            tasksCompleted: [
+              {
+                taskId: "analytics-security",
+                status: "completed",
+                findingsCount: 0,
+              },
+            ],
+            tasksFailed: [],
+            tasksSkipped: [],
+            findings: [],
+            checklistCoverage: {
+              covered: ["A05:2021-Security-Misconfiguration"],
+              skipped: [],
+            },
+            overallVerdict: "approved",
+            summary: "P2 nonce fix landed; no P0/P1 findings.",
+          },
+          costUsd: 0.05,
+        };
+      }
+      return { taskStatus: {}, errors: {}, costUsd: 0 };
+    };
+    const ctx = makeCtx(invokeAgent);
+    const result = await runFeature(feature, ctx);
+    expect(result.status).toBe("completed");
+    // Security: 1× initial (prose-only) + 1× bug-010 strict-schema retry +
+    //           1× re-validate after bug-007 builder routing.
+    expect(securityInvocations).toBe(3);
+    // Builder: 1× initial + 1× bug-007 routing retry (CSP nonce fix).
+    expect(builderInvocations).toBe(2);
+    // bug-010 retry envelope content
+    expect(bug010RetryContext).toBeDefined();
+    expect(bug010RetryContext!).toMatch(/HARD CONSTRAINT/);
+    expect(bug010RetryContext!).toMatch(/OUTPUT CONTRACT VIOLATION/);
+    expect(bug010RetryContext!).toMatch(/SecurityAgentOutput/);
+    expect(bug010RetryContext!).toMatch(/TASK_OUTCOME/);
+  });
+});
