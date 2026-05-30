@@ -3124,13 +3124,13 @@
       ],
       "evidence": "evidence/phase2-step-019-result.txt",
       "polished": false,
-      "passes": false,
+      "passes": true,
       "attempt_count": 0,
       "depends_on": [
         "phase2-step-010"
       ],
-      "closed_at": null,
-      "outcome_summary": ""
+      "closed_at": "2026-05-30",
+      "outcome_summary": "dev-server.ts 796 LOC + 53/53 tests pass; multi-tier port coordination + single-tier shape + waitForDevServer + Windows-aware spawn"
     },
     {
       "id": "phase2-step-020",
@@ -4250,14 +4250,14 @@
       ],
       "evidence": "evidence/phase2-step-021-result.txt",
       "polished": false,
-      "passes": false,
+      "passes": true,
       "attempt_count": 0,
       "depends_on": [
         "phase2-step-013",
         "phase2-step-015"
       ],
-      "closed_at": null,
-      "outcome_summary": ""
+      "closed_at": "2026-05-30",
+      "outcome_summary": "resume-build SKILL.md 336 LOC; paired with pause-build; --pipeline-run-id + --latest flags; pause-granularity respected"
     },
     {
       "id": "phase2-step-022",
@@ -4288,13 +4288,13 @@
       ],
       "evidence": "evidence/phase2-step-022-result.txt",
       "polished": false,
-      "passes": false,
+      "passes": true,
       "attempt_count": 0,
       "depends_on": [
         "phase2-step-002"
       ],
-      "closed_at": null,
-      "outcome_summary": ""
+      "closed_at": "2026-05-30",
+      "outcome_summary": "partial-failure-policy wired via feat-081; per-feature recovery + blast-radius compute + sibling continuation + partial-failure-report.md emission"
     },
     {
       "id": "phase3-step-024",

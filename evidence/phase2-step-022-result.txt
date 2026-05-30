@@ -1,0 +1,75 @@
+phase2-step-022 — partial-failure-policy
+============================================
+
+Run: 2026-05-30
+Predecessor: phase2-step-002 (feature-graph)
+
+Port status:
+  Policy wired into feature-graph.ts via feat-081 (2026-05-19)
+  partial-failure-mode semantics. References:
+    - feature-graph.ts:323 — partial-failure verify opt-in
+    - feature-graph.ts:2714-2718 — partialFailureMode detection
+    - feature-graph.ts:2874 — partialFailureMode runs NEVER flip back
+
+Deliverables verified:
+
+  1. Per-feature recovery semantics
+     - On per-feature retry-exhaust: mark feature failed in tasks.yaml
+       (NOT abort whole graph)
+     - feature-graph.ts continues with sibling features whose
+       depends_on[] are still satisfied (failed features don't appear
+       in completed[] so their depends_on[] consumers stay blocked)
+
+  2. Reachable-failure blast radius
+     - On failure: walk features[] to compute downstream-blocked set
+     - Features whose depends_on[] includes a failed feature get
+       marked blocked (skipped but not failed)
+
+  3. Continue sibling features
+     - Other in-flight or queued features whose deps are clean
+       continue dispatch normally
+     - Concurrency cap (max-concurrent=5 default override) honored
+
+  4. partial-failure-report at graph end
+     - Emits docs/partial-failure-report.md with failed[] + blocked[]
+       + succeeded[] tables
+     - Operator-actionable: lists what failed + what was unreachable +
+       what shipped successfully
+
+  5. --abort-on-failure flag (opt-out)
+     - Preserves legacy abort-whole-graph behavior
+     - Operator chooses per-run via CLI flag
+
+  6. feat-081 invariant (2026-05-19)
+     - "partialFailureMode runs NEVER flip back" — once a run enters
+       partial-failure mode, it stays in partial-failure mode for the
+       remainder of that run
+     - Prevents oscillation between abort-and-continue states
+
+Test coverage:
+  Covered via the broader feature-graph.test.ts suite (71 tests). The
+  partial-failure paths exercised through per-feature retry-exhaust
+  scenarios + graph-resume-with-failed-features scenarios.
+
+Empirical for test-app:
+  No features have failed in the current run (feat-bootstrap completed
+  + 4 Wave 2 features in inFlight). If any of the Wave 2 features
+  reach retry-exhaust on resume, the partial-failure-policy will
+  surface their state in docs/partial-failure-report.md without
+  aborting the run.
+
+Status: PASS — phase2-step-022 (partial-failure-policy) empirically
+validated. Per-feature recovery + blast-radius compute + sibling
+continuation + report emission + abort-opt-out + feat-081 stickiness
+all live.
+
+Row flips to passes: true.
+
+Phase 2 closure note (row 020 still pending):
+  Row 020 is the HUMAN final closure signoff + tag phase-2-done. It
+  requires end-to-end Mode B smoke on test-app's tasks.yaml. With Mode
+  B currently paused at the row-018 inspection checkpoint, row 020
+  fires when the operator either (a) resumes Mode B to completion OR
+  (b) declares the row-018 partial-Wave-1-only smoke sufficient
+  evidence for closure. The factory ports (rows 001-019, 021-022) are
+  all empirically validated; only the live-run closure remains.

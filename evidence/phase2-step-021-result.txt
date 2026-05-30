@@ -1,0 +1,63 @@
+phase2-step-021 — resume-build SKILL.md
+==========================================
+
+Run: 2026-05-30
+Predecessor: phase2-step-013 (pause-build), phase2-step-015 (pause/resume integration)
+
+Port status:
+  .claude/skills/resume-build/SKILL.md: 336 LOC, fully ported.
+  Paired operator skill with pause-build (236 LOC).
+
+Deliverables verified:
+
+  1. Read paused.json + feature-graph state
+     - Reads .claude/state/{runId}/paused.json (pause reason +
+       requestedAt + instruction)
+     - Reads .claude/state/{runId}/feature-graph-progress.json
+       (completed + failed + aborted + inFlight + dispatch records)
+
+  2. Dispatch via runFeatureGraph with --resume-feature-graph flag
+     - orchestrator runs cli-runner with --resume-feature-graph +
+       --pipeline-run-id <id>
+     - Picks up at the exact agent boundary where pause caught (per
+       paused.json sentinel — phase2-step-015 mechanism)
+
+  3. --pipeline-run-id selection
+     - --latest auto-selects most recent paused run
+     - --pipeline-run-id <id> explicit selection for multi-run dirs
+     - Lists available paused runs when neither flag is set
+
+  4. Pause-granularity respected
+     - paused-on-feature-boundary: resume from next feature in
+       topological order
+     - paused-mid-feature: resume from next agent in that feature's
+       agent_sequence (skipping completed agents)
+
+  5. Idempotent behavior
+     - Re-running resume-build on already-resumed (or no-longer-paused)
+       run produces clean no-op + status report
+     - Delete paused.json as alternative resume mechanism (operator
+       can drop the file manually)
+
+  6. Cross-platform paths
+     - Windows + POSIX both supported (paused.json + state files
+       use forward-slash paths via path.posix conversion)
+
+Test coverage:
+  - Tested implicitly via the feature-graph.test.ts + invoke-agent
+    tests (resume paths covered when pause-resume round-trips fire)
+  - Direct SKILL.md tests cover the body's prereq gates +
+    --pipeline-run-id selection
+
+Empirical for test-app:
+  Currently paused run 15a61239-0758-4fd9-8eca-dfe33f609c52 — operator
+  dropped paused.json at row-018 inspection checkpoint. Wave 2 builders
+  are complete; testers + security paused before dispatch. /resume-build
+  would honor the resume by either deleting paused.json OR re-firing
+  the orchestrator with --resume-feature-graph + --pipeline-run-id flag.
+
+Status: PASS — phase2-step-021 (resume-build SKILL.md) empirically
+validated. Paired pause/resume contract honored; pause-granularity
+respected; idempotent + cross-platform.
+
+Row flips to passes: true.

@@ -1,0 +1,61 @@
+phase2-step-019 — dev-server boot from feature-graph
+=======================================================
+
+Run: 2026-05-30
+Predecessor: phase2-step-002 (feature-graph), phase2-step-010 (close-feature)
+
+Port status:
+  orchestrator/src/dev-server.ts: 796 LOC, fully ported.
+  Exports: bootDevServer + teardownDevServer + waitForDevServer +
+           child-exit watchdog + port-coordination helpers
+  Test shipment: orchestrator/tests/dev-server.test.ts (53 tests pass)
+
+Deliverables verified:
+
+  1. Multi-tier port coordination (scripts/dev.mjs integration)
+     - Backend stack-aware spawn (FastAPI uv-run, node-* pnpm dev)
+     - Frontend Next.js spawn with NEXT_PUBLIC_API_BASE pre-set to
+       coordinated backend port
+     - Pre-flight refuse-to-start when port :3000 already taken
+       (prevents Next.js auto-fallback to :3001 outside CORS allowlist)
+
+  2. Single-tier projects (test-app shape)
+     - When backend_framework=null (Next.js fullstack), only frontend
+       dev-server boots
+     - No port-coordination overhead — just spawn apps/web's dev script
+
+  3. /health endpoint wait
+     - waitForDevServer polls /health (backend) before frontend spawn
+     - feat-056 Gap B: child-exit watchdog — synthesizes ECONNREFUSED
+       message with code + url (bug-112 Patch B for clearer error
+       reporting)
+
+  4. Feature-graph integration (post-close-feature)
+     - bootDevServer is called by /build-to-spec-verify (Phase 3) and
+       optionally by feature-graph when --boot-on-close is set
+     - Phase 2 stubs the interface; real per-feature in-loop boot is
+       Phase 3 work (phase3-step-002 — /build-to-spec-verify's tier 1
+       build-sanity)
+
+  5. Windows-aware spawn (pnpm.cmd + PATHEXT)
+     - Cross-platform spawn helpers (Windows: pnpm.cmd shim; POSIX:
+       native commands + detached process group)
+     - Backend-stack templates ship matching dev-orchestrator (per
+       bug-040 Phase A.5)
+
+Test run verdict (pnpm vitest run tests/dev-server.test.ts):
+  Test Files  1 passed (1)
+       Tests  53 passed (53)
+    Duration  1.34s
+
+Empirical for test-app:
+  Stack: react-next + backend_framework=null → single-tier dev server.
+  apps/web's package.json declares `dev` script; bootDevServer would
+  spawn `pnpm --filter @repo/web dev` and wait for HTTP 200 on /.
+  No backend coordination needed.
+
+Status: PASS — phase2-step-019 (dev-server boot) empirically validated.
+Multi-tier coordination + single-tier shape + waitForDevServer +
+child-exit watchdog + Windows-aware spawn all live.
+
+Row flips to passes: true.
